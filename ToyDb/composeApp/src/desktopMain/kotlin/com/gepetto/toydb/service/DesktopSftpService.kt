@@ -239,6 +239,7 @@ class DesktopSftpService : SftpService {
         config: SftpConfig,
         db: ToyDatabase,
         onHostKeyUnverified: suspend (hostname: String, port: Int, fingerprint: String) -> Boolean,
+        selectedFiles: Set<String>?,
         onProgress: (status: String, progress: Float) -> Unit
     ): Result<Unit> = withContext(Dispatchers.IO) {
         try {
@@ -250,11 +251,18 @@ class DesktopSftpService : SftpService {
 
             onProgress("Exporting database to local files...", 0.1f)
             val filesToWrite = mutableListOf<Pair<String, String>>()
-            filesToWrite.add("carmaker.json" to ImportExportService.exportMakers(db))
-            filesToWrite.add("category_settings.json" to ImportExportService.exportCategorySettings(db))
+            if (selectedFiles == null || selectedFiles.contains("carmaker.json")) {
+                filesToWrite.add("carmaker.json" to ImportExportService.exportMakers(db))
+            }
+            if (selectedFiles == null || selectedFiles.contains("category_settings.json")) {
+                filesToWrite.add("category_settings.json" to ImportExportService.exportCategorySettings(db))
+            }
             val categories = repository.getCategorySettings()
             categories.forEach { cat ->
-                filesToWrite.add("${cat.imagePrefix}list.json" to ImportExportService.exportToys(db, cat.category))
+                val fileName = "${cat.imagePrefix}list.json"
+                if (selectedFiles == null || selectedFiles.contains(fileName)) {
+                    filesToWrite.add(fileName to ImportExportService.exportToys(db, cat.category))
+                }
             }
 
             val localPath = localImportExportDir.toPath()
@@ -300,28 +308,30 @@ class DesktopSftpService : SftpService {
 
                     localImageFiles.forEachIndexed { index, localImgPath ->
                         val fileName = localImgPath.name
-                        val localFile = localImgPath.toNioPath().toFile()
-                        val localMeta = FileSystem.SYSTEM.metadata(localImgPath)
-                        val localSize = localMeta.size ?: 0L
-                        val localMtimeSec = (localMeta.lastModifiedAtMillis ?: 0L) / 1000L
+                        if (selectedFiles == null || selectedFiles.contains(fileName)) {
+                            val localFile = localImgPath.toNioPath().toFile()
+                            val localMeta = FileSystem.SYSTEM.metadata(localImgPath)
+                            val localSize = localMeta.size ?: 0L
+                            val localMtimeSec = (localMeta.lastModifiedAtMillis ?: 0L) / 1000L
 
-                        val remoteInfo = remoteFileMap[fileName]
-                        val remoteFile = if (config.remoteDir.endsWith("/")) "${config.remoteDir}$fileName" else "${config.remoteDir}/$fileName"
+                            val remoteInfo = remoteFileMap[fileName]
+                            val remoteFile = if (config.remoteDir.endsWith("/")) "${config.remoteDir}$fileName" else "${config.remoteDir}/$fileName"
 
-                        val shouldUpload = if (remoteInfo == null) {
-                            true
-                        } else {
-                            val remoteSize = remoteInfo.attributes.size
-                            val remoteMtimeSec = remoteInfo.attributes.mtime
-                            if (localSize != remoteSize) {
+                            val shouldUpload = if (remoteInfo == null) {
                                 true
                             } else {
-                                localMtimeSec > remoteMtimeSec
+                                val remoteSize = remoteInfo.attributes.size
+                                val remoteMtimeSec = remoteInfo.attributes.mtime
+                                if (localSize != remoteSize) {
+                                    true
+                                } else {
+                                    localMtimeSec > remoteMtimeSec
+                                }
                             }
-                        }
 
-                        if (shouldUpload) {
-                            sftp.put(net.schmizz.sshj.xfer.FileSystemFile(localFile), remoteFile)
+                            if (shouldUpload) {
+                                sftp.put(net.schmizz.sshj.xfer.FileSystemFile(localFile), remoteFile)
+                            }
                         }
                         
                         val progressVal = 0.7f + (0.3f * (index + 1) / localImageFiles.size.coerceAtLeast(1))
@@ -346,6 +356,7 @@ class DesktopSftpService : SftpService {
         config: SftpConfig,
         db: ToyDatabase,
         onHostKeyUnverified: suspend (hostname: String, port: Int, fingerprint: String) -> Boolean,
+        selectedFiles: Set<String>?,
         onProgress: (status: String, progress: Float) -> Unit
     ): Result<Unit> = withContext(Dispatchers.IO) {
         try {
@@ -372,9 +383,11 @@ class DesktopSftpService : SftpService {
                     val jsonFiles = remoteFiles.filter { getFileNameFromPath(it.path).endsWith(".json", ignoreCase = true) }
                     jsonFiles.forEach { rf ->
                         val fileName = getFileNameFromPath(rf.path)
-                        val localFile = localPath.div(fileName).toNioPath().toFile()
-                        val remoteFile = if (config.remoteDir.endsWith("/")) "${config.remoteDir}$fileName" else "${config.remoteDir}/$fileName"
-                        sftp.get(remoteFile, net.schmizz.sshj.xfer.FileSystemFile(localFile))
+                        if (selectedFiles == null || selectedFiles.contains(fileName)) {
+                            val localFile = localPath.div(fileName).toNioPath().toFile()
+                            val remoteFile = if (config.remoteDir.endsWith("/")) "${config.remoteDir}$fileName" else "${config.remoteDir}/$fileName"
+                            sftp.get(remoteFile, net.schmizz.sshj.xfer.FileSystemFile(localFile))
+                        }
                     }
 
                     // 2. Download media files
@@ -386,27 +399,29 @@ class DesktopSftpService : SftpService {
 
                     allowedRemoteImages.forEachIndexed { index, remoteImg ->
                         val fileName = getFileNameFromPath(remoteImg.path)
-                        val remoteSize = remoteImg.attributes.size
-                        val remoteMtimeSec = remoteImg.attributes.mtime
-                        val remoteFile = if (config.remoteDir.endsWith("/")) "${config.remoteDir}$fileName" else "${config.remoteDir}/$fileName"
-                        val localImgPath = localImagesPath.div(fileName)
-                        val localFile = localImgPath.toNioPath().toFile()
+                        if (selectedFiles == null || selectedFiles.contains(fileName)) {
+                            val remoteSize = remoteImg.attributes.size
+                            val remoteMtimeSec = remoteImg.attributes.mtime
+                            val remoteFile = if (config.remoteDir.endsWith("/")) "${config.remoteDir}$fileName" else "${config.remoteDir}/$fileName"
+                            val localImgPath = localImagesPath.div(fileName)
+                            val localFile = localImgPath.toNioPath().toFile()
 
-                        val shouldDownload = if (!FileSystem.SYSTEM.exists(localImgPath)) {
-                              true
-                        } else {
-                            val localMeta = FileSystem.SYSTEM.metadata(localImgPath)
-                            val localSize = localMeta.size ?: 0L
-                            val localMtimeSec = (localMeta.lastModifiedAtMillis ?: 0L) / 1000L
-                            if (localSize != remoteSize) {
-                                true
+                            val shouldDownload = if (!FileSystem.SYSTEM.exists(localImgPath)) {
+                                  true
                             } else {
-                                remoteMtimeSec > localMtimeSec
+                                val localMeta = FileSystem.SYSTEM.metadata(localImgPath)
+                                val localSize = localMeta.size ?: 0L
+                                val localMtimeSec = (localMeta.lastModifiedAtMillis ?: 0L) / 1000L
+                                if (localSize != remoteSize) {
+                                    true
+                                } else {
+                                    remoteMtimeSec > localMtimeSec
+                                }
                             }
-                        }
 
-                        if (shouldDownload) {
-                            sftp.get(remoteFile, net.schmizz.sshj.xfer.FileSystemFile(localFile))
+                            if (shouldDownload) {
+                                sftp.get(remoteFile, net.schmizz.sshj.xfer.FileSystemFile(localFile))
+                            }
                         }
                         
                         val progressVal = 0.5f + (0.3f * (index + 1) / allowedRemoteImages.size.coerceAtLeast(1))
@@ -423,26 +438,33 @@ class DesktopSftpService : SftpService {
                     }
 
                     // 1. Category Settings
-                    val catSettingsContent = readLocalJson("category_settings.json")
-                    if (catSettingsContent != null) {
-                        ImportExportService.importCategorySettings(db, catSettingsContent)
+                    if (selectedFiles == null || selectedFiles.contains("category_settings.json")) {
+                        val catSettingsContent = readLocalJson("category_settings.json")
+                        if (catSettingsContent != null) {
+                            ImportExportService.importCategorySettings(db, catSettingsContent)
+                        }
                     }
 
                     // 2. Makers
-                    val makersContent = readLocalJson("carmaker.json") ?: readLocalJson("makers.json")
-                    if (makersContent != null) {
-                        ImportExportService.importMakers(db, makersContent)
+                    if (selectedFiles == null || selectedFiles.contains("carmaker.json") || selectedFiles.contains("makers.json")) {
+                        val makersContent = readLocalJson("carmaker.json") ?: readLocalJson("makers.json")
+                        if (makersContent != null) {
+                            ImportExportService.importMakers(db, makersContent)
+                        }
                     }
 
                     // 3. Toys
                     val activeCategories = repository.getCategorySettings()
                     activeCategories.forEach { cat ->
-                        val content = readLocalJson("${cat.imagePrefix}list.json")
-                            ?: readLocalJson("${cat.category}s.json")
-                            ?: readLocalJson("${cat.category}list.json")
-                            ?: readLocalJson("${cat.category}.json")
-                        if (content != null) {
-                            ImportExportService.importToys(db, cat.category, content)
+                        val fileName = "${cat.imagePrefix}list.json"
+                        if (selectedFiles == null || selectedFiles.contains(fileName) || selectedFiles.contains("${cat.category}s.json") || selectedFiles.contains("${cat.category}list.json") || selectedFiles.contains("${cat.category}.json")) {
+                            val content = readLocalJson(fileName)
+                                ?: readLocalJson("${cat.category}s.json")
+                                ?: readLocalJson("${cat.category}list.json")
+                                ?: readLocalJson("${cat.category}.json")
+                            if (content != null) {
+                                ImportExportService.importToys(db, cat.category, content)
+                            }
                         }
                     }
 

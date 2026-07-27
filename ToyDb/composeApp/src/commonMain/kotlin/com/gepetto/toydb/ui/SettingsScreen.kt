@@ -72,6 +72,7 @@ fun SettingsScreen(
     var testErrorMsg by remember { mutableStateOf("") }
     var showSyncConfirmDialog by remember { mutableStateOf(false) }
     val proposedSftpActions = remember { mutableStateListOf<SyncAction>() }
+    val selectedSftpActions = remember { mutableStateMapOf<String, Boolean>() }
     var syncDirection by remember { mutableStateOf("Upload") }
 
     // Host Fingerprint verification state
@@ -536,22 +537,58 @@ fun SettingsScreen(
                     
                     if (proposedSftpActions.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(8.dp))
-                        Box(
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 13.dp, end = 13.dp, top = 2.dp, bottom = 2.dp)
+                        ) {
+                            val allSelected = proposedSftpActions.all { selectedSftpActions[it.filename] == true }
+                            Checkbox(
+                                checked = allSelected,
+                                onCheckedChange = { isChecked ->
+                                    proposedSftpActions.forEach { action ->
+                                        selectedSftpActions[action.filename] = isChecked
+                                    }
+                                },
+                                modifier = Modifier.padding(end = 8.dp)
+                            )
+                            Text(
+                                text = "Select All",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = sysTextColor()
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .heightIn(max = 240.dp)
                                 .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
                                 .padding(4.dp)
                         ) {
-                            androidx.compose.foundation.lazy.LazyColumn {
+                            val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+                            androidx.compose.foundation.lazy.LazyColumn(
+                                state = listState,
+                                modifier = Modifier.weight(1f).padding(end = 4.dp)
+                            ) {
                                 items(proposedSftpActions.size) { index ->
                                     val action = proposedSftpActions[index]
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .padding(vertical = 4.dp, horizontal = 8.dp),
-                                        horizontalArrangement = Arrangement.SpaceBetween
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
                                     ) {
+                                        Checkbox(
+                                            checked = selectedSftpActions[action.filename] ?: true,
+                                            onCheckedChange = { isChecked ->
+                                                selectedSftpActions[action.filename] = isChecked
+                                            },
+                                            modifier = Modifier.padding(end = 8.dp)
+                                        )
                                         Text(
                                             text = action.filename,
                                             style = MaterialTheme.typography.bodyMedium,
@@ -573,6 +610,12 @@ fun SettingsScreen(
                                     }
                                 }
                             }
+                            PlatformScrollbar(
+                                state = listState,
+                                modifier = Modifier
+                                    .fillMaxHeight()
+                                    .width(8.dp)
+                            )
                         }
                     }
                 }
@@ -583,10 +626,11 @@ fun SettingsScreen(
                         showSyncConfirmDialog = false
                         coroutineScope.launch {
                             isSftpSyncing = true
+                            val selectedSet = selectedSftpActions.filterValues { it }.keys
                             if (syncDirection == "Upload") {
                                 statusText = "Uploading data to SFTP server..."
                                 sftpSyncProgress = 0.0f
-                                val result = sftpService.uploadData(buildSftpConfig(), db, onHostKeyUnverified) { status, progress ->
+                                val result = sftpService.uploadData(buildSftpConfig(), db, onHostKeyUnverified, selectedSet) { status, progress ->
                                     statusText = status
                                     sftpSyncProgress = progress
                                 }
@@ -598,7 +642,7 @@ fun SettingsScreen(
                             } else {
                                 statusText = "Downloading data from SFTP server..."
                                 sftpSyncProgress = 0.0f
-                                val result = sftpService.downloadData(buildSftpConfig(), db, onHostKeyUnverified) { status, progress ->
+                                val result = sftpService.downloadData(buildSftpConfig(), db, onHostKeyUnverified, selectedSet) { status, progress ->
                                     statusText = status
                                     sftpSyncProgress = progress
                                 }
@@ -744,6 +788,8 @@ fun SettingsScreen(
                                             val actions = result.getOrThrow()
                                             proposedSftpActions.clear()
                                             proposedSftpActions.addAll(actions)
+                                            selectedSftpActions.clear()
+                                            actions.forEach { selectedSftpActions[it.filename] = true }
                                             syncDirection = "Upload"
                                             showSyncConfirmDialog = true
                                         } else {
@@ -761,6 +807,8 @@ fun SettingsScreen(
                                             val actions = result.getOrThrow()
                                             proposedSftpActions.clear()
                                             proposedSftpActions.addAll(actions)
+                                            selectedSftpActions.clear()
+                                            actions.forEach { selectedSftpActions[it.filename] = true }
                                             syncDirection = "Download"
                                             showSyncConfirmDialog = true
                                         } else {
@@ -906,6 +954,8 @@ fun SettingsScreen(
                                         val actions = result.getOrThrow()
                                         proposedSftpActions.clear()
                                         proposedSftpActions.addAll(actions)
+                                        selectedSftpActions.clear()
+                                        actions.forEach { selectedSftpActions[it.filename] = true }
                                         syncDirection = "Upload"
                                         showSyncConfirmDialog = true
                                     } else {
@@ -923,6 +973,8 @@ fun SettingsScreen(
                                         val actions = result.getOrThrow()
                                         proposedSftpActions.clear()
                                         proposedSftpActions.addAll(actions)
+                                        selectedSftpActions.clear()
+                                        actions.forEach { selectedSftpActions[it.filename] = true }
                                         syncDirection = "Download"
                                         showSyncConfirmDialog = true
                                     } else {

@@ -176,17 +176,25 @@ fun ExplorerScreen(
                     Text("No toys found matching filters.", color = MaterialTheme.colorScheme.outline)
                 }
             } else {
-                LazyVerticalGrid(
-                    columns = GridCells.Adaptive(minSize = 350.dp),
-                    modifier = Modifier.weight(1f),
-                    horizontalArrangement = Arrangement.spacedBy(GcSpacing.Standard),
-                    verticalArrangement = Arrangement.spacedBy(GcSpacing.Standard)
-                ) {
-                    items(toysList) { toy ->
-                        ToyItemCard(toy, prefix) {
-                            onNavigate(Destination.ToyDetail(category, toy.refNum))
+                Row(modifier = Modifier.weight(1f)) {
+                    val gridState = androidx.compose.foundation.lazy.grid.rememberLazyGridState()
+                    LazyVerticalGrid(
+                        state = gridState,
+                        columns = GridCells.Adaptive(minSize = 350.dp),
+                        modifier = Modifier.weight(1f).padding(end = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(GcSpacing.Standard),
+                        verticalArrangement = Arrangement.spacedBy(GcSpacing.Standard)
+                    ) {
+                        items(toysList) { toy ->
+                            ToyItemCard(toy, prefix) {
+                                onNavigate(Destination.ToyDetail(category, toy.refNum))
+                            }
                         }
                     }
+                    PlatformGridScrollbar(
+                        state = gridState,
+                        modifier = Modifier.fillMaxHeight().width(8.dp)
+                    )
                 }
             }
         }

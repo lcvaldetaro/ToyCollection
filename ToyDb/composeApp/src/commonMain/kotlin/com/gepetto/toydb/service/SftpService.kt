@@ -44,6 +44,7 @@ interface SftpService {
         config: SftpConfig, 
         db: ToyDatabase, 
         onHostKeyUnverified: suspend (hostname: String, port: Int, fingerprint: String) -> Boolean,
+        selectedFiles: Set<String>? = null,
         onProgress: (status: String, progress: Float) -> Unit
     ): Result<Unit>
     
@@ -51,6 +52,7 @@ interface SftpService {
         config: SftpConfig, 
         db: ToyDatabase, 
         onHostKeyUnverified: suspend (hostname: String, port: Int, fingerprint: String) -> Boolean,
+        selectedFiles: Set<String>? = null,
         onProgress: (status: String, progress: Float) -> Unit
     ): Result<Unit>
 }
