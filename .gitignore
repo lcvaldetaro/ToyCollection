@@ -1,0 +1,25 @@
+# Gradle files and directories
+.gradle/
+build/
+**/build/
+
+# Android Studio / IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+/local.properties
+
+# macOS system files
+.DS_Store
+Thumbs.db
+
+# Project-specific / local runs
+/cache/
+/composeApp/cache/
+/.jdk/
+.kotlin/
+
+# Log files
+*.log

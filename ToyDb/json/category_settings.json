@@ -1,0 +1,31 @@
+{
+    "date": "July 17, 2026",
+    "buildNumber": "1052",
+    "settings": [
+        {
+            "category": "kit",
+            "imagePrefix": "pla",
+            "label": "Model Kits"
+        },
+        {
+            "category": "misc",
+            "imagePrefix": "mis",
+            "label": "Others"
+        },
+        {
+            "category": "slot",
+            "imagePrefix": "car",
+            "label": "Slot Cars"
+        },
+        {
+            "category": "static",
+            "imagePrefix": "sta",
+            "label": "Static Models"
+        },
+        {
+            "category": "train",
+            "imagePrefix": "tra",
+            "label": "Model Trains"
+        }
+    ]
+}
