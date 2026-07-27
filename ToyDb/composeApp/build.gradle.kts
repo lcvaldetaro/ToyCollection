@@ -67,10 +67,56 @@ compose.resources {
     publicResClass = true
 }
 
+val resolvedJavaHome: String? = run {
+    var found: String? = null
+    var dir: File? = projectDir
+    while (dir != null) {
+        val localJdk = File(dir, ".jdk/Contents/Home")
+        if (File(localJdk, "bin/jpackage").exists()) {
+            found = localJdk.absolutePath
+            break
+        }
+        val siblingDirs = dir.listFiles()?.filter { it.isDirectory }
+        if (siblingDirs != null) {
+            for (sib in siblingDirs) {
+                val sibJdk = File(sib, ".jdk/Contents/Home")
+                if (File(sibJdk, "bin/jpackage").exists()) {
+                    found = sibJdk.absolutePath
+                    break
+                }
+            }
+        }
+        if (found != null) break
+        dir = dir.parentFile
+    }
+    if (found == null) {
+        val env = System.getenv("JAVA_HOME")
+        if (!env.isNullOrEmpty() && File(File(env), "bin/jpackage").exists()) {
+            found = env
+        }
+    }
+    if (found == null) {
+        val sys = System.getProperty("java.home")
+        if (!sys.isNullOrEmpty() && File(File(sys), "bin/jpackage").exists()) {
+            found = sys
+        }
+    }
+    if (found == null) {
+        try {
+            val process = ProcessBuilder("/usr/libexec/java_home").start()
+            val path = process.inputStream.bufferedReader().readText().trim()
+            if (path.isNotEmpty() && File(File(path), "bin/jpackage").exists()) {
+                found = path
+            }
+        } catch (e: Exception) {}
+    }
+    found
+}
+
 compose.desktop {
     application {
         mainClass = "MainKt"
-        javaHome = System.getenv("JAVA_HOME") ?: System.getProperty("java.home")
+        javaHome = resolvedJavaHome ?: System.getProperty("java.home")
 
         nativeDistributions {
             targetFormats(

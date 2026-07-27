@@ -2,26 +2,84 @@
 # Find the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# 1. First, check if there is a local project-specific .jdk
-if [ -d "$SCRIPT_DIR/.jdk/Contents/Home" ]; then
-    export JAVA_HOME="$SCRIPT_DIR/.jdk/Contents/Home"
-# 2. Second, check if a global JDK with jpackage is installed via macOS java_home utility
-elif [ -x /usr/libexec/java_home ]; then
-    DETECTED_JAVA_HOME=$(/usr/libexec/java_home -v 21 2>/dev/null || /usr/libexec/java_home -v 17 2>/dev/null || /usr/libexec/java_home 2>/dev/null)
-    if [ -n "$DETECTED_JAVA_HOME" ] && [ -f "$DETECTED_JAVA_HOME/bin/jpackage" ]; then
-        export JAVA_HOME="$DETECTED_JAVA_HOME"
+is_valid_jdk() {
+    [ -n "$1" ] && [ -d "$1" ] && [ -f "$1/bin/jpackage" ]
+}
+
+FOUND_JAVA_HOME=""
+
+# 1. Check if there is a local project-specific .jdk
+if is_valid_jdk "$SCRIPT_DIR/.jdk/Contents/Home"; then
+    FOUND_JAVA_HOME="$SCRIPT_DIR/.jdk/Contents/Home"
+fi
+
+# 1b. Check sibling/parent workspace directories for any shared .jdk
+if [ -z "$FOUND_JAVA_HOME" ]; then
+    CURRENT_SEARCH_DIR="$SCRIPT_DIR"
+    for i in {1..3}; do
+        CURRENT_SEARCH_DIR="$(dirname "$CURRENT_SEARCH_DIR")"
+        if [ "$CURRENT_SEARCH_DIR" = "/" ] || [ "$CURRENT_SEARCH_DIR" = "/Users" ] || [ "$CURRENT_SEARCH_DIR" = "$HOME" ]; then
+            if [ -d "$HOME/valdetaro" ]; then
+                SEARCH_ROOT="$HOME/valdetaro"
+            else
+                break
+            fi
+        else
+            SEARCH_ROOT="$CURRENT_SEARCH_DIR"
+        fi
+        FOUND_PATH=$(find "$SEARCH_ROOT" -maxdepth 4 -type d -path "*/.jdk/Contents/Home" -print -quit 2>/dev/null)
+        if is_valid_jdk "$FOUND_PATH"; then
+            FOUND_JAVA_HOME="$FOUND_PATH"
+            break
+        fi
+    done
+fi
+
+# 2. Search for a suitable JDK with jpackage, prioritizing Java 21 since the Gradle daemon
+# configured in gradle/gradle-daemon-jvm.properties requires Java 21.
+if [ -z "$FOUND_JAVA_HOME" ]; then
+    for version in 21 17; do
+        # Check global JDKs via macOS java_home utility with --failfast to prevent fallback to other versions
+        if [ -x /usr/libexec/java_home ]; then
+            DETECTED_JAVA_HOME=$(/usr/libexec/java_home --failfast -v "$version" 2>/dev/null)
+            if is_valid_jdk "$DETECTED_JAVA_HOME"; then
+                FOUND_JAVA_HOME="$DETECTED_JAVA_HOME"
+                break
+            fi
+        fi
+
+        # Check in Gradle-provisioned JDKs directory for the specific version
+        GRADLE_JDK_DIR=$(find "$HOME/.gradle/jdks" -type d -path "*-$version-*/*/Contents/Home" -print -quit 2>/dev/null || \
+                         find "$HOME/.gradle/jdks" -type d -path "*-$version-*/*/Home" -print -quit 2>/dev/null || \
+                         find "$HOME/.gradle/jdks" -type d -path "*$version*/*/Contents/Home" -print -quit 2>/dev/null || \
+                         find "$HOME/.gradle/jdks" -type d -path "*$version*/*/Home" -print -quit 2>/dev/null)
+        if is_valid_jdk "$GRADLE_JDK_DIR"; then
+            FOUND_JAVA_HOME="$GRADLE_JDK_DIR"
+            break
+        fi
+    done
+fi
+
+# 3. Fallback to any JDK with jpackage if no Java 21/17 was specifically matched
+if [ -z "$FOUND_JAVA_HOME" ]; then
+    if [ -x /usr/libexec/java_home ]; then
+        DETECTED_JAVA_HOME=$(/usr/libexec/java_home 2>/dev/null)
+        if is_valid_jdk "$DETECTED_JAVA_HOME"; then
+            FOUND_JAVA_HOME="$DETECTED_JAVA_HOME"
+        fi
     fi
 fi
 
-# 3. Third, if JAVA_HOME is still empty or doesn't have jpackage, look in ~/.gradle/jdks/
-if [ -z "$JAVA_HOME" ] || [ ! -f "$JAVA_HOME/bin/jpackage" ]; then
-    GRADLE_JDK_DIR=$(find "$HOME/.gradle/jdks" -type d -path "*/Contents/Home" -print -quit 2>/dev/null || find "$HOME/.gradle/jdks" -type d -name "Home" -print -quit 2>/dev/null)
-    if [ -n "$GRADLE_JDK_DIR" ] && [ -f "$GRADLE_JDK_DIR/bin/jpackage" ]; then
-        export JAVA_HOME="$GRADLE_JDK_DIR"
+if [ -z "$FOUND_JAVA_HOME" ]; then
+    GRADLE_JDK_DIR=$(find "$HOME/.gradle/jdks" -type d -path "*/Contents/Home" -print -quit 2>/dev/null || \
+                     find "$HOME/.gradle/jdks" -type d -name "Home" -print -quit 2>/dev/null)
+    if is_valid_jdk "$GRADLE_JDK_DIR"; then
+        FOUND_JAVA_HOME="$GRADLE_JDK_DIR"
     fi
 fi
 
-if [ -n "$JAVA_HOME" ]; then
+if [ -n "$FOUND_JAVA_HOME" ]; then
+    export JAVA_HOME="$FOUND_JAVA_HOME"
     export PATH="$JAVA_HOME/bin:$PATH"
     echo "Using JDK with jpackage at: $JAVA_HOME"
 else

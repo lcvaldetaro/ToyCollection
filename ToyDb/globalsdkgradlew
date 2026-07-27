@@ -8,15 +8,31 @@ is_valid_jdk() {
 
 FOUND_JAVA_HOME=""
 
-# 1. First, check if there is a local project-specific .jdk
+# 1. Check if there is a local project-specific .jdk
 if is_valid_jdk "$SCRIPT_DIR/.jdk/Contents/Home"; then
     FOUND_JAVA_HOME="$SCRIPT_DIR/.jdk/Contents/Home"
-# 1b. Check sibling ToyCollectionMultiplatform .jdk
-elif is_valid_jdk "$SCRIPT_DIR/../ToyCollectionMultiplatform/.jdk/Contents/Home"; then
-    FOUND_JAVA_HOME="$SCRIPT_DIR/../ToyCollectionMultiplatform/.jdk/Contents/Home"
-# 1c. Check sibling LapCounterMultiplatform .jdk
-elif is_valid_jdk "$SCRIPT_DIR/../LapCounterMultiplatform/.jdk/Contents/Home"; then
-    FOUND_JAVA_HOME="$SCRIPT_DIR/../LapCounterMultiplatform/.jdk/Contents/Home"
+fi
+
+# 1b. Check sibling/parent workspace directories for any shared .jdk
+if [ -z "$FOUND_JAVA_HOME" ]; then
+    CURRENT_SEARCH_DIR="$SCRIPT_DIR"
+    for i in {1..3}; do
+        CURRENT_SEARCH_DIR="$(dirname "$CURRENT_SEARCH_DIR")"
+        if [ "$CURRENT_SEARCH_DIR" = "/" ] || [ "$CURRENT_SEARCH_DIR" = "/Users" ] || [ "$CURRENT_SEARCH_DIR" = "$HOME" ]; then
+            if [ -d "$HOME/valdetaro" ]; then
+                SEARCH_ROOT="$HOME/valdetaro"
+            else
+                break
+            fi
+        else
+            SEARCH_ROOT="$CURRENT_SEARCH_DIR"
+        fi
+        FOUND_PATH=$(find "$SEARCH_ROOT" -maxdepth 4 -type d -path "*/.jdk/Contents/Home" -print -quit 2>/dev/null)
+        if is_valid_jdk "$FOUND_PATH"; then
+            FOUND_JAVA_HOME="$FOUND_PATH"
+            break
+        fi
+    done
 fi
 
 # 2. Search for a suitable JDK with jpackage, prioritizing Java 21 since the Gradle daemon
