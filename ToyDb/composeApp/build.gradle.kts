@@ -1,6 +1,5 @@
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
-    alias(libs.plugins.android.application)
     id("org.jetbrains.compose")
     id("org.jetbrains.kotlin.plugin.compose")
     alias(libs.plugins.kotlin.serialization)
@@ -11,46 +10,7 @@ val desktopMinor = libs.versions.versionName.get().split(".").getOrElse(1) { "0"
 val desktopBuildNum = libs.versions.versionCode.get()
 val desktopPackageVersion = "${desktopMajor}.${desktopMinor}.${desktopBuildNum}"
 
-android {
-    namespace = "com.gepetto.toydb"
-    compileSdk = libs.versions.compileSdk.get().toInt()
-
-    defaultConfig {
-        applicationId = "com.gepetto.toydb"
-        minSdk = libs.versions.minSdk.get().toInt()
-        targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = libs.versions.versionCode.get().toInt()
-        versionName = libs.versions.versionName.get()
-    }
-
-    buildTypes {
-        getByName("debug") {
-            isDebuggable = true
-        }
-        getByName("release") {
-            isMinifyEnabled = false
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-        }
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-}
-
 kotlin {
-    androidTarget {
-        compilerOptions {
-            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
-            freeCompilerArgs.addAll(
-                "-opt-in=androidx.compose.ui.ExperimentalComposeUiApi",
-                "-opt-in=androidx.compose.animation.ExperimentalSharedTransitionApi",
-                "-opt-in=androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi",
-                "-opt-in=androidx.compose.material3.ExperimentalMaterial3Api"
-            )
-        }
-    }
     jvm("desktop") {
         compilerOptions {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
@@ -91,13 +51,6 @@ kotlin {
             implementation(libs.adaptive)
             implementation(libs.adaptive.layout)
             implementation(libs.adaptive.navigation)
-        }
-
-        val androidMain = sourceSets.getByName("androidMain")
-        androidMain.dependencies {
-            implementation(libs.androidx.activity.compose)
-            implementation(libs.androidx.appcompat)
-            implementation(libs.kotlinx.coroutines.android)
         }
 
         val desktopMain = sourceSets.getByName("desktopMain")

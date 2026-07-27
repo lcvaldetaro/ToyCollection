@@ -19,9 +19,9 @@ A multi-device viewer designed for browsing, searching, and inspecting toys and 
 
 ### 2. 🗄 [ToyDb (Database Manager / CRUD Editor)](file:///Users/luizvaldetaro/valdetaro/ToyCollection/ToyDb)
 A local database coordinator designed to execute CRUD operations, imports, exports, and integrity validations.
-* **Targets**: Desktop (macOS, Windows) and Android.
+* **Targets**: Desktop (macOS, Windows).
 * **Key Features**:
-  * Interfaces directly with a local SQLite database (`toydb.db`) using JDBC (on Desktop) or `SQLiteOpenHelper` (on Android) with custom migration versioning.
+  * Interfaces directly with a local SQLite database (`toydb.db`) using JDBC with custom migration versioning.
   * Supports importing and exporting database tables from/to JSON files matching the legacy database formats.
   * Auto-updates and manages image files using Okio.
   * Includes integrity validation scripts (`verify_db.py`, `verify_export.py`) to prevent data degradation.

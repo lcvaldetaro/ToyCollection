@@ -6,8 +6,7 @@ A Kotlin Multiplatform (KMP) CRUD database application designed to update, inser
 
 ## 📱 Supported Targets
 
-* **Desktop (JVM)**: Primary target. Native macOS (DMG) and Windows (MSI) applications.
-* **Android**: Mobile application.
+* **Desktop (JVM)**: Native macOS (DMG) and Windows (MSI) applications.
 
 ---
 
@@ -17,13 +16,12 @@ A Kotlin Multiplatform (KMP) CRUD database application designed to update, inser
 2. **SQLite Database Layer**:
    - Platform-independent SQL wrapper (`ToyDatabase` and `SqlCursor`).
    - **Desktop (JVM)**: Interacts with a local SQLite database (`toydb.db`) using the JDBC driver (`org.xerial:sqlite-jdbc`).
-   - **Android**: Interacts with SQLite using Android's native `SQLiteOpenHelper`.
 3. **Database Migration Strategy**:
    - Manages schemas and upgrades incrementally using `PRAGMA user_version` inside SQL migrations.
 4. **Adaptive Navigation & Multi-Pane Layouts**:
    - Uses `GcTheme` for automatic dark/light theme adjustments.
-   - Uses `GcAdaptiveScaffold` / `GcNavBar` for dynamic shell layout adapting between a horizontal bottom bar (portrait) and vertical side rail (landscape).
-   - Utilizes `androidx.navigation3` integrated with `GcSceneStrategy` for adaptive multi-pane views (single pane on mobile, List-Detail-Extra pane layout on desktop).
+   - Uses `GcAdaptiveScaffold` / `GcNavBar` for dynamic shell layout adapting between a horizontal bottom bar (portrait window sizes) and vertical side rail (landscape/desktop window sizes).
+   - Utilizes `androidx.navigation3` integrated with `GcSceneStrategy` for adaptive multi-pane views (List-Detail-Extra pane layout on desktop).
 5. **Import / Export Service**:
    - Reads/writes JSON files conforming to the legacy database schema to ensure seamless interoperability.
    - Automatically synchronizes image metadata and sizes by scanning files directly on the local storage file system.
@@ -35,7 +33,7 @@ A Kotlin Multiplatform (KMP) CRUD database application designed to update, inser
 
 ## 📂 Core Package Structure
 
-* [**`database`**](file:///Users/luizvaldetaro/valdetaro/ToyCollection/ToyDb/composeApp/src/commonMain/kotlin/com/gepetto/toydb/database): Custom cross-platform SQL layer (`Database.kt`), migrations logic, and repository layer (`ToyRepository.kt`).
+* [**`database`**](file:///Users/luizvaldetaro/valdetaro/ToyCollection/ToyDb/composeApp/src/commonMain/kotlin/com/gepetto/toydb/database): Custom SQL layer (`Database.kt`), migrations logic, and repository layer (`ToyRepository.kt`).
 * [**`service`**](file:///Users/luizvaldetaro/valdetaro/ToyCollection/ToyDb/composeApp/src/commonMain/kotlin/com/gepetto/toydb/service): `ImportExportService` handling serialization of toy collections and manufacturer database tables.
 * [**`ui`**](file:///Users/luizvaldetaro/valdetaro/ToyCollection/ToyDb/composeApp/src/commonMain/kotlin/com/gepetto/toydb/ui): App navigation and CRUD editors:
   - **Dashboard**: Stats screen summarizing count and value values.
@@ -48,7 +46,7 @@ A Kotlin Multiplatform (KMP) CRUD database application designed to update, inser
 
 ## ⚙️ Initial Setup & Directories
 
-On the first launch (especially on Desktop), the app prompts the user to configure:
+On the first launch, the app prompts the user to configure:
 1. **Import / Export Directory**: Path containing the source JSON files (`makers.json`, `slots.json`, etc.).
 2. **Images Directory**: Path where the catalog pictures are saved.
 
@@ -73,9 +71,4 @@ Ensure you have Java JDK 17+ installed.
 ### Run Desktop (JVM)
 ```bash
 ./gradlew :composeApp:run
-```
-
-### Build Android APK (Debug)
-```bash
-./gradlew :composeApp:assembleDebug
 ```
