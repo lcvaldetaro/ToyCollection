@@ -9,7 +9,7 @@ build/
 *.ipr
 *.iws
 out/
-/local.properties
+local.properties
 
 # macOS system files
 .DS_Store
