@@ -58,6 +58,8 @@ androidxNavigation3 = "1.1.4"
 jetbrainsNavigation3 = "1.1.1"
 androidxAdaptiveNavigation3 = "1.3.0-rc01"
 androidxLifeCycleNavigation3 = "2.11.0"
+sshj = "0.39.0"
+slf4jSimple = "2.0.9"
 
 [libraries]
 accompanist-pager = { module = "com.google.accompanist:accompanist-pager", version.ref = "accompanistPager" }
@@ -120,6 +122,8 @@ retrofit-converter = { module = "com.jakewharton.retrofit:retrofit2-kotlinx-seri
 squareup-retrofit2 = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit2" }
 retrofit-kotlin-deserializer = { module = "com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter", version.ref = "retrofitDeserializerVersion" }
 ui = { module = "androidx.compose.ui:ui" }
+sshj = { module = "com.hierynomus:sshj", version.ref = "sshj" }
+slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4jSimple" }
 zxing-android-embedded = { module = "com.journeyapps:zxing-android-embedded", version.ref = "zxingAndroidEmbedded" }
 zxing-core = { module = "com.google.zxing:core", version.ref = "zxingCore" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }

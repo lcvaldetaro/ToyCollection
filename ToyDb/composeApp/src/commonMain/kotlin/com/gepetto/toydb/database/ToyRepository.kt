@@ -415,6 +415,72 @@ class ToyRepository(private val db: ToyDatabase) {
         }
     }
 
+    private fun getAppSetting(key: String): String? {
+        var value: String? = null
+        try {
+            val cursor = db.query("SELECT value FROM app_settings WHERE key = ?", listOf(key))
+            if (cursor.next()) {
+                value = cursor.getString("value")
+            }
+            cursor.close()
+        } catch (e: Exception) {
+            GcLog.e("ToyRepository", "Error reading setting $key: ${e.message}", e)
+        }
+        return value
+    }
+
+    private fun setAppSetting(key: String, value: String?) {
+        try {
+            if (value == null) {
+                db.execute("DELETE FROM app_settings WHERE key = ?", listOf(key))
+            } else {
+                db.execute("INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)", listOf(key, value))
+            }
+            GcLog.d("ToyRepository", "Saved setting $key")
+        } catch (e: Exception) {
+            GcLog.e("ToyRepository", "Error saving setting $key: ${e.message}", e)
+        }
+    }
+
+    fun getSftpHostSetting(): String? = getAppSetting("sftp_host")
+    fun setSftpHostSetting(host: String?) = setAppSetting("sftp_host", host)
+
+    fun getSftpPortSetting(): Int = getAppSetting("sftp_port")?.toIntOrNull() ?: 22
+    fun setSftpPortSetting(port: Int) = setAppSetting("sftp_port", port.toString())
+
+    fun getSftpUsernameSetting(): String? = getAppSetting("sftp_username")
+    fun setSftpUsernameSetting(username: String?) = setAppSetting("sftp_username", username)
+
+    fun getSftpAuthTypeSetting(): String = getAppSetting("sftp_auth_type") ?: "password"
+    fun setSftpAuthTypeSetting(authType: String) = setAppSetting("sftp_auth_type", authType)
+
+    fun getSftpPasswordSetting(): String? = getAppSetting("sftp_password")
+    fun setSftpPasswordSetting(password: String?) = setAppSetting("sftp_password", password)
+
+    fun getSftpKeyPathSetting(): String? = getAppSetting("sftp_key_path")
+    fun setSftpKeyPathSetting(path: String?) = setAppSetting("sftp_key_path", path)
+
+    fun getSftpKeyPassphraseSetting(): String? = getAppSetting("sftp_key_passphrase")
+    fun setSftpKeyPassphraseSetting(passphrase: String?) = setAppSetting("sftp_key_passphrase", passphrase)
+
+    fun getSftpRemoteDirSetting(): String? = getAppSetting("sftp_remote_dir")
+    fun setSftpRemoteDirSetting(dir: String?) = setAppSetting("sftp_remote_dir", dir)
+
+    fun getSftpApprovedFingerprintsSetting(): String? = getAppSetting("sftp_approved_fingerprints")
+    fun setSftpApprovedFingerprintsSetting(fingerprints: String?) = setAppSetting("sftp_approved_fingerprints", fingerprints)
+
+    fun addSftpApprovedFingerprint(fingerprint: String) {
+        val current = getSftpApprovedFingerprintsSetting()
+        if (current.isNullOrEmpty()) {
+            setSftpApprovedFingerprintsSetting(fingerprint)
+        } else {
+            val list = current.split(",").map { it.trim() }.toMutableList()
+            if (!list.contains(fingerprint)) {
+                list.add(fingerprint)
+                setSftpApprovedFingerprintsSetting(list.joinToString(","))
+            }
+        }
+    }
 
     fun getDistinctScales(toyType: String): List<String> = getDistinctField(toyType, "scale")
     fun getDistinctConditions(toyType: String): List<String> = getDistinctField(toyType, "condition")

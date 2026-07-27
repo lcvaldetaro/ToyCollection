@@ -36,6 +36,7 @@ import club.gepetto.composeutils.navigation3.removeUpToInclusive
 import club.gepetto.composeutils.scaffold.GcAdaptiveScaffold
 import com.gepetto.toydb.database.ToyDatabase
 import com.gepetto.toydb.database.ToyRepository
+import com.gepetto.toydb.service.SftpService
 import com.gepetto.toydb.utils.isDesktopPlatform
 
 private fun copyMakerImages(repository: ToyRepository, selectedImagesPath: String) {
@@ -85,7 +86,11 @@ private fun copyMakerImages(repository: ToyRepository, selectedImagesPath: Strin
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ToyDbNavigation(db: ToyDatabase, modifier: Modifier = Modifier) {
+fun ToyDbNavigation(
+    db: ToyDatabase,
+    sftpService: SftpService,
+    modifier: Modifier = Modifier
+) {
     val repository = remember { ToyRepository(db) }
     var themeMode by remember { mutableStateOf(repository.getThemeSetting()) }
 
@@ -356,6 +361,7 @@ fun ToyDbNavigation(db: ToyDatabase, modifier: Modifier = Modifier) {
                             entry<Destination.Settings> {
                                 SettingsScreen(
                                     db = db,
+                                    sftpService = sftpService,
                                     currentTheme = themeMode,
                                     onThemeChanged = { newTheme ->
                                         repository.setThemeSetting(newTheme)

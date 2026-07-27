@@ -11,6 +11,7 @@ import coil3.PlatformContext
 import com.gepetto.toydb.database.createDatabase
 import com.gepetto.toydb.database.ToyRepository
 import com.gepetto.toydb.service.ImportExportService
+import com.gepetto.toydb.service.DesktopSftpService
 import com.gepetto.toydb.ui.ToyDbNavigation
 import java.io.File
 import org.jetbrains.compose.resources.painterResource
@@ -72,6 +73,7 @@ fun main(args: Array<String>) {
             width = 1200.dp,
             height = 800.dp
         )
+        val sftpService = remember { DesktopSftpService() }
         Window(
             onCloseRequest = {
                 database.close()
@@ -82,7 +84,7 @@ fun main(args: Array<String>) {
             icon = painterResource(Res.drawable.icon)
         ) {
             GcTheme {
-                ToyDbNavigation(database)
+                ToyDbNavigation(database, sftpService)
             }
         }
     }

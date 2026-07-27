@@ -32,11 +32,18 @@ import com.gepetto.toydb.utils.isDesktopPlatform
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import com.gepetto.toydb.service.SftpService
+import com.gepetto.toydb.service.SftpConfig
+import com.gepetto.toydb.service.SyncAction
+import androidx.compose.foundation.border
+import kotlinx.coroutines.CompletableDeferred
+import com.gepetto.toydb.utils.selectFileDialog
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun SettingsScreen(
     db: ToyDatabase,
+    sftpService: SftpService,
     currentTheme: Int = 0,
     onThemeChanged: (Int) -> Unit = {},
     onCategoriesChanged: () -> Unit,
@@ -44,6 +51,64 @@ fun SettingsScreen(
 ) {
     val repository = remember { ToyRepository(db) }
     var statusText by remember { mutableStateOf("Ready") }
+    val coroutineScope = rememberCoroutineScope()
+
+    // SFTP Config States
+    var sftpHost by remember { mutableStateOf(repository.getSftpHostSetting() ?: "") }
+    var sftpPort by remember { mutableStateOf(repository.getSftpPortSetting().toString()) }
+    var sftpUsername by remember { mutableStateOf(repository.getSftpUsernameSetting() ?: "") }
+    var sftpAuthType by remember { mutableStateOf(repository.getSftpAuthTypeSetting()) }
+    var sftpPassword by remember { mutableStateOf(repository.getSftpPasswordSetting() ?: "") }
+    var sftpKeyPath by remember { mutableStateOf(repository.getSftpKeyPathSetting() ?: "") }
+    var sftpKeyPassphrase by remember { mutableStateOf(repository.getSftpKeyPassphraseSetting() ?: "") }
+    var sftpRemoteDir by remember { mutableStateOf(repository.getSftpRemoteDirSetting() ?: "") }
+    var sftpApprovedFingerprints by remember { mutableStateOf(repository.getSftpApprovedFingerprintsSetting() ?: "") }
+
+    var isTestingSftp by remember { mutableStateOf(false) }
+    var sftpSyncProgress by remember { mutableStateOf(0.0f) }
+    var isSftpSyncing by remember { mutableStateOf(false) }
+    var showTestSuccessDialog by remember { mutableStateOf(false) }
+    var showTestErrorDialog by remember { mutableStateOf(false) }
+    var testErrorMsg by remember { mutableStateOf("") }
+    var showSyncConfirmDialog by remember { mutableStateOf(false) }
+    val proposedSftpActions = remember { mutableStateListOf<SyncAction>() }
+    var syncDirection by remember { mutableStateOf("Upload") }
+
+    // Host Fingerprint verification state
+    class HostKeyVerification(
+        val hostname: String,
+        val port: Int,
+        val fingerprint: String,
+        val deferred: CompletableDeferred<Boolean>
+    )
+    var activeVerification by remember { mutableStateOf<HostKeyVerification?>(null) }
+
+    fun buildSftpConfig(): SftpConfig {
+        return SftpConfig(
+            host = sftpHost.trim(),
+            port = sftpPort.toIntOrNull() ?: 22,
+            username = sftpUsername.trim(),
+            authType = sftpAuthType,
+            password = sftpPassword,
+            keyPath = sftpKeyPath.trim(),
+            keyPassphrase = sftpKeyPassphrase,
+            remoteDir = sftpRemoteDir.trim(),
+            approvedFingerprints = sftpApprovedFingerprints.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+        )
+    }
+
+    val onHostKeyUnverified: suspend (String, Int, String) -> Boolean = { hostname, port, fingerprint ->
+        val deferred = CompletableDeferred<Boolean>()
+        activeVerification = HostKeyVerification(hostname, port, fingerprint, deferred)
+        val accepted = deferred.await()
+        if (accepted) {
+            withContext(Dispatchers.IO) {
+                repository.addSftpApprovedFingerprint(fingerprint)
+            }
+            sftpApprovedFingerprints = repository.getSftpApprovedFingerprintsSetting() ?: ""
+        }
+        accepted
+    }
 
     // Dynamic Category List state
     var categoriesList by remember { mutableStateOf(repository.getCategorySettings()) }
@@ -373,6 +438,194 @@ fun SettingsScreen(
         )
     }
 
+    if (activeVerification != null) {
+        val verification = activeVerification!!
+        AlertDialog(
+            onDismissRequest = {
+                verification.deferred.complete(false)
+                activeVerification = null
+            },
+            containerColor = sysBackgroundColor(),
+            title = { Text("Verify Remote Host Fingerprint", color = sysTextColor()) },
+            text = {
+                Column {
+                    Text("The authenticity of host '${verification.hostname}:${verification.port}' can't be established.", color = sysTextColor())
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("Fingerprint:", fontWeight = FontWeight.Bold, color = sysTextColor())
+                    Text(verification.fingerprint, style = MaterialTheme.typography.bodySmall, color = sysTextColor())
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("Are you sure you want to continue connecting?", color = sysTextColor())
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        verification.deferred.complete(true)
+                        activeVerification = null
+                    }
+                ) {
+                    Text("Accept & Save")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = {
+                        verification.deferred.complete(false)
+                        activeVerification = null
+                    }
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    if (showTestSuccessDialog) {
+        AlertDialog(
+            onDismissRequest = { showTestSuccessDialog = false },
+            containerColor = sysBackgroundColor(),
+            title = { Text("Connection Test Successful", color = sysTextColor(), fontWeight = FontWeight.Bold) },
+            text = { Text("The connection to the SFTP server was successfully established.", color = sysTextColor()) },
+            confirmButton = {
+                Button(onClick = { showTestSuccessDialog = false }) {
+                    Text("OK")
+                }
+            }
+        )
+    }
+
+    if (showTestErrorDialog) {
+        AlertDialog(
+            onDismissRequest = { showTestErrorDialog = false },
+            containerColor = sysBackgroundColor(),
+            title = { Text("Connection Test Failed", color = sysTextColor(), fontWeight = FontWeight.Bold) },
+            text = { Text("Could not connect to the SFTP server:\n\n$testErrorMsg", color = sysTextColor()) },
+            confirmButton = {
+                Button(onClick = { showTestErrorDialog = false }) {
+                    Text("OK")
+                }
+            }
+        )
+    }
+
+    if (showSyncConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showSyncConfirmDialog = false },
+            containerColor = sysBackgroundColor(),
+            title = {
+                Text(
+                    text = "Confirm Sync ($syncDirection)",
+                    fontWeight = FontWeight.Bold,
+                    color = sysTextColor()
+                )
+            },
+            text = {
+                Column {
+                    Text(
+                        text = if (proposedSftpActions.isEmpty()) {
+                            if (syncDirection == "Upload") {
+                                "All files on the server are up-to-date. No changes detected. Do you want to continue with the upload?"
+                            } else {
+                                "All local files are up-to-date. No changes detected. Do you want to continue with the download?"
+                            }
+                        } else {
+                            "The following actions will be performed to synchronize with the server:"
+                        },
+                        color = sysTextColor()
+                    )
+                    
+                    if (proposedSftpActions.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 240.dp)
+                                .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+                                .padding(4.dp)
+                        ) {
+                            androidx.compose.foundation.lazy.LazyColumn {
+                                items(proposedSftpActions.size) { index ->
+                                    val action = proposedSftpActions[index]
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 4.dp, horizontal = 8.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(
+                                            text = action.filename,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = sysTextColor(),
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        Text(
+                                            text = action.reason,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = if (action.reason == "New File") {
+                                                MaterialTheme.colorScheme.primary
+                                            } else if (action.reason.startsWith("Overwrite")) {
+                                                MaterialTheme.colorScheme.secondary
+                                            } else {
+                                                MaterialTheme.colorScheme.tertiary
+                                            },
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showSyncConfirmDialog = false
+                        coroutineScope.launch {
+                            isSftpSyncing = true
+                            if (syncDirection == "Upload") {
+                                statusText = "Uploading data to SFTP server..."
+                                sftpSyncProgress = 0.0f
+                                val result = sftpService.uploadData(buildSftpConfig(), db, onHostKeyUnverified) { status, progress ->
+                                    statusText = status
+                                    sftpSyncProgress = progress
+                                }
+                                if (result.isSuccess) {
+                                    statusText = "Data successfully uploaded to server!"
+                                } else {
+                                    statusText = "Upload failed: ${result.exceptionOrNull()?.message}"
+                                }
+                            } else {
+                                statusText = "Downloading data from SFTP server..."
+                                sftpSyncProgress = 0.0f
+                                val result = sftpService.downloadData(buildSftpConfig(), db, onHostKeyUnverified) { status, progress ->
+                                    statusText = status
+                                    sftpSyncProgress = progress
+                                }
+                                if (result.isSuccess) {
+                                    statusText = "Data successfully downloaded from server!"
+                                    onCategoriesChanged()
+                                } else {
+                                    statusText = "Download failed: ${result.exceptionOrNull()?.message}"
+                                }
+                            }
+                            isSftpSyncing = false
+                        }
+                    }
+                ) {
+                    Text("Continue")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = { showSyncConfirmDialog = false }
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -441,6 +694,82 @@ fun SettingsScreen(
                                 onSetStatus = { statusText = it },
                                 readJsonFile = { name, dir -> readJsonFile(name, dir) },
                                 writeJsonFile = { name, content, dir -> writeJsonFile(name, content, dir) }
+                            )
+                            SftpSettingsCard(
+                                host = sftpHost, onHostChange = { sftpHost = it },
+                                port = sftpPort, onPortChange = { sftpPort = it },
+                                username = sftpUsername, onUsernameChange = { sftpUsername = it },
+                                authType = sftpAuthType, onAuthTypeChange = { sftpAuthType = it },
+                                password = sftpPassword, onPasswordChange = { sftpPassword = it },
+                                keyPath = sftpKeyPath, onKeyPathChange = { sftpKeyPath = it },
+                                keyPassphrase = sftpKeyPassphrase, onKeyPassphraseChange = { sftpKeyPassphrase = it },
+                                remoteDir = sftpRemoteDir, onRemoteDirChange = { sftpRemoteDir = it },
+                                onSave = {
+                                    repository.setSftpHostSetting(sftpHost)
+                                    repository.setSftpPortSetting(sftpPort.toIntOrNull() ?: 22)
+                                    repository.setSftpUsernameSetting(sftpUsername)
+                                    repository.setSftpAuthTypeSetting(sftpAuthType)
+                                    repository.setSftpPasswordSetting(sftpPassword)
+                                    repository.setSftpKeyPathSetting(sftpKeyPath)
+                                    repository.setSftpKeyPassphraseSetting(sftpKeyPassphrase)
+                                    repository.setSftpRemoteDirSetting(sftpRemoteDir)
+                                    statusText = "SFTP connection configuration saved."
+                                },
+                                onTestConnection = {
+                                    coroutineScope.launch {
+                                        isTestingSftp = true
+                                        statusText = "Testing SFTP Connection..."
+                                        val result = sftpService.testConnection(buildSftpConfig(), onHostKeyUnverified)
+                                        isTestingSftp = false
+                                        if (result.isSuccess) {
+                                            statusText = "SFTP Connection Successful!"
+                                            showTestSuccessDialog = true
+                                        } else {
+                                            statusText = "SFTP Connection Failed: ${result.exceptionOrNull()?.message}"
+                                            testErrorMsg = result.exceptionOrNull()?.message ?: "Unknown error"
+                                            showTestErrorDialog = true
+                                        }
+                                    }
+                                },
+                                isTesting = isTestingSftp
+                            )
+                            SftpSyncActions(
+                                onUploadClick = {
+                                    coroutineScope.launch {
+                                        statusText = "Calculating upload changes..."
+                                        isSftpSyncing = true
+                                        val result = sftpService.calculateUploadPlan(buildSftpConfig(), db, onHostKeyUnverified)
+                                        isSftpSyncing = false
+                                        if (result.isSuccess) {
+                                            val actions = result.getOrThrow()
+                                            proposedSftpActions.clear()
+                                            proposedSftpActions.addAll(actions)
+                                            syncDirection = "Upload"
+                                            showSyncConfirmDialog = true
+                                        } else {
+                                            statusText = "Plan calculation failed: ${result.exceptionOrNull()?.message}"
+                                        }
+                                    }
+                                },
+                                onDownloadClick = {
+                                    coroutineScope.launch {
+                                        statusText = "Calculating download changes..."
+                                        isSftpSyncing = true
+                                        val result = sftpService.calculateDownloadPlan(buildSftpConfig(), db, onHostKeyUnverified)
+                                        isSftpSyncing = false
+                                        if (result.isSuccess) {
+                                            val actions = result.getOrThrow()
+                                            proposedSftpActions.clear()
+                                            proposedSftpActions.addAll(actions)
+                                            syncDirection = "Download"
+                                            showSyncConfirmDialog = true
+                                        } else {
+                                            statusText = "Plan calculation failed: ${result.exceptionOrNull()?.message}"
+                                        }
+                                    }
+                                },
+                                isSyncing = isSftpSyncing || isTestingSftp,
+                                syncProgress = sftpSyncProgress
                             )
                         }
                     }
@@ -527,6 +856,82 @@ fun SettingsScreen(
                             onSetStatus = { statusText = it },
                             readJsonFile = { name, dir -> readJsonFile(name, dir) },
                             writeJsonFile = { name, content, dir -> writeJsonFile(name, content, dir) }
+                        )
+                        SftpSettingsCard(
+                            host = sftpHost, onHostChange = { sftpHost = it },
+                            port = sftpPort, onPortChange = { sftpPort = it },
+                            username = sftpUsername, onUsernameChange = { sftpUsername = it },
+                            authType = sftpAuthType, onAuthTypeChange = { sftpAuthType = it },
+                            password = sftpPassword, onPasswordChange = { sftpPassword = it },
+                            keyPath = sftpKeyPath, onKeyPathChange = { sftpKeyPath = it },
+                            keyPassphrase = sftpKeyPassphrase, onKeyPassphraseChange = { sftpKeyPassphrase = it },
+                            remoteDir = sftpRemoteDir, onRemoteDirChange = { sftpRemoteDir = it },
+                            onSave = {
+                                repository.setSftpHostSetting(sftpHost)
+                                repository.setSftpPortSetting(sftpPort.toIntOrNull() ?: 22)
+                                repository.setSftpUsernameSetting(sftpUsername)
+                                repository.setSftpAuthTypeSetting(sftpAuthType)
+                                repository.setSftpPasswordSetting(sftpPassword)
+                                repository.setSftpKeyPathSetting(sftpKeyPath)
+                                repository.setSftpKeyPassphraseSetting(sftpKeyPassphrase)
+                                repository.setSftpRemoteDirSetting(sftpRemoteDir)
+                                statusText = "SFTP connection configuration saved."
+                            },
+                            onTestConnection = {
+                                coroutineScope.launch {
+                                    isTestingSftp = true
+                                    statusText = "Testing SFTP Connection..."
+                                    val result = sftpService.testConnection(buildSftpConfig(), onHostKeyUnverified)
+                                    isTestingSftp = false
+                                    if (result.isSuccess) {
+                                        statusText = "SFTP Connection Successful!"
+                                        showTestSuccessDialog = true
+                                    } else {
+                                        statusText = "SFTP Connection Failed: ${result.exceptionOrNull()?.message}"
+                                        testErrorMsg = result.exceptionOrNull()?.message ?: "Unknown error"
+                                        showTestErrorDialog = true
+                                    }
+                                }
+                            },
+                            isTesting = isTestingSftp
+                        )
+                        SftpSyncActions(
+                            onUploadClick = {
+                                coroutineScope.launch {
+                                    statusText = "Calculating upload changes..."
+                                    isSftpSyncing = true
+                                    val result = sftpService.calculateUploadPlan(buildSftpConfig(), db, onHostKeyUnverified)
+                                    isSftpSyncing = false
+                                    if (result.isSuccess) {
+                                        val actions = result.getOrThrow()
+                                        proposedSftpActions.clear()
+                                        proposedSftpActions.addAll(actions)
+                                        syncDirection = "Upload"
+                                        showSyncConfirmDialog = true
+                                    } else {
+                                        statusText = "Plan calculation failed: ${result.exceptionOrNull()?.message}"
+                                    }
+                                }
+                            },
+                            onDownloadClick = {
+                                coroutineScope.launch {
+                                    statusText = "Calculating download changes..."
+                                    isSftpSyncing = true
+                                    val result = sftpService.calculateDownloadPlan(buildSftpConfig(), db, onHostKeyUnverified)
+                                    isSftpSyncing = false
+                                    if (result.isSuccess) {
+                                        val actions = result.getOrThrow()
+                                        proposedSftpActions.clear()
+                                        proposedSftpActions.addAll(actions)
+                                        syncDirection = "Download"
+                                        showSyncConfirmDialog = true
+                                    } else {
+                                        statusText = "Plan calculation failed: ${result.exceptionOrNull()?.message}"
+                                    }
+                                }
+                            },
+                            isSyncing = isSftpSyncing || isTestingSftp,
+                            syncProgress = sftpSyncProgress
                         )
                     }
                     CategoriesManager(
@@ -934,6 +1339,244 @@ fun CategoriesManager(
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SftpSettingsCard(
+    host: String, onHostChange: (String) -> Unit,
+    port: String, onPortChange: (String) -> Unit,
+    username: String, onUsernameChange: (String) -> Unit,
+    authType: String, onAuthTypeChange: (String) -> Unit,
+    password: String, onPasswordChange: (String) -> Unit,
+    keyPath: String, onKeyPathChange: (String) -> Unit,
+    keyPassphrase: String, onKeyPassphraseChange: (String) -> Unit,
+    remoteDir: String, onRemoteDirChange: (String) -> Unit,
+    onSave: () -> Unit,
+    onTestConnection: () -> Unit,
+    isTesting: Boolean
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = sysBackgroundColor()),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+    ) {
+        Column(modifier = Modifier.padding(GcSpacing.Standard)) {
+            Text("SFTP Server Connection", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = sysTextColor())
+            Spacer(modifier = Modifier.height(GcSpacing.Small))
+
+            OutlinedTextField(
+                value = host,
+                onValueChange = onHostChange,
+                label = { Text("SFTP Host") },
+                placeholder = { Text("e.g. sftp.example.com") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = sysTextColor(),
+                    unfocusedTextColor = sysTextColor()
+                )
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = port,
+                    onValueChange = onPortChange,
+                    label = { Text("Port") },
+                    placeholder = { Text("22") },
+                    modifier = Modifier.width(100.dp),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = sysTextColor(),
+                        unfocusedTextColor = sysTextColor()
+                    )
+                )
+                OutlinedTextField(
+                    value = username,
+                    onValueChange = onUsernameChange,
+                    label = { Text("Username") },
+                    placeholder = { Text("e.g. gepetto") },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = sysTextColor(),
+                        unfocusedTextColor = sysTextColor()
+                    )
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text("Authentication Type", style = MaterialTheme.typography.bodyMedium, color = sysTextColor())
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    RadioButton(selected = authType == "password", onClick = { onAuthTypeChange("password") })
+                    Text("Password", color = sysTextColor())
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    RadioButton(selected = authType == "key", onClick = { onAuthTypeChange("key") })
+                    Text("SSH Key File", color = sysTextColor())
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+
+            if (authType == "password") {
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = onPasswordChange,
+                    label = { Text("Password") },
+                    placeholder = { Text("Password") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = sysTextColor(),
+                        unfocusedTextColor = sysTextColor()
+                    )
+                )
+            } else {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = keyPath,
+                        onValueChange = onKeyPathChange,
+                        label = { Text("Private Key Path") },
+                        placeholder = { Text("/path/to/id_rsa") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = sysTextColor(),
+                            unfocusedTextColor = sysTextColor()
+                        )
+                    )
+                    Button(onClick = {
+                        val path = selectFileDialog("Select Private Key File", listOf("pem", "key", "rsa", "pub", ""))
+                        if (path != null) {
+                            onKeyPathChange(path)
+                        }
+                    }) {
+                        Text("Choose")
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = keyPassphrase,
+                    onValueChange = onKeyPassphraseChange,
+                    label = { Text("Key Passphrase (optional)") },
+                    placeholder = { Text("Passphrase") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = sysTextColor(),
+                        unfocusedTextColor = sysTextColor()
+                    )
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedTextField(
+                value = remoteDir,
+                onValueChange = onRemoteDirChange,
+                label = { Text("Remote Base Directory") },
+                placeholder = { Text("e.g. /home/gepetto/toydb") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = sysTextColor(),
+                    unfocusedTextColor = sysTextColor()
+                )
+            )
+            Spacer(modifier = Modifier.height(GcSpacing.Standard))
+
+            Row(horizontalArrangement = Arrangement.spacedBy(GcSpacing.Small)) {
+                Button(onClick = onSave) {
+                    Text("Save Config")
+                }
+                OutlinedButton(
+                    onClick = onTestConnection,
+                    enabled = !isTesting
+                ) {
+                    if (isTesting) {
+                        CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Testing...")
+                    } else {
+                        Text("Test Connection")
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SftpSyncActions(
+    onUploadClick: () -> Unit,
+    onDownloadClick: () -> Unit,
+    isSyncing: Boolean,
+    syncProgress: Float
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = sysBackgroundColor()),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+    ) {
+        Column(modifier = Modifier.padding(GcSpacing.Standard)) {
+            Text("SFTP Server Synchronization", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = sysTextColor())
+            Spacer(modifier = Modifier.height(GcSpacing.Small))
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(GcSpacing.Standard)
+            ) {
+                Button(
+                    enabled = !isSyncing,
+                    onClick = onUploadClick,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    if (isSyncing) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Syncing...")
+                    } else {
+                        Text("Upload to Server")
+                    }
+                }
+
+                Button(
+                    enabled = !isSyncing,
+                    onClick = onDownloadClick,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.secondary,
+                        contentColor = MaterialTheme.colorScheme.onSecondary
+                    )
+                ) {
+                    if (isSyncing) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = MaterialTheme.colorScheme.onSecondary,
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Syncing...")
+                    } else {
+                        Text("Download from Server")
+                    }
+                }
+            }
+
+            if (isSyncing) {
+                Spacer(modifier = Modifier.height(16.dp))
+                LinearProgressIndicator(
+                    progress = { syncProgress },
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
     }
