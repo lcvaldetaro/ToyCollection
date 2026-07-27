@@ -617,6 +617,28 @@ fun SettingsScreen(
                                     .width(8.dp)
                             )
                         }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        val totalCount = proposedSftpActions.size
+                        val selectedCount = proposedSftpActions.count { selectedSftpActions[it.filename] == true }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = GcSpacing.Small),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Total files: $totalCount",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = sysTextColor()
+                            )
+                            Text(
+                                text = "Selected: $selectedCount",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     }
                 }
             },
