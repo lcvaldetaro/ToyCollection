@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
@@ -53,6 +54,18 @@ fun MakerDetailScreen(
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     val bitmapsScrollState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
+
+    val makerImages = remember(maker) {
+        maker?.bitmaps?.split(" ")?.filter { it.trim().isNotEmpty() } ?: emptyList()
+    }
+
+    val allImagePaths = remember(makerImages) {
+        val list = mutableListOf<String>()
+        makerImages.forEach { filename ->
+            resolveBitmapUri(filename)?.let { list.add(it) }
+        }
+        list.toTypedArray()
+    }
 
     val imagePicker = rememberImagePicker { selectedPath ->
         val currentMaker = makerState ?: return@rememberImagePicker
@@ -160,142 +173,145 @@ fun MakerDetailScreen(
             )
         }
     ) { innerPadding ->
-        Column(
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(minSize = 350.dp),
             modifier = modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(GcSpacing.Standard)
+                .padding(horizontal = GcSpacing.Standard),
+            horizontalArrangement = Arrangement.spacedBy(GcSpacing.Standard),
+            verticalArrangement = Arrangement.spacedBy(GcSpacing.Standard)
         ) {
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                Spacer(modifier = Modifier.height(GcSpacing.Small))
+            }
+
             // Manufacturer General Info Card
-            Card(
-                modifier = Modifier.fillMaxWidth().padding(bottom = GcSpacing.Standard),
-                colors = CardDefaults.cardColors(containerColor = sysBackgroundColor()),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
-            ) {
-                Column(modifier = Modifier.padding(GcSpacing.Standard)) {
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = sysBackgroundColor()),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+                ) {
+                    Column(modifier = Modifier.padding(GcSpacing.Standard)) {
+                        Text(
+                            text = maker.name,
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = sysTextColor()
+                        )
+                        Spacer(modifier = Modifier.height(GcSpacing.Small))
+                        Text(
+                            text = "Country: ${if (maker.country.isEmpty()) "Unknown" else maker.country}",
+                            fontWeight = FontWeight.SemiBold,
+                            color = sysTextColor()
+                        )
+                        if (maker.comments.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(GcSpacing.Small))
+                            Text(
+                                text = maker.comments,
+                                fontSize = 14.sp,
+                                color = sysTextColor()
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Image Files / Bitmaps list Header
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(
-                        text = maker.name,
-                        fontSize = 22.sp,
+                        text = "Manufacturer Images (${makerImages.size})",
+                        fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = sysTextColor()
                     )
-                    Spacer(modifier = Modifier.height(GcSpacing.Small))
-                    Text(
-                        text = "Country: ${if (maker.country.isEmpty()) "Unknown" else maker.country}",
-                        fontWeight = FontWeight.SemiBold,
-                        color = sysTextColor()
-                    )
-                    if (maker.comments.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(GcSpacing.Small))
-                        Text(
-                            text = maker.comments,
-                            fontSize = 14.sp,
-                            color = sysTextColor()
+                    IconButton(
+                        onClick = { imagePicker() }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Add Manufacturer Image",
+                            tint = MaterialTheme.colorScheme.primary
                         )
                     }
                 }
             }
 
-            // Image Files / Bitmaps list
-            // Image Files / Bitmaps list
-            val makerImages = remember(maker) {
-                maker.bitmaps.split(" ").filter { it.trim().isNotEmpty() }
-            }
-
-            val allImagePaths = remember(makerImages) {
-                val list = mutableListOf<String>()
-                makerImages.forEach { filename ->
-                    resolveBitmapUri(filename)?.let { list.add(it) }
-                }
-                list.toTypedArray()
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(bottom = GcSpacing.Small),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Manufacturer Images (${makerImages.size})",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = sysTextColor()
-                )
-                IconButton(
-                    onClick = { imagePicker() }
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Add Manufacturer Image",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
-
+            // Image Files / Bitmaps list Row
             if (allImagePaths.isNotEmpty()) {
-                LazyRow(
-                    state = bitmapsScrollState,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(120.dp)
-                        .padding(vertical = GcSpacing.Small)
-                        .scrollHorizontallyWithMouseWheel(bitmapsScrollState, coroutineScope),
-                    horizontalArrangement = Arrangement.spacedBy(GcSpacing.Small)
-                ) {
-                    lazyItems(makerImages) { filename ->
-                        val bitmapUri = remember(filename) { resolveBitmapUri(filename) }
-                        if (bitmapUri != null) {
-                            GcImage(
-                                imageFile = bitmapUri,
-                                files = allImagePaths,
-                                contentDescription = filename,
-                                modifier = Modifier.size(100.dp),
-                                contentScale = ContentScale.Crop,
-                                fullImageOnClick = true
-                            )
-                        } else {
-                            Box(
-                                modifier = Modifier
-                                    .size(100.dp)
-                                    .background(MaterialTheme.colorScheme.secondaryContainer),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(filename, fontSize = 10.sp, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    LazyRow(
+                        state = bitmapsScrollState,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(120.dp)
+                            .scrollHorizontallyWithMouseWheel(bitmapsScrollState, coroutineScope),
+                        horizontalArrangement = Arrangement.spacedBy(GcSpacing.Small)
+                    ) {
+                        lazyItems(makerImages) { filename ->
+                            val bitmapUri = remember(filename) { resolveBitmapUri(filename) }
+                            if (bitmapUri != null) {
+                                GcImage(
+                                    imageFile = bitmapUri,
+                                    files = allImagePaths,
+                                    contentDescription = filename,
+                                    modifier = Modifier.size(100.dp),
+                                    contentScale = ContentScale.Crop,
+                                    fullImageOnClick = true
+                                )
+                            } else {
+                                Box(
+                                    modifier = Modifier
+                                        .size(100.dp)
+                                        .background(MaterialTheme.colorScheme.secondaryContainer),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(filename, fontSize = 10.sp, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                                }
                             }
                         }
                     }
                 }
-                
-                Spacer(modifier = Modifier.height(GcSpacing.Standard))
             }
 
-            // Associated Toys
-            Text(
-                text = "Associated Toys (${toysList.size})",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = sysTextColor(),
-                modifier = Modifier.padding(bottom = GcSpacing.Small)
-            )
+            // Associated Toys Header
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                Text(
+                    text = "Associated Toys (${toysList.size})",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = sysTextColor(),
+                    modifier = Modifier.padding(top = GcSpacing.Small)
+                )
+            }
 
+            // Associated Toys items / empty state
             if (toysList.isEmpty()) {
-                Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    Text("No toys found for this manufacturer.", color = MaterialTheme.colorScheme.outline)
-                }
-            } else {
-                LazyVerticalGrid(
-                    columns = GridCells.Adaptive(minSize = 350.dp),
-                    modifier = Modifier.weight(1f),
-                    horizontalArrangement = Arrangement.spacedBy(GcSpacing.Standard),
-                    verticalArrangement = Arrangement.spacedBy(GcSpacing.Standard)
-                ) {
-                    items(toysList) { toy ->
-                        val prefix = settingsList.find { it.category == toy.toyType }?.imagePrefix ?: "car"
-                        ToyItemCard(toy, prefix) {
-                            onNavigate(Destination.ToyDetail(toy.toyType, toy.refNum))
-                        }
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().height(150.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("No toys found for this manufacturer.", color = MaterialTheme.colorScheme.outline)
                     }
                 }
+            } else {
+                items(toysList) { toy ->
+                    val prefix = settingsList.find { it.category == toy.toyType }?.imagePrefix ?: "car"
+                    ToyItemCard(toy, prefix) {
+                        onNavigate(Destination.ToyDetail(toy.toyType, toy.refNum))
+                    }
+                }
+            }
+
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                Spacer(modifier = Modifier.height(40.dp))
             }
         }
     }

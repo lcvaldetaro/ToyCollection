@@ -2,7 +2,11 @@ package com.gepetto.toydb.ui
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.toArgb
+import club.gepetto.composeutils.textAsBitmap
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -10,6 +14,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Business
+import androidx.compose.ui.layout.ContentScale
+import com.gepetto.toydb.utils.resolveBitmapUri
+import club.gepetto.composeutils.image.GcImage
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -90,13 +98,14 @@ fun MakerDirectoryScreen(
                 }
             } else {
                 LazyVerticalGrid(
-                    columns = GridCells.Adaptive(minSize = 300.dp),
+                    columns = GridCells.Adaptive(minSize = 160.dp),
                     modifier = Modifier.weight(1f),
                     horizontalArrangement = Arrangement.spacedBy(GcSpacing.Standard),
-                    verticalArrangement = Arrangement.spacedBy(GcSpacing.Standard)
+                    verticalArrangement = Arrangement.spacedBy(GcSpacing.Small)
                 ) {
                     items(filteredMakers) { maker ->
-                        MakerItemCard(maker) {
+                        val toyCount = remember(maker.name) { repository.getToysByMaker(maker.name).size }
+                        MakerItemCard(maker, toyCount) {
                             onNavigate(Destination.MakerDetail(maker.name))
                         }
                     }
@@ -107,7 +116,7 @@ fun MakerDirectoryScreen(
 }
 
 @Composable
-fun MakerItemCard(maker: Maker, onClick: () -> Unit) {
+fun MakerItemCard(maker: Maker, toyCount: Int, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -115,25 +124,74 @@ fun MakerItemCard(maker: Maker, onClick: () -> Unit) {
         colors = CardDefaults.cardColors(containerColor = sysBackgroundColor()),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
     ) {
-        Column(modifier = Modifier.padding(GcSpacing.Standard)) {
-            Text(
-                text = maker.name,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = sysTextColor()
-            )
-            Text(
-                text = "Country: ${if (maker.country.isEmpty()) "Unknown" else maker.country}",
-                fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            if (maker.comments.isNotEmpty()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = GcSpacing.Standard, vertical = GcSpacing.Small),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(GcSpacing.Standard)
+        ) {
+            val makerImages = remember(maker) {
+                maker.bitmaps.split(" ").filter { it.trim().isNotEmpty() }
+            }
+            val firstImage = makerImages.firstOrNull()
+            val bitmapUri = remember(firstImage) { firstImage?.let { resolveBitmapUri(it) } }
+
+            // Round Avatar Container
+            Card(
+                modifier = Modifier.size(50.dp),
+                shape = CircleShape,
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (bitmapUri != null) {
+                        GcImage(
+                            imageFile = bitmapUri,
+                            files = arrayOf(bitmapUri),
+                            contentDescription = maker.name,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop,
+                            fullImageOnClick = false
+                        )
+                    } else {
+                        val textColor = sysTextColor()
+                        val textBitmap = remember(maker.name, textColor) {
+                            textAsBitmap(text = maker.name, textColor = textColor.toArgb())
+                        }
+                        GcImage(
+                            imageBitmap = textBitmap,
+                            contentDescription = maker.name,
+                            modifier = Modifier.fillMaxSize().padding(4.dp),
+                            contentScale = ContentScale.Fit,
+                            fullImageOnClick = false
+                        )
+                    }
+                }
+            }
+
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = maker.comments,
+                    text = maker.name,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = sysTextColor(),
+                    maxLines = 1
+                )
+                Text(
+                    text = if (maker.country.isEmpty()) "Unknown" else maker.country,
                     fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.outline,
-                    maxLines = 2,
-                    modifier = Modifier.padding(top = 4.dp)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1
+                )
+                Text(
+                    text = "$toyCount toys",
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.SemiBold
                 )
             }
         }
