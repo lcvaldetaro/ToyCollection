@@ -254,6 +254,18 @@ object ImportExportService {
                 c.bitmapsTimeStamp
             )
 
+            val body = c.bodyMaker.trim()
+            val chassis = c.chassisMaker.trim()
+            val calculatedMakerCombo = if (body == chassis) {
+                body
+            } else if (body.isEmpty()) {
+                chassis
+            } else if (chassis.isEmpty()) {
+                body
+            } else {
+                "$chassis/$body"
+            }
+
             db.execute(
                 """
                 INSERT OR REPLACE INTO toys (
@@ -266,7 +278,7 @@ object ImportExportService {
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """.trimIndent(),
                 listOf(
-                    ref, toyType, c.description, c.makerCombo, c.scale, c.factoryCar,
+                    ref, toyType, c.description, calculatedMakerCombo, c.scale, c.factoryCar,
                     c.bodyMaker, c.acquired, c.chassisType, c.chassisMaker, c.condition, c.color,
                     c.motorMaker, c.motorDetails, c.catalogNumber, c.comments, c.majorWork,
                     c.minorWork, c.repro, valDouble, paidDouble, c.amountSold, c.traded, c.buy,

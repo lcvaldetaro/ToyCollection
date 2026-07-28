@@ -49,6 +49,7 @@ fun SettingsScreen(
     currentTheme: Int = 0,
     onThemeChanged: (Int) -> Unit = {},
     onCategoriesChanged: () -> Unit,
+    onNavigate: (Destination) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val repository = remember { ToyRepository(db) }
@@ -702,7 +703,7 @@ fun SettingsScreen(
     }
 
     val lazyListState = rememberLazyListState()
-    Box(modifier = modifier.fillMaxSize()) {
+    Box(modifier = modifier.fillMaxSize().imePadding()) {
         LazyColumn(
             state = lazyListState,
             modifier = Modifier
@@ -732,6 +733,7 @@ fun SettingsScreen(
                             SyncWarningBanner()
                         }
                         ThemeSelector(currentTheme, onThemeChanged)
+                        AppInfoSettings { onNavigate(Destination.Info) }
                         if (isDesktopPlatform()) {
                             ImagesDirectorySettings(
                                 customImagesPath = customImagesPath,
@@ -901,6 +903,7 @@ fun SettingsScreen(
                         SyncWarningBanner()
                     }
                     ThemeSelector(currentTheme, onThemeChanged)
+                    AppInfoSettings { onNavigate(Destination.Info) }
                     if (isDesktopPlatform()) {
                         ImagesDirectorySettings(
                             customImagesPath = customImagesPath,
@@ -1076,6 +1079,35 @@ fun StatusBanner(statusText: String) {
             Text("Storage Type: SQLite Local Database", fontSize = 12.sp, color = MaterialTheme.colorScheme.outline)
             Spacer(modifier = Modifier.height(4.dp))
             Text("Status: $statusText", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = sysTextColor())
+        }
+    }
+}
+
+@Composable
+fun AppInfoSettings(onNavigate: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = sysBackgroundColor()),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+    ) {
+        Column(modifier = Modifier.padding(GcSpacing.Standard)) {
+            Text("About & Info", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = sysTextColor())
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "View application version details, documentation, and copyright information.",
+                fontSize = 12.sp,
+                color = sysTextColor().copy(alpha = 0.6f)
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Button(
+                onClick = onNavigate,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            ) {
+                Text("View Info Screen")
+            }
         }
     }
 }

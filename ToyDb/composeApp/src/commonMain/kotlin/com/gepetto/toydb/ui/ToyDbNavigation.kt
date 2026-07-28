@@ -29,6 +29,7 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import club.gepetto.composeutils.GcE2eBox
 import club.gepetto.composeutils.GcTheme
+import androidx.compose.ui.platform.LocalWindowInfo
 import club.gepetto.composeutils.navbar.GcNavButton
 import club.gepetto.composeutils.navigation3.GcNavDisplay
 import club.gepetto.composeutils.navigation3.GcSceneStrategy
@@ -266,7 +267,10 @@ fun ToyDbNavigation(
             else -> null
         }
 
-        val buttons = remember(categoriesSettings) {
+        val windowSize = LocalWindowInfo.current.containerSize
+        val isLandscape = windowSize.width > windowSize.height
+
+        val buttons = remember(categoriesSettings, isLandscape) {
             val list = mutableListOf<GcNavButton>()
             list.add(
                 GcNavButton(label = "Stats", imageVector = Icons.Default.Dashboard, navChoice = "dashboard", onClick = {
@@ -274,26 +278,28 @@ fun ToyDbNavigation(
                     backStack.add(Destination.Dashboard)
                 })
             )
-            categoriesSettings.forEach { setting ->
-                val icon = when (setting.category) {
-                    "slot" -> Icons.Default.DirectionsCar
-                    "train" -> Icons.Default.Train
-                    "static" -> Icons.Default.DirectionsCar
-                    "kit" -> Icons.Default.Build
-                    "misc" -> Icons.Default.Category
-                    else -> Icons.Default.Category
-                }
-                list.add(
-                    GcNavButton(
-                        label = setting.label,
-                        imageVector = icon,
-                        navChoice = "explorer_${setting.category}",
-                        onClick = {
-                            backStack.clear()
-                            backStack.add(Destination.CategoryExplorer(setting.category))
-                        }
+            if (isLandscape) {
+                categoriesSettings.forEach { setting ->
+                    val icon = when (setting.category) {
+                        "slot" -> Icons.Default.DirectionsCar
+                        "train" -> Icons.Default.Train
+                        "static" -> Icons.Default.DirectionsCar
+                        "kit" -> Icons.Default.Build
+                        "misc" -> Icons.Default.Category
+                        else -> Icons.Default.Category
+                    }
+                    list.add(
+                        GcNavButton(
+                            label = setting.label,
+                            imageVector = icon,
+                            navChoice = "explorer_${setting.category}",
+                            onClick = {
+                                backStack.clear()
+                                backStack.add(Destination.CategoryExplorer(setting.category))
+                            }
+                        )
                     )
-                )
+                }
             }
             list.add(
                 GcNavButton(label = "Makers", imageVector = Icons.Default.Business, navChoice = "makers", onClick = {
@@ -302,7 +308,7 @@ fun ToyDbNavigation(
                 })
             )
             list.add(
-                GcNavButton(label = "Settings", imageVector = Icons.Default.Settings, navChoice = "settings", onClick = {
+                GcNavButton(label = if (!isLandscape) "Setup" else "Settings", imageVector = Icons.Default.Settings, navChoice = "settings", onClick = {
                     backStack.clear()
                     backStack.add(Destination.Settings)
                 })
@@ -377,7 +383,8 @@ fun ToyDbNavigation(
                                     },
                                     onCategoriesChanged = {
                                         categoriesSettings = repository.getCategorySettings()
-                                    }
+                                    },
+                                    onNavigate = { backStack.add(it) }
                                 )
                             }
                             entry<Destination.Info> {

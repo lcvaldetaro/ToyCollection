@@ -257,6 +257,17 @@ class ToyRepository(private val db: ToyDatabase) {
 
     fun saveToy(toy: Toy) {
         try {
+            val body = toy.bodyMaker.trim()
+            val chassis = toy.chassisMaker.trim()
+            val calculatedMakerCombo = if (body == chassis) {
+                body
+            } else if (body.isEmpty()) {
+                chassis
+            } else if (chassis.isEmpty()) {
+                body
+            } else {
+                "$chassis/$body"
+            }
             db.execute(
                 """
                 INSERT OR REPLACE INTO toys (
@@ -269,7 +280,7 @@ class ToyRepository(private val db: ToyDatabase) {
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """.trimIndent(),
                 listOf(
-                    toy.refNum, toy.toyType, toy.description, toy.makerCombo, toy.scale, toy.factoryCar,
+                    toy.refNum, toy.toyType, toy.description, calculatedMakerCombo, toy.scale, toy.factoryCar,
                     toy.bodyMaker, toy.acquired, toy.chassisType, toy.chassisMaker, toy.condition, toy.color,
                     toy.motorMaker, toy.motorDetails, toy.catalogNumber, toy.comments, toy.majorWork,
                     toy.minorWork, toy.repro, toy.value, toy.amountPaid, toy.amountSold, toy.traded, toy.buy,

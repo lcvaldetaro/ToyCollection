@@ -30,6 +30,7 @@ fun MakerForm(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .imePadding()
             .verticalScroll(rememberScrollState())
             .padding(GcSpacing.Standard)
     ) {

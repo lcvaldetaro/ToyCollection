@@ -33,7 +33,6 @@ fun ToyForm(
     var factoryCar by remember { mutableStateOf(initialToy.factoryCar == "y") }
 
     // Makers state
-    var makerCombo by remember { mutableStateOf(initialToy.makerCombo) }
     var bodyMaker by remember { mutableStateOf(initialToy.bodyMaker) }
     var chassisMaker by remember { mutableStateOf(initialToy.chassisMaker) }
     var chassisType by remember { mutableStateOf(initialToy.chassisType) }
@@ -67,7 +66,7 @@ fun ToyForm(
     var bitmapsSize by remember { mutableStateOf(initialToy.bitmapsSize) }
     var bitmapsTimeStamp by remember { mutableStateOf(initialToy.bitmapsTimeStamp) }
 
-    Column(modifier = modifier.fillMaxSize()) {
+    Column(modifier = modifier.fillMaxSize().imePadding()) {
         TabRow(selectedTabIndex = tabIndex) {
             tabs.forEachIndexed { index, title ->
                 Tab(
@@ -104,7 +103,6 @@ fun ToyForm(
                     FormField(label = "General Comments", value = comments, onValueChange = { comments = it })
                 }
                 1 -> { // Makers
-                    FormField(label = "Maker Combo (Combined)", value = makerCombo, onValueChange = { makerCombo = it })
                     FormField(label = "Body Maker", value = bodyMaker, onValueChange = { bodyMaker = it })
                     FormField(label = "Chassis Maker", value = chassisMaker, onValueChange = { chassisMaker = it })
                     FormField(label = "Chassis Type", value = chassisType, onValueChange = { chassisType = it })
@@ -163,11 +161,22 @@ fun ToyForm(
             Button(
                 onClick = {
                     if (description.trim().isEmpty()) return@Button
+                    val body = bodyMaker.trim()
+                    val chassis = chassisMaker.trim()
+                    val calculatedMakerCombo = if (body == chassis) {
+                        body
+                    } else if (body.isEmpty()) {
+                        chassis
+                    } else if (chassis.isEmpty()) {
+                        body
+                    } else {
+                        "$chassis/$body"
+                    }
                     val updated = Toy(
                         refNum = initialToy.refNum,
                         toyType = initialToy.toyType,
                         description = description,
-                        makerCombo = makerCombo,
+                        makerCombo = calculatedMakerCombo,
                         scale = scale,
                         factoryCar = if (factoryCar) "y" else "n",
                         bodyMaker = bodyMaker,
