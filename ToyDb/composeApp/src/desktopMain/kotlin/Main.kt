@@ -35,17 +35,12 @@ fun main(args: Array<String>) {
     // Auto-populate from packaged default database if empty or non-existent
     if (isInitialInstall) {
         try {
-            val classLoader = Thread.currentThread().contextClassLoader ?: object {}.javaClass.classLoader
-            val inputStream = classLoader.getResourceAsStream("default_toydb.db")
-            if (inputStream != null) {
-                dbFile.parentFile?.mkdirs()
-                dbFile.outputStream().use { output ->
-                    inputStream.copyTo(output)
-                }
-                println("Database successfully initialized from packaged resources.")
-            } else {
-                System.err.println("Default database resource 'default_toydb.db' not found.")
+            dbFile.parentFile?.mkdirs()
+            kotlinx.coroutines.runBlocking {
+                val bytes = Res.readBytes("files/default_toydb.db")
+                dbFile.writeBytes(bytes)
             }
+            println("Database successfully initialized from packaged resources.")
         } catch (e: Exception) {
             System.err.println("Failed to initialize database from resources: ${e.message}")
         }

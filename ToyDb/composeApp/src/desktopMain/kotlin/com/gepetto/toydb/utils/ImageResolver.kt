@@ -112,3 +112,16 @@ actual fun selectFileDialog(title: String, allowedExtensions: List<String>): Str
 }
 
 actual fun isDesktopPlatform(): Boolean = true
+
+@androidx.compose.runtime.Composable
+actual fun rememberImagePicker(onImagePicked: (String) -> Unit): () -> Unit {
+    return {
+        val selectedPath = selectFileDialog(
+            "Select Image to Upload",
+            listOf("jpg", "jpeg", "png", "gif", "webp", "JPG", "JPEG", "PNG", "GIF")
+        )
+        if (selectedPath != null) {
+            onImagePicked(selectedPath)
+        }
+    }
+}

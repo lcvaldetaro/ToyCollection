@@ -3,6 +3,8 @@ package com.gepetto.toydb.ui
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -57,7 +59,7 @@ fun SettingsScreen(
     var sftpHost by remember { mutableStateOf(repository.getSftpHostSetting() ?: "") }
     var sftpPort by remember { mutableStateOf(repository.getSftpPortSetting().toString()) }
     var sftpUsername by remember { mutableStateOf(repository.getSftpUsernameSetting() ?: "") }
-    var sftpAuthType by remember { mutableStateOf(repository.getSftpAuthTypeSetting()) }
+    var sftpAuthType by remember { mutableStateOf(if (!isDesktopPlatform()) "password" else (repository.getSftpAuthTypeSetting() ?: "password")) }
     var sftpPassword by remember { mutableStateOf(repository.getSftpPasswordSetting() ?: "") }
     var sftpKeyPath by remember { mutableStateOf(repository.getSftpKeyPathSetting() ?: "") }
     var sftpKeyPassphrase by remember { mutableStateOf(repository.getSftpKeyPassphraseSetting() ?: "") }
@@ -640,6 +642,13 @@ fun SettingsScreen(
                             )
                         }
                     }
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "⚠️ Warning: Navigating away from this screen or backgrounding the app during transfer will abort the synchronization.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
             },
             confirmButton = {
@@ -692,17 +701,21 @@ fun SettingsScreen(
         )
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(sysBackgroundColor())
-            .verticalScroll(rememberScrollState())
-            .padding(GcSpacing.Standard)
-    ) {
-        Text("Database & System Settings", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = sysTextColor())
-        Spacer(modifier = Modifier.height(GcSpacing.Standard))
-
-        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+    val lazyListState = rememberLazyListState()
+    Box(modifier = modifier.fillMaxSize()) {
+        LazyColumn(
+            state = lazyListState,
+            modifier = Modifier
+                .fillMaxSize()
+                .background(sysBackgroundColor())
+                .padding(GcSpacing.Standard)
+        ) {
+            item {
+                Text("Database & System Settings", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = sysTextColor())
+                Spacer(modifier = Modifier.height(GcSpacing.Standard))
+            }
+            item {
+                BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
             val isWide = maxWidth > 850.dp
             if (isWide) {
                 Row(
@@ -715,6 +728,9 @@ fun SettingsScreen(
                         verticalArrangement = Arrangement.spacedBy(GcSpacing.Standard)
                     ) {
                         StatusBanner(statusText)
+                        if (isSftpSyncing) {
+                            SyncWarningBanner()
+                        }
                         ThemeSelector(currentTheme, onThemeChanged)
                         if (isDesktopPlatform()) {
                             ImagesDirectorySettings(
@@ -741,7 +757,8 @@ fun SettingsScreen(
                                     customImportExportPath = null
                                 }
                             )
-                            ImportExportActions(
+                        }
+                        ImportExportActions(
                                 customImportExportPath = customImportExportPath,
                                 db = db,
                                 onImportComplete = { counts ->
@@ -842,7 +859,6 @@ fun SettingsScreen(
                                 syncProgress = sftpSyncProgress
                             )
                         }
-                    }
 
                     // Right Column: Categories Manager
                     Column(
@@ -881,6 +897,9 @@ fun SettingsScreen(
                     verticalArrangement = Arrangement.spacedBy(GcSpacing.Standard)
                 ) {
                     StatusBanner(statusText)
+                    if (isSftpSyncing) {
+                        SyncWarningBanner()
+                    }
                     ThemeSelector(currentTheme, onThemeChanged)
                     if (isDesktopPlatform()) {
                         ImagesDirectorySettings(
@@ -907,7 +926,8 @@ fun SettingsScreen(
                                 customImportExportPath = null
                             }
                         )
-                        ImportExportActions(
+                    }
+                    ImportExportActions(
                             customImportExportPath = customImportExportPath,
                             db = db,
                             onImportComplete = { counts ->
@@ -1007,8 +1027,7 @@ fun SettingsScreen(
                             isSyncing = isSftpSyncing || isTestingSftp,
                             syncProgress = sftpSyncProgress
                         )
-                    }
-                    CategoriesManager(
+                        CategoriesManager(
                         categoriesList = categoriesList,
                         onAddCategory = {
                             dialogIsEditMode = false
@@ -1034,7 +1053,15 @@ fun SettingsScreen(
                 }
             }
         }
-        Spacer(modifier = Modifier.height(40.dp))
+            }
+            item {
+                Spacer(modifier = Modifier.height(40.dp))
+            }
+        }
+        PlatformScrollbar(
+            state = lazyListState,
+            modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight()
+        )
     }
 }
 
@@ -1484,20 +1511,22 @@ fun SftpSettingsCard(
             }
             Spacer(modifier = Modifier.height(8.dp))
 
-            Text("Authentication Type", style = MaterialTheme.typography.bodyMedium, color = sysTextColor())
-            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    RadioButton(selected = authType == "password", onClick = { onAuthTypeChange("password") })
-                    Text("Password", color = sysTextColor())
+            if (isDesktopPlatform()) {
+                Text("Authentication Type", style = MaterialTheme.typography.bodyMedium, color = sysTextColor())
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        RadioButton(selected = authType == "password", onClick = { onAuthTypeChange("password") })
+                        Text("Password", color = sysTextColor())
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        RadioButton(selected = authType == "key", onClick = { onAuthTypeChange("key") })
+                        Text("SSH Key File", color = sysTextColor())
+                    }
                 }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    RadioButton(selected = authType == "key", onClick = { onAuthTypeChange("key") })
-                    Text("SSH Key File", color = sysTextColor())
-                }
+                Spacer(modifier = Modifier.height(8.dp))
             }
-            Spacer(modifier = Modifier.height(8.dp))
 
-            if (authType == "password") {
+            if (!isDesktopPlatform() || authType == "password") {
                 OutlinedTextField(
                     value = password,
                     onValueChange = onPasswordChange,
@@ -1618,7 +1647,7 @@ fun SftpSyncActions(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Syncing...")
                     } else {
-                        Text("Upload to Server")
+                        Text("Upload")
                     }
                 }
 
@@ -1640,18 +1669,52 @@ fun SftpSyncActions(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Syncing...")
                     } else {
-                        Text("Download from Server")
+                        Text("Download")
                     }
                 }
             }
 
             if (isSyncing) {
                 Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "⚠️ Do not navigate away or minimize the app until sync is complete.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(modifier = Modifier.height(8.dp))
                 LinearProgressIndicator(
                     progress = { syncProgress },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun SyncWarningBanner() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.2f),
+            contentColor = MaterialTheme.colorScheme.onErrorContainer
+        ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.5f))
+    ) {
+        Column(modifier = Modifier.padding(GcSpacing.Standard)) {
+            Text(
+                text = "⚠️ Active Transfer in Progress", 
+                fontSize = 14.sp, 
+                fontWeight = FontWeight.Bold, 
+                color = MaterialTheme.colorScheme.error
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "Do not navigate away from this screen or minimize the app. Doing so will abort the active upload or download.",
+                fontSize = 12.sp,
+                color = sysTextColor()
+            )
         }
     }
 }

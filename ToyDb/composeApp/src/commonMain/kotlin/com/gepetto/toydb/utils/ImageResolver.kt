@@ -14,3 +14,6 @@ expect fun selectFileDialog(title: String, allowedExtensions: List<String>): Str
 
 expect fun isDesktopPlatform(): Boolean
 
+@androidx.compose.runtime.Composable
+expect fun rememberImagePicker(onImagePicked: (String) -> Unit): () -> Unit
+

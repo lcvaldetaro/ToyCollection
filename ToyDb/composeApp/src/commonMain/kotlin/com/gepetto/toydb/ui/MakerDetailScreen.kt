@@ -30,7 +30,7 @@ import club.gepetto.composeutils.image.GcImage
 import com.gepetto.toydb.database.ToyRepository
 import com.gepetto.toydb.utils.resolveBitmapUri
 import com.gepetto.toydb.utils.scrollHorizontallyWithMouseWheel
-import com.gepetto.toydb.utils.selectFileDialog
+import com.gepetto.toydb.utils.rememberImagePicker
 import androidx.compose.material.icons.filled.Add
 import okio.FileSystem
 import okio.Path.Companion.toPath
@@ -53,6 +53,51 @@ fun MakerDetailScreen(
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     val bitmapsScrollState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
+
+    val imagePicker = rememberImagePicker { selectedPath ->
+        val currentMaker = makerState ?: return@rememberImagePicker
+        val srcPath = selectedPath.toPath()
+        val filename = srcPath.name
+        
+        val customPath = repository.getImagesPathSetting()
+        val targetDir = if (!customPath.isNullOrEmpty()) {
+            customPath.toPath()
+        } else {
+            val possibleDirs = listOf("images", "../images", "ToyDb/images", "../ToyDb/images")
+            possibleDirs.map { it.toPath() }.find { FileSystem.SYSTEM.exists(it) } ?: "images".toPath()
+        }
+        
+        val destPath = targetDir.div(filename)
+        try {
+            if (!FileSystem.SYSTEM.exists(targetDir)) {
+                FileSystem.SYSTEM.createDirectories(targetDir)
+            }
+            FileSystem.SYSTEM.copy(srcPath, destPath)
+            
+            val size = FileSystem.SYSTEM.metadataOrNull(destPath)?.size ?: 0L
+            val timestamp = System.currentTimeMillis()
+            
+            val currentBitmaps = currentMaker.bitmaps.trim()
+            val currentSizes = currentMaker.bitmapsSize.trim()
+            val currentTimestamps = currentMaker.bitmapsTimeStamp.trim()
+            
+            val newBitmaps = if (currentBitmaps.isEmpty()) filename else "$currentBitmaps $filename"
+            val newSizes = if (currentSizes.isEmpty()) size.toString() else "$currentSizes $size"
+            val newTimestamps = if (currentTimestamps.isEmpty()) timestamp.toString() else "$currentTimestamps $timestamp"
+            
+            val updatedMaker = currentMaker.copy(
+                bitmaps = newBitmaps,
+                bitmapsSize = newSizes,
+                bitmapsTimeStamp = newTimestamps
+            )
+            repository.saveMaker(updatedMaker)
+            
+            makerState = repository.getMaker(makerName)
+            GcLog.d("MakerDetailScreen", "Successfully uploaded and saved manufacturer image $filename")
+        } catch (e: Exception) {
+            GcLog.e("MakerDetailScreen", "Error uploading manufacturer image: ${e.message}", e)
+        }
+    }
 
     if (maker == null) {
         Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -177,56 +222,7 @@ fun MakerDetailScreen(
                     color = sysTextColor()
                 )
                 IconButton(
-                    onClick = {
-                        val selectedPath = selectFileDialog("Select Image to Upload", listOf("jpg", "jpeg", "png", "gif", "webp", "JPG", "JPEG", "PNG", "GIF"))
-                        if (selectedPath != null) {
-                            val srcPath = selectedPath.toPath()
-                            val filename = srcPath.name
-                            
-                            // Resolve images directory
-                            val customPath = repository.getImagesPathSetting()
-                            val targetDir = if (!customPath.isNullOrEmpty()) {
-                                customPath.toPath()
-                            } else {
-                                val possibleDirs = listOf("images", "../images", "ToyDb/images", "../ToyDb/images")
-                                possibleDirs.map { it.toPath() }.find { FileSystem.SYSTEM.exists(it) } ?: "images".toPath()
-                            }
-                            
-                            val destPath = targetDir.div(filename)
-                            try {
-                                if (!FileSystem.SYSTEM.exists(targetDir)) {
-                                    FileSystem.SYSTEM.createDirectories(targetDir)
-                                }
-                                FileSystem.SYSTEM.copy(srcPath, destPath)
-                                
-                                // Get metadata
-                                val size = FileSystem.SYSTEM.metadataOrNull(destPath)?.size ?: 0L
-                                val timestamp = System.currentTimeMillis()
-                                
-                                // Update maker fields
-                                val currentBitmaps = maker.bitmaps.trim()
-                                val currentSizes = maker.bitmapsSize.trim()
-                                val currentTimestamps = maker.bitmapsTimeStamp.trim()
-                                
-                                val newBitmaps = if (currentBitmaps.isEmpty()) filename else "$currentBitmaps $filename"
-                                val newSizes = if (currentSizes.isEmpty()) size.toString() else "$currentSizes $size"
-                                val newTimestamps = if (currentTimestamps.isEmpty()) timestamp.toString() else "$currentTimestamps $timestamp"
-                                
-                                val updatedMaker = maker.copy(
-                                    bitmaps = newBitmaps,
-                                    bitmapsSize = newSizes,
-                                    bitmapsTimeStamp = newTimestamps
-                                )
-                                repository.saveMaker(updatedMaker)
-                                
-                                // Refresh state
-                                makerState = repository.getMaker(makerName)
-                                GcLog.d("MakerDetailScreen", "Successfully uploaded and saved manufacturer image $filename")
-                            } catch (e: Exception) {
-                                GcLog.e("MakerDetailScreen", "Failed to copy and save manufacturer image: ${e.message}", e)
-                            }
-                        }
-                    }
+                    onClick = { imagePicker() }
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,

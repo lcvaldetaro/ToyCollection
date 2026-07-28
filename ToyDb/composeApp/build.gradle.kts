@@ -3,6 +3,7 @@ plugins {
     id("org.jetbrains.compose")
     id("org.jetbrains.kotlin.plugin.compose")
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.android.application)
 }
 
 val desktopMajor = libs.versions.versionName.get().split(".").getOrElse(0) { "1" }
@@ -33,7 +34,26 @@ val generateCommonConfig = tasks.register("generateCommonConfig") {
     }
 }
 
+val prepareAndroidResources = tasks.register<Copy>("prepareAndroidResources") {
+    from("src/commonMain/composeResources") {
+        include("values/**")
+        include("drawable/**")
+    }
+    into(layout.buildDirectory.dir("generated/android/res"))
+}
+
+tasks.configureEach {
+    if (name == "preBuild") {
+        dependsOn(prepareAndroidResources)
+    }
+}
+
 kotlin {
+    androidTarget {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        }
+    }
     jvm("desktop") {
         compilerOptions {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
@@ -86,6 +106,66 @@ kotlin {
             implementation(libs.sshj)
             implementation(libs.slf4j.simple)
         }
+
+        val androidMain = sourceSets.getByName("androidMain")
+        androidMain.dependencies {
+            implementation(libs.androidx.activity.compose)
+            implementation(libs.androidx.appcompat)
+            implementation(libs.kotlinx.coroutines.android)
+            implementation(libs.sshj)
+            implementation("org.bouncycastle:bcprov-jdk18on:1.78.1")
+        }
+    }
+}
+
+android {
+    namespace = "com.gepetto.toydb"
+    compileSdk = libs.versions.compileSdk.get().toInt()
+
+    signingConfigs {
+        create("release") {
+            storeFile = file(project.findProperty("gepetto.lapcounter.store_file") as String? ?: "release.keystore")
+            storePassword = project.findProperty("gepetto.store_psw") as String?
+            keyAlias = project.findProperty("gepetto.key_alias") as String?
+            keyPassword = project.findProperty("gepetto.key_psw") as String?
+        }
+    }
+
+    defaultConfig {
+        applicationId = "com.gepetto.toydb"
+        minSdk = libs.versions.minSdk.get().toInt()
+        targetSdk = libs.versions.targetSdk.get().toInt()
+        versionCode = libs.versions.versionCode.get().toInt()
+        versionName = libs.versions.versionName.get()
+    }
+    sourceSets {
+        getByName("main") {
+            manifest.srcFile("src/androidMain/AndroidManifest.xml")
+            res.srcDirs(
+                prepareAndroidResources,
+                "src/androidMain/res"
+            )
+        }
+    }
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
+    }
+    buildTypes {
+        getByName("release") {
+            isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
+        }
+        getByName("debug") {
+            isMinifyEnabled = false
+            isDebuggable = true
+            signingConfig = signingConfigs.getByName("release")
+        }
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 }
 

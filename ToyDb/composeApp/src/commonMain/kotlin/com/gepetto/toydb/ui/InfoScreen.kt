@@ -15,7 +15,10 @@ import club.gepetto.composeutils.GcMarkdown
 import club.gepetto.composeutils.sysBackgroundColor
 import club.gepetto.composeutils.sysTextColor
 import com.gepetto.toydb.CommonConfig
+import org.jetbrains.compose.resources.stringResource
 import toydb.composeapp.generated.resources.Res
+import toydb.composeapp.generated.resources.app_name
+import toydb.composeapp.generated.resources.copyright
 
 @Composable
 fun InfoScreen(modifier: Modifier = Modifier) {
@@ -42,7 +45,7 @@ fun InfoScreen(modifier: Modifier = Modifier) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Gepetto Toy Database Manager",
+                text = stringResource(Res.string.app_name),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = sysTextColor(),
@@ -61,7 +64,7 @@ fun InfoScreen(modifier: Modifier = Modifier) {
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Copyright © 2026 Valdetaro Consulting, LLC DBA Gepetto Club\nAll rights reserved.",
+                text = stringResource(Res.string.copyright) + "\nAll rights reserved.",
                 style = MaterialTheme.typography.bodySmall,
                 color = sysTextColor().copy(alpha = 0.5f),
                 textAlign = TextAlign.Center
