@@ -18,7 +18,7 @@ actual fun resolveImageUri(prefix: String, refNum: Int): String? {
     }
     
     possibleDirs.addAll(listOf(
-        File("/Users/luizvaldetaro/valdetaro/ToyDb/images"),
+        File("/Users/luizvaldetaro/valdetaro/ToyCollection/ToyDb/images"),
         File("images"),
         File("../images"),
         File("ToyDb/images"),
@@ -47,7 +47,7 @@ actual fun resolveBitmapUri(filename: String): String? {
     }
     
     possibleDirs.addAll(listOf(
-        File("/Users/luizvaldetaro/valdetaro/ToyDb/images"),
+        File("/Users/luizvaldetaro/valdetaro/ToyCollection/ToyDb/images"),
         File("images"),
         File("../images"),
         File("ToyDb/images"),

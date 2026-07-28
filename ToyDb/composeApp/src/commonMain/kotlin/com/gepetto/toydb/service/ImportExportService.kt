@@ -285,7 +285,7 @@ object ImportExportService {
      */
     fun exportMakers(db: ToyDatabase): String {
         GcLog.d(TAG, "Exporting makers...")
-        val cursor = db.query("SELECT * FROM makers ORDER BY name ASC")
+        val cursor = db.query("SELECT * FROM makers ORDER BY name COLLATE NOCASE")
         val list = mutableListOf<JsonMaker>()
         while (cursor.next()) {
             list.add(
@@ -309,7 +309,7 @@ object ImportExportService {
      */
     fun exportToys(db: ToyDatabase, toyType: String): String {
         GcLog.d(TAG, "Exporting toys for type '$toyType'...")
-        val cursor = db.query("SELECT * FROM toys WHERE toy_type = ? ORDER BY ref_num ASC", listOf(toyType))
+        val cursor = db.query("SELECT * FROM toys WHERE toy_type = ? ORDER BY body_maker COLLATE NOCASE, description COLLATE NOCASE", listOf(toyType))
         val list = mutableListOf<JsonToy>()
         while (cursor.next()) {
             val ref = cursor.getInt("ref_num") ?: 0

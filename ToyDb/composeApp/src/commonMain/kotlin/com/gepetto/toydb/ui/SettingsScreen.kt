@@ -144,7 +144,7 @@ fun SettingsScreen(
             listOf("$dirPath/$fileName".toPath())
         } else {
             listOf(
-                "/Users/luizvaldetaro/valdetaro/ToyDb/json/$fileName".toPath(),
+                "/Users/luizvaldetaro/valdetaro/ToyCollection/ToyDb/json/$fileName".toPath(),
                 "ToyDb/json/$fileName".toPath(),
                 "json/$fileName".toPath()
             )
@@ -166,7 +166,7 @@ fun SettingsScreen(
             listOf("$dirPath/$fileName".toPath())
         } else {
             listOf(
-                "/Users/luizvaldetaro/valdetaro/ToyDb/json/$fileName".toPath(),
+                "/Users/luizvaldetaro/valdetaro/ToyCollection/ToyDb/json/$fileName".toPath(),
                 "ToyDb/json/$fileName".toPath(),
                 "json/$fileName".toPath()
             )

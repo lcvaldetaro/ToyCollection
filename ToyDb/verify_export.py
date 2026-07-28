@@ -24,6 +24,28 @@ def verify_file(original_path, exported_path, list_key):
     orig_list = orig_data[list_key]
     exp_list = exp_data[list_key]
 
+    # Verify sorting order of exported list
+    if list_key == "makers":
+        sorted_list = sorted(exp_list, key=lambda x: x.get("name", "").lower())
+        if exp_list != sorted_list:
+            print("[-] Exported makers list is not sorted case-insensitively by name!")
+            for i in range(len(exp_list) - 1):
+                if exp_list[i].get("name", "").lower() > exp_list[i+1].get("name", "").lower():
+                    print(f"    Out of order: '{exp_list[i].get('name')}' before '{exp_list[i+1].get('name')}'")
+                    break
+            return False
+    elif list_key == "cars":
+        sorted_list = sorted(exp_list, key=lambda x: (x.get("bodyMaker", "").lower(), x.get("description", "").lower()))
+        if exp_list != sorted_list:
+            print("[-] Exported toys list is not sorted case-insensitively by bodyMaker then description!")
+            for i in range(len(exp_list) - 1):
+                key1 = (exp_list[i].get("bodyMaker", "").lower(), exp_list[i].get("description", "").lower())
+                key2 = (exp_list[i+1].get("bodyMaker", "").lower(), exp_list[i+1].get("description", "").lower())
+                if key1 > key2:
+                    print(f"    Out of order: '{exp_list[i].get('bodyMaker')}'/'{exp_list[i].get('description')}' before '{exp_list[i+1].get('bodyMaker')}'/'{exp_list[i+1].get('description')}'")
+                    break
+            return False
+
     print(f"[+] Counts for {list_key}: Original={len(orig_list)}, Exported={len(exp_list)}")
 
     if len(orig_list) != len(exp_list):
@@ -72,7 +94,7 @@ def verify_file(original_path, exported_path, list_key):
     return True
 
 def main():
-    toy_db_dir = "/Users/luizvaldetaro/valdetaro/ToyDb"
+    toy_db_dir = "/Users/luizvaldetaro/valdetaro/ToyCollection/ToyDb"
     original_dir = os.path.join(toy_db_dir, "json")
     exported_dir = os.path.join(toy_db_dir, "json") # Since app exports directly back to json directory
 

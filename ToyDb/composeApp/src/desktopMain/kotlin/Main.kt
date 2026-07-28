@@ -92,7 +92,7 @@ fun main(args: Array<String>) {
 
 fun runHeadlessImportExport(db: com.gepetto.toydb.database.ToyDatabase) {
     println("--- Headless Import & Export Mode ---")
-    val jsonDir = "/Users/luizvaldetaro/valdetaro/ToyDb/json"
+    val jsonDir = "/Users/luizvaldetaro/valdetaro/ToyCollection/ToyDb/json"
     
     fun readJson(fileName: String): String? {
         val path = "$jsonDir/$fileName".toPath()
