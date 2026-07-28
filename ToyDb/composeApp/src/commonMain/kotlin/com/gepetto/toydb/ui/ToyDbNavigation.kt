@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Train
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontWeight
@@ -261,6 +262,7 @@ fun ToyDbNavigation(
             is Destination.CategoryExplorer -> "explorer_${last.category}"
             is Destination.MakerDirectory -> "makers"
             is Destination.Settings -> "settings"
+            is Destination.Info -> "info"
             else -> null
         }
 
@@ -303,6 +305,12 @@ fun ToyDbNavigation(
                 GcNavButton(label = "Settings", imageVector = Icons.Default.Settings, navChoice = "settings", onClick = {
                     backStack.clear()
                     backStack.add(Destination.Settings)
+                })
+            )
+            list.add(
+                GcNavButton(label = "Info", imageVector = Icons.Default.Info, navChoice = "info", onClick = {
+                    backStack.clear()
+                    backStack.add(Destination.Info)
                 })
             )
             list
@@ -371,6 +379,9 @@ fun ToyDbNavigation(
                                         categoriesSettings = repository.getCategorySettings()
                                     }
                                 )
+                            }
+                            entry<Destination.Info> {
+                                InfoScreen()
                             }
                         }
                     )

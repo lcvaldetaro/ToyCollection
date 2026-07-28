@@ -14,4 +14,5 @@ sealed interface Destination : NavKey {
     @Serializable data object AddMaker : Destination
     @Serializable data class EditMaker(val makerName: String) : Destination
     @Serializable data object Settings : Destination
+    @Serializable data object Info : Destination
 }

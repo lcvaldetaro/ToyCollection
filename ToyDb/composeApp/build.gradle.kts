@@ -10,6 +10,29 @@ val desktopMinor = libs.versions.versionName.get().split(".").getOrElse(1) { "0"
 val desktopBuildNum = libs.versions.versionCode.get()
 val desktopPackageVersion = "${desktopMajor}.${desktopMinor}.${desktopBuildNum}"
 
+val generateCommonConfig = tasks.register("generateCommonConfig") {
+    val vName = libs.versions.versionName.get()
+    val vCode = libs.versions.versionCode.get().toLong()
+    val outputDir = layout.buildDirectory.dir("generated/commonConfig/kotlin").get().asFile
+    val outputFile = File(outputDir, "com/gepetto/toydb/CommonConfig.kt")
+    
+    inputs.property("versionName", vName)
+    inputs.property("versionCode", vCode)
+    outputs.dir(outputDir)
+
+    doLast {
+        outputFile.parentFile.mkdirs()
+        outputFile.writeText("""
+            package com.gepetto.toydb
+
+            object CommonConfig {
+                const val versionName = "$vName"
+                const val versionCode = ${vCode}L
+            }
+        """.trimIndent())
+    }
+}
+
 kotlin {
     jvm("desktop") {
         compilerOptions {
@@ -25,6 +48,7 @@ kotlin {
 
     sourceSets {
         val commonMain = sourceSets.getByName("commonMain")
+        commonMain.kotlin.srcDir(generateCommonConfig)
         commonMain.dependencies {
             implementation(libs.circum)
             implementation(libs.gepetto.utils)
