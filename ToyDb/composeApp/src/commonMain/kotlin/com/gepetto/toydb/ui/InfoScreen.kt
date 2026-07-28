@@ -21,7 +21,10 @@ import toydb.composeapp.generated.resources.app_name
 import toydb.composeapp.generated.resources.copyright
 
 @Composable
-fun InfoScreen(modifier: Modifier = Modifier) {
+fun InfoScreen(
+    onNavigateToSftpSetup: () -> Unit = {},
+    modifier: Modifier = Modifier
+) {
     var aboutMarkdown by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
@@ -84,6 +87,40 @@ fun InfoScreen(modifier: Modifier = Modifier) {
                         content = aboutMarkdown,
                         textColor = sysTextColor()
                     )
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp)
+                ) {
+                    Text(
+                        text = "Backup & Synchronization",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = sysTextColor()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "If you want to back up your collection data safely to the cloud, or synchronize your data across several devices (such as your phone, tablet, and computer), you will need to set up a private SFTP server.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = sysTextColor().copy(alpha = 0.8f)
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Button(
+                        onClick = onNavigateToSftpSetup,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.secondary,
+                            contentColor = MaterialTheme.colorScheme.onSecondary
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("SFTP Server Setup Guide")
+                    }
                 }
             } else {
                 CircularProgressIndicator(

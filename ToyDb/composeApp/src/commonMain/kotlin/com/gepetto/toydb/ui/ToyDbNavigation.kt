@@ -388,7 +388,10 @@ fun ToyDbNavigation(
                                 )
                             }
                             entry<Destination.Info> {
-                                InfoScreen()
+                                InfoScreen(onNavigateToSftpSetup = { backStack.add(Destination.SftpSetup) })
+                            }
+                            entry<Destination.SftpSetup> {
+                                SftpSetupScreen(onBack = { backStack.removeUpToInclusive(Destination.SftpSetup) })
                             }
                         }
                     )
