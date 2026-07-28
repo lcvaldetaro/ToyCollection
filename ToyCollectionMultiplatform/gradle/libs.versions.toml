@@ -2,8 +2,8 @@
 compileSdk = "37"
 targetSdk = "37"
 minSdk = "24"
-versionCode = "219"
-versionName = "2.4.9"
+versionCode = "220"
+versionName = "2.4.10"
 
 accompanistPager = "0.36.0"
 agp = "9.3.1"
