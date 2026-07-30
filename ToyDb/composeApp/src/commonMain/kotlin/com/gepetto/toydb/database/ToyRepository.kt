@@ -122,10 +122,8 @@ class ToyRepository(private val db: ToyDatabase) {
         }
 
         if (makerFilter.isNotEmpty()) {
-            sql.append(" AND (body_maker = ? OR chassis_maker = ? OR maker_combo LIKE ?)")
+            sql.append(" AND body_maker = ?")
             bindArgs.add(makerFilter)
-            bindArgs.add(makerFilter)
-            bindArgs.add("%$makerFilter%")
         }
 
         sql.append(" ORDER BY ref_num ASC")
@@ -232,8 +230,8 @@ class ToyRepository(private val db: ToyDatabase) {
         val toysList = mutableListOf<Toy>()
         try {
             val cursor = db.query(
-                "SELECT * FROM toys WHERE body_maker = ? OR chassis_maker = ? OR maker_combo LIKE ? ORDER BY ref_num ASC",
-                listOf(makerName, makerName, "%$makerName%")
+                "SELECT * FROM toys WHERE body_maker = ? ORDER BY ref_num ASC",
+                listOf(makerName)
             )
             while (cursor.next()) {
                 val toyType = cursor.getString("toy_type") ?: "slot"
