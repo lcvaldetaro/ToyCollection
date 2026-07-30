@@ -1,6 +1,8 @@
 package com.gepetto.toydb.ui
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.PaddingValues
+import club.gepetto.composeutils.GcCard
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.*
@@ -16,6 +18,8 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import com.gepetto.toydb.utils.resolveBitmapUri
 import club.gepetto.composeutils.image.GcImage
 import androidx.compose.material3.*
@@ -97,16 +101,39 @@ fun MakerDirectoryScreen(
                     Text("No manufacturers found.", color = MaterialTheme.colorScheme.outline)
                 }
             } else {
-                LazyVerticalGrid(
-                    columns = GridCells.Adaptive(minSize = 160.dp),
-                    modifier = Modifier.weight(1f),
-                    horizontalArrangement = Arrangement.spacedBy(GcSpacing.Standard),
-                    verticalArrangement = Arrangement.spacedBy(GcSpacing.Small)
-                ) {
-                    items(filteredMakers) { maker ->
-                        val toyCount = remember(maker.name) { repository.getToysByMaker(maker.name).size }
-                        MakerItemCard(maker, toyCount) {
-                            onNavigate(Destination.MakerDetail(maker.name))
+                BoxWithConstraints(modifier = Modifier.weight(1f)) {
+                    val numOfColumns = (this.maxWidth / 180).value.toInt()
+                    if (numOfColumns > 0) {
+                        val columns = GridCells.Fixed(numOfColumns)
+                        val localDensity = LocalDensity.current
+                        var columnHeight by remember { mutableStateOf(0) }
+                        var columnHeightDp by remember { mutableStateOf(0.dp) }
+
+                        LazyVerticalGrid(
+                            columns = columns,
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)
+                        ) {
+                            items(filteredMakers.size) { index ->
+                                val maker = filteredMakers[index]
+                                val toyCount = remember(maker.name) { repository.getToysByMaker(maker.name).size }
+                                val localModifier =
+                                    if (columnHeight > 0) Modifier.height(columnHeightDp) else Modifier
+
+                                MakerItemCard(
+                                    maker = maker,
+                                    toyCount = toyCount,
+                                    modifier = localModifier
+                                        .onGloballyPositioned {
+                                            if (it.size.height > columnHeight) {
+                                                columnHeight = it.size.height
+                                                columnHeightDp = with(localDensity) { columnHeight.toDp() }
+                                            }
+                                        }
+                                ) {
+                                    onNavigate(Destination.MakerDetail(maker.name))
+                                }
+                            }
                         }
                     }
                 }
@@ -116,82 +143,72 @@ fun MakerDirectoryScreen(
 }
 
 @Composable
-fun MakerItemCard(maker: Maker, toyCount: Int, onClick: () -> Unit) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
-        colors = CardDefaults.cardColors(containerColor = sysBackgroundColor()),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+fun MakerItemCard(
+    maker: Maker,
+    toyCount: Int,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    val textColor = sysTextColor()
+    val makerImages = remember(maker) {
+        maker.bitmaps.split(" ").filter { it.trim().isNotEmpty() }
+    }
+    val firstImage = makerImages.firstOrNull()
+    val bitmapUri = remember(firstImage) { firstImage?.let { resolveBitmapUri(it) } }
+
+    GcCard(
+        modifier = modifier.clickable { onClick() },
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = GcSpacing.Standard, vertical = GcSpacing.Small),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(GcSpacing.Standard)
-        ) {
-            val makerImages = remember(maker) {
-                maker.bitmaps.split(" ").filter { it.trim().isNotEmpty() }
-            }
-            val firstImage = makerImages.firstOrNull()
-            val bitmapUri = remember(firstImage) { firstImage?.let { resolveBitmapUri(it) } }
-
-            // Round Avatar Container
-            Card(
-                modifier = Modifier.size(50.dp),
-                shape = CircleShape,
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
-            ) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (bitmapUri != null) {
-                        GcImage(
-                            imageFile = bitmapUri,
-                            files = arrayOf(bitmapUri),
-                            contentDescription = maker.name,
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop,
-                            fullImageOnClick = false
-                        )
-                    } else {
-                        val textColor = sysTextColor()
-                        val textBitmap = remember(maker.name, textColor) {
-                            textAsBitmap(text = maker.name, textColor = textColor.toArgb())
-                        }
-                        GcImage(
-                            imageBitmap = textBitmap,
-                            contentDescription = maker.name,
-                            modifier = Modifier.fillMaxSize().padding(4.dp),
-                            contentScale = ContentScale.Fit,
-                            fullImageOnClick = false
-                        )
-                    }
+        Row {
+            if (bitmapUri == null) {
+                val textBitmap = remember(maker.name, textColor) {
+                    textAsBitmap(text = maker.name, textColor = textColor.toArgb())
                 }
+                GcImage(
+                    modifier = Modifier.align(Alignment.CenterVertically),
+                    imageBitmap = textBitmap,
+                    contentDescription = maker.name,
+                    fullImageOnClick = false,
+                    size = 48.dp,
+                    cornerSize = 16.dp,
+                    paddingSize = 4.dp,
+                    onClick = onClick
+                )
+            } else {
+                GcImage(
+                    modifier = Modifier.align(Alignment.CenterVertically),
+                    imageFile = bitmapUri,
+                    contentDescription = maker.name,
+                    fullImageOnClick = false,
+                    size = 48.dp,
+                    cornerSize = 16.dp,
+                    paddingSize = 4.dp,
+                    onClick = onClick
+                )
             }
 
-            Column(modifier = Modifier.weight(1f)) {
+            Column(
+                modifier = Modifier
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                    .fillMaxWidth()
+                    .align(Alignment.CenterVertically)
+            ) {
                 Text(
                     text = maker.name,
-                    fontSize = 14.sp,
+                    style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.Bold,
-                    color = sysTextColor(),
-                    maxLines = 1
+                    fontSize = 14.sp,
+                    color = textColor,
                 )
                 Text(
-                    text = if (maker.country.isEmpty()) "Unknown" else maker.country,
+                    text = maker.country,
                     fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1
+                    color = textColor,
                 )
                 Text(
-                    text = "$toyCount toys",
-                    fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.SemiBold
+                    text = "$toyCount models",
+                    fontSize = 12.sp,
+                    color = textColor
                 )
             }
         }

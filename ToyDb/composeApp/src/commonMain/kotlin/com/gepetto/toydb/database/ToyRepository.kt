@@ -244,6 +244,28 @@ class ToyRepository(private val db: ToyDatabase) {
         return toysList
     }
 
+    fun getMakerCategoryCounts(): Map<String, Map<String, Int>> {
+        val counts = mutableMapOf<String, MutableMap<String, Int>>()
+        try {
+            val cursor = db.query(
+                "SELECT body_maker, toy_type, COUNT(*) FROM toys WHERE body_maker IS NOT NULL AND body_maker != '' GROUP BY body_maker, toy_type"
+            )
+            while (cursor.next()) {
+                val maker = cursor.getString("body_maker") ?: ""
+                val type = cursor.getString("toy_type") ?: ""
+                val count = cursor.getInt("COUNT(*)") ?: 0
+                if (maker.isNotEmpty()) {
+                    val makerMap = counts.getOrPut(maker) { mutableMapOf() }
+                    makerMap[type] = count
+                }
+            }
+            cursor.close()
+        } catch (e: Exception) {
+            GcLog.e("ToyRepository", "Error getting maker category counts: ${e.message}", e)
+        }
+        return counts
+    }
+
     fun deleteToy(toyType: String, refNum: Int) {
         try {
             db.execute("DELETE FROM toys WHERE toy_type = ? AND ref_num = ?", listOf(toyType, refNum))

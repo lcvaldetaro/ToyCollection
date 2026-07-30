@@ -23,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import club.gepetto.composeutils.GcGenericDialog
+import club.gepetto.composeutils.GcFilterButton
 import club.gepetto.composeutils.GcSpacing
 import club.gepetto.composeutils.sysBackgroundColor
 import club.gepetto.composeutils.sysForegroundColor
@@ -50,6 +51,38 @@ fun MakerDetailScreen(
     val maker = makerState
     val toysList = remember { repository.getToysByMaker(makerName) }
     val settingsList = remember { repository.getCategorySettings() }
+
+    var selectedCategory by remember { mutableStateOf("all") }
+    
+    val filteredToys = remember(toysList, selectedCategory) {
+        if (selectedCategory == "all") {
+            toysList
+        } else {
+            toysList.filter { it.toyType == selectedCategory }
+        }
+    }
+
+    val totalAll = toysList.size
+    val totalSlot = remember(toysList) { toysList.count { it.toyType == "slot" } }
+    val totalTrain = remember(toysList) { toysList.count { it.toyType == "train" } }
+    val totalStatic = remember(toysList) { toysList.count { it.toyType == "static" } }
+    val totalKit = remember(toysList) { toysList.count { it.toyType == "kit" } }
+    val totalMisc = remember(toysList) { toysList.count { it.toyType == "misc" } }
+
+    val categories = remember(totalAll, totalSlot, totalTrain, totalStatic, totalKit, totalMisc) {
+        listOf(
+            CategoryFilter("all", "All", totalAll),
+            CategoryFilter("slot", "Slot Cars", totalSlot),
+            CategoryFilter("train", "Trains", totalTrain),
+            CategoryFilter("static", "Static Models", totalStatic),
+            CategoryFilter("kit", "Model Kits", totalKit),
+            CategoryFilter("misc", "Others", totalMisc)
+        ).filter { it.key == "all" || it.count > 0 }
+    }
+
+    val showFilters = remember(categories) {
+        categories.count { it.key != "all" && it.count > 0 } > 1
+    }
 
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     val bitmapsScrollState = rememberLazyListState()
@@ -280,29 +313,54 @@ fun MakerDetailScreen(
                 }
             }
 
-            // Associated Toys Header
+            // Associated Toys Header & Filter Buttons
             item(span = { GridItemSpan(maxLineSpan) }) {
-                Text(
-                    text = "Associated Toys (${toysList.size})",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = sysTextColor(),
-                    modifier = Modifier.padding(top = GcSpacing.Small)
-                )
+                Column {
+                    Text(
+                        text = "Associated Toys (${filteredToys.size})",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = sysTextColor(),
+                        modifier = Modifier.padding(top = GcSpacing.Small, bottom = GcSpacing.Small)
+                    )
+                    
+                    if (showFilters) {
+                        val selectedLabel = categories.find { it.key == selectedCategory }?.fullLabel ?: ""
+                        val filtersScrollState = rememberLazyListState()
+                        
+                        LazyRow(
+                            state = filtersScrollState,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = GcSpacing.Standard)
+                                .scrollHorizontallyWithMouseWheel(filtersScrollState, coroutineScope),
+                            horizontalArrangement = Arrangement.spacedBy(GcSpacing.Small)
+                        ) {
+                            lazyItems(categories) { cat ->
+                                GcFilterButton(
+                                    label = cat.fullLabel,
+                                    selection = selectedLabel
+                                ) {
+                                    selectedCategory = cat.key
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             // Associated Toys items / empty state
-            if (toysList.isEmpty()) {
+            if (filteredToys.isEmpty()) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     Box(
                         modifier = Modifier.fillMaxWidth().height(150.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("No toys found for this manufacturer.", color = MaterialTheme.colorScheme.outline)
+                        Text("No toys found for this category.", color = MaterialTheme.colorScheme.outline)
                     }
                 }
             } else {
-                items(toysList) { toy ->
+                items(filteredToys) { toy ->
                     val prefix = settingsList.find { it.category == toy.toyType }?.imagePrefix ?: "car"
                     ToyItemCard(toy, prefix) {
                         onNavigate(Destination.ToyDetail(toy.toyType, toy.refNum))
@@ -315,4 +373,8 @@ fun MakerDetailScreen(
             }
         }
     }
+}
+
+private data class CategoryFilter(val key: String, val label: String, val count: Int) {
+    val fullLabel = "$label ($count)"
 }
