@@ -44,6 +44,7 @@ import com.gepetto.toydb.service.SyncAction
 import androidx.compose.foundation.border
 import kotlinx.coroutines.CompletableDeferred
 import com.gepetto.toydb.utils.selectFileDialog
+import com.gepetto.toydb.utils.KeepScreenOn
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -75,6 +76,7 @@ fun SettingsScreen(
     var sftpSyncProgress by remember { mutableStateOf(0.0f) }
     var isSftpSyncing by remember { mutableStateOf(false) }
     var showTestSuccessDialog by remember { mutableStateOf(false) }
+    var showDownloadSuccessDialog by remember { mutableStateOf(false) }
     var showTestErrorDialog by remember { mutableStateOf(false) }
     var testErrorMsg by remember { mutableStateOf("") }
     var showSyncConfirmDialog by remember { mutableStateOf(false) }
@@ -502,6 +504,20 @@ fun SettingsScreen(
         )
     }
 
+    if (showDownloadSuccessDialog) {
+        AlertDialog(
+            onDismissRequest = { showDownloadSuccessDialog = false },
+            containerColor = sysBackgroundColor(),
+            title = { Text("Download Completed", color = sysTextColor(), fontWeight = FontWeight.Bold) },
+            text = { Text("The data was successfully downloaded from the SFTP server.", color = sysTextColor()) },
+            confirmButton = {
+                Button(onClick = { showDownloadSuccessDialog = false }) {
+                    Text("OK")
+                }
+            }
+        )
+    }
+
     if (showTestErrorDialog) {
         AlertDialog(
             onDismissRequest = { showTestErrorDialog = false },
@@ -685,6 +701,7 @@ fun SettingsScreen(
                                 if (result.isSuccess) {
                                     statusText = "Data successfully downloaded from server!"
                                     onCategoriesChanged()
+                                    showDownloadSuccessDialog = true
                                 } else {
                                     statusText = "Download failed: ${result.exceptionOrNull()?.message}"
                                 }
@@ -705,6 +722,8 @@ fun SettingsScreen(
             }
         )
     }
+
+    KeepScreenOn(enabled = isSftpSyncing && syncDirection == "Download")
 
     val lazyListState = rememberLazyListState()
     Box(modifier = modifier.fillMaxSize().imePadding()) {
