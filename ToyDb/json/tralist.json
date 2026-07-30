@@ -1,10 +1,10 @@
 {
-    "date": "July 17, 2026",
-    "buildNumber": "1052",
+    "date": "July 30, 2026",
+    "buildNumber": "5",
     "cars": [
         {
             "refNum": "25",
-            "makerCombo": "American Flyer",
+            "makerCombo": "American Flier/American Flyer",
             "condition": "",
             "scale": "1/52",
             "description": "Steam Locomotive 2-6-0",
@@ -36,7 +36,10 @@
             "pictureTimeStamp": "1782842844000",
             "pictureSize": "3008988",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "19",
@@ -72,7 +75,10 @@
             "pictureTimeStamp": "1782842844000",
             "pictureSize": "1481197",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "20",
@@ -108,7 +114,10 @@
             "pictureTimeStamp": "1781632895355",
             "pictureSize": "1526227",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "9",
@@ -144,7 +153,10 @@
             "pictureTimeStamp": "1782842844000",
             "pictureSize": "1462947",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "1",
@@ -180,7 +192,10 @@
             "pictureTimeStamp": "1782842783000",
             "pictureSize": "1766055",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "8",
@@ -216,7 +231,10 @@
             "pictureTimeStamp": "1782842845000",
             "pictureSize": "1423860",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "12",
@@ -252,7 +270,10 @@
             "pictureTimeStamp": "1782842789000",
             "pictureSize": "2943015",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "40",
@@ -288,7 +309,10 @@
             "pictureTimeStamp": "1782842814000",
             "pictureSize": "322966",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "4",
@@ -324,7 +348,10 @@
             "pictureTimeStamp": "1782842776000",
             "pictureSize": "2189232",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "7",
@@ -360,7 +387,10 @@
             "pictureTimeStamp": "1782842772000",
             "pictureSize": "1556139",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "5",
@@ -396,7 +426,10 @@
             "pictureTimeStamp": "1782842775000",
             "pictureSize": "1461762",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "6",
@@ -432,11 +465,14 @@
             "pictureTimeStamp": "1782842771000",
             "pictureSize": "1526160",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "13",
-            "makerCombo": "Bachmann",
+            "makerCombo": "Backmann/Bachmann",
             "condition": " ",
             "scale": "1/144",
             "description": "Steam Engine 2-6-0 1905",
@@ -468,7 +504,10 @@
             "pictureTimeStamp": "1782842787000",
             "pictureSize": "1546126",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "3",
@@ -504,7 +543,10 @@
             "pictureTimeStamp": "1782842786000",
             "pictureSize": "2321762",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "39",
@@ -540,7 +582,10 @@
             "pictureTimeStamp": "1782842783000",
             "pictureSize": "1895637",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "37",
@@ -576,7 +621,10 @@
             "pictureTimeStamp": "1782842833000",
             "pictureSize": "1869770",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "38",
@@ -612,7 +660,10 @@
             "pictureTimeStamp": "1782842781000",
             "pictureSize": "1718338",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "22",
@@ -648,7 +699,10 @@
             "pictureTimeStamp": "1782842835000",
             "pictureSize": "1387963",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "21",
@@ -684,7 +738,10 @@
             "pictureTimeStamp": "1782842840000",
             "pictureSize": "1510019",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "16",
@@ -720,7 +777,10 @@
             "pictureTimeStamp": "1782842771000",
             "pictureSize": "1619659",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "2",
@@ -756,7 +816,10 @@
             "pictureTimeStamp": "1782842789000",
             "pictureSize": "1749411",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "57",
@@ -792,7 +855,10 @@
             "pictureTimeStamp": "1782842819000",
             "pictureSize": "1378031",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "58",
@@ -828,7 +894,10 @@
             "pictureTimeStamp": "1782842809000",
             "pictureSize": "1481517",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "35",
@@ -864,7 +933,10 @@
             "pictureTimeStamp": "1782842840000",
             "pictureSize": "2222415",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "33",
@@ -900,7 +972,10 @@
             "pictureTimeStamp": "1782842851000",
             "pictureSize": "2269039",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "51",
@@ -936,7 +1011,10 @@
             "pictureTimeStamp": "1782842827000",
             "pictureSize": "1496127",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "53",
@@ -972,7 +1050,10 @@
             "pictureTimeStamp": "1782842826000",
             "pictureSize": "1552649",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "28",
@@ -1008,7 +1089,10 @@
             "pictureTimeStamp": "1782842776000",
             "pictureSize": "2253388",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "29",
@@ -1044,7 +1128,10 @@
             "pictureTimeStamp": "1782842775000",
             "pictureSize": "2533103",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "56",
@@ -1080,7 +1167,10 @@
             "pictureTimeStamp": "1782842821000",
             "pictureSize": "1593470",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "30",
@@ -1116,7 +1206,10 @@
             "pictureTimeStamp": "1781632895385",
             "pictureSize": "2544273",
             "hasPicture": "y",
-            "factoryCar": "n"
+            "factoryCar": "n",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "31",
@@ -1152,7 +1245,10 @@
             "pictureTimeStamp": "1781632895388",
             "pictureSize": "2274248",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "11",
@@ -1188,7 +1284,10 @@
             "pictureTimeStamp": "1782842783000",
             "pictureSize": "1674694",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "10",
@@ -1224,7 +1323,10 @@
             "pictureTimeStamp": "1782842781000",
             "pictureSize": "1550733",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "23",
@@ -1260,7 +1362,10 @@
             "pictureTimeStamp": "1781632895363",
             "pictureSize": "2351484",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "24",
@@ -1296,7 +1401,10 @@
             "pictureTimeStamp": "1782842846000",
             "pictureSize": "2331784",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "50",
@@ -1332,7 +1440,10 @@
             "pictureTimeStamp": "1782842829000",
             "pictureSize": "1276857",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "48",
@@ -1368,7 +1479,10 @@
             "pictureTimeStamp": "1781632895418",
             "pictureSize": "346604",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "63",
@@ -1404,7 +1518,10 @@
             "pictureTimeStamp": "1782842800000",
             "pictureSize": "1588223",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "41",
@@ -1440,7 +1557,10 @@
             "pictureTimeStamp": "1782842816000",
             "pictureSize": "1939613",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "42",
@@ -1476,7 +1596,10 @@
             "pictureTimeStamp": "1782842821000",
             "pictureSize": "2085195",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "49",
@@ -1512,7 +1635,10 @@
             "pictureTimeStamp": "1782842792000",
             "pictureSize": "1590610",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "54",
@@ -1548,7 +1674,10 @@
             "pictureTimeStamp": "1782842814000",
             "pictureSize": "1579125",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "43",
@@ -1584,7 +1713,10 @@
             "pictureTimeStamp": "1782842819000",
             "pictureSize": "2028036",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "55",
@@ -1620,7 +1752,10 @@
             "pictureTimeStamp": "1782842816000",
             "pictureSize": "1552615",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "36",
@@ -1656,7 +1791,10 @@
             "pictureTimeStamp": "1782842835000",
             "pictureSize": "2006619",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "64",
@@ -1692,7 +1830,10 @@
             "pictureTimeStamp": "1782842809000",
             "pictureSize": "1008140",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "65",
@@ -1728,7 +1869,10 @@
             "pictureTimeStamp": "1782842810000",
             "pictureSize": "1160488",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "67",
@@ -1764,7 +1908,10 @@
             "pictureTimeStamp": "1782842804000",
             "pictureSize": "458020",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "68",
@@ -1800,7 +1947,10 @@
             "pictureTimeStamp": "1782842814000",
             "pictureSize": "1102419",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "66",
@@ -1836,7 +1986,10 @@
             "pictureTimeStamp": "1782842805000",
             "pictureSize": "4191742",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "44",
@@ -1872,7 +2025,10 @@
             "pictureTimeStamp": "1782842829000",
             "pictureSize": "2643995",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "45",
@@ -1908,7 +2064,10 @@
             "pictureTimeStamp": "1782842827000",
             "pictureSize": "2498231",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "46",
@@ -1944,7 +2103,10 @@
             "pictureTimeStamp": "1782842824000",
             "pictureSize": "2241232",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "52",
@@ -1980,7 +2142,10 @@
             "pictureTimeStamp": "1782842824000",
             "pictureSize": "1341145",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "62",
@@ -2016,7 +2181,10 @@
             "pictureTimeStamp": "1782842799000",
             "pictureSize": "1608780",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "47",
@@ -2052,7 +2220,10 @@
             "pictureTimeStamp": "1782842826000",
             "pictureSize": "570241",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "32",
@@ -2088,7 +2259,10 @@
             "pictureTimeStamp": "1782842851000",
             "pictureSize": "2079733",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "17",
@@ -2124,7 +2298,10 @@
             "pictureTimeStamp": "1782842772000",
             "pictureSize": "1543484",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "18",
@@ -2160,7 +2337,10 @@
             "pictureTimeStamp": "1782842845000",
             "pictureSize": "1787459",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "15",
@@ -2196,7 +2376,10 @@
             "pictureTimeStamp": "1782842775000",
             "pictureSize": "1424103",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "14",
@@ -2232,7 +2415,10 @@
             "pictureTimeStamp": "1782842776000",
             "pictureSize": "1457204",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "26",
@@ -2268,7 +2454,10 @@
             "pictureTimeStamp": "1782842851000",
             "pictureSize": "2568256",
             "hasPicture": "y",
-            "factoryCar": "n"
+            "factoryCar": "n",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "27",
@@ -2304,7 +2493,10 @@
             "pictureTimeStamp": "1782842851000",
             "pictureSize": "2678345",
             "hasPicture": "y",
-            "factoryCar": "n"
+            "factoryCar": "n",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "59",
@@ -2340,7 +2532,10 @@
             "pictureTimeStamp": "1782842810000",
             "pictureSize": "1502805",
             "hasPicture": "y",
-            "factoryCar": "n"
+            "factoryCar": "n",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "60",
@@ -2376,7 +2571,10 @@
             "pictureTimeStamp": "1782842795000",
             "pictureSize": "1565889",
             "hasPicture": "y",
-            "factoryCar": "n"
+            "factoryCar": "n",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "61",
@@ -2412,7 +2610,10 @@
             "pictureTimeStamp": "1782842793000",
             "pictureSize": "1473674",
             "hasPicture": "y",
-            "factoryCar": "n"
+            "factoryCar": "n",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         },
         {
             "refNum": "34",
@@ -2448,7 +2649,10 @@
             "pictureTimeStamp": "1782842839000",
             "pictureSize": "2244436",
             "hasPicture": "y",
-            "factoryCar": "y"
+            "factoryCar": "y",
+            "yearMade": "",
+            "number": "",
+            "myComments": ""
         }
     ]
 }

@@ -6,6 +6,7 @@ import com.gepetto.toydb.database.Toy
 import com.gepetto.toydb.database.ToyDatabase
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import com.gepetto.toydb.CommonConfig
 import okio.FileSystem
 import okio.Path.Companion.toPath
 
@@ -66,15 +67,15 @@ data class JsonToy(
 
 @Serializable
 data class JsonMakersFile(
-    val date: String = "July 17, 2026",
-    val buildNumber: String = "1052",
+    val date: String = getCurrentDateString(),
+    val buildNumber: String = CommonConfig.versionCodeString,
     val makers: List<JsonMaker>
 )
 
 @Serializable
 data class JsonToysFile(
-    val date: String = "July 17, 2026",
-    val buildNumber: String = "1052",
+    val date: String = getCurrentDateString(),
+    val buildNumber: String = CommonConfig.versionCodeString,
     val cars: List<JsonToy>
 )
 
@@ -87,8 +88,8 @@ data class JsonCategorySetting(
 
 @Serializable
 data class JsonCategorySettingsFile(
-    val date: String = "July 17, 2026",
-    val buildNumber: String = "1052",
+    val date: String = getCurrentDateString(),
+    val buildNumber: String = CommonConfig.versionCodeString,
     val settings: List<JsonCategorySetting>
 )
 
@@ -100,8 +101,8 @@ data class JsonAppSetting(
 
 @Serializable
 data class JsonAppSettingsFile(
-    val date: String = "July 17, 2026",
-    val buildNumber: String = "1052",
+    val date: String = getCurrentDateString(),
+    val buildNumber: String = CommonConfig.versionCodeString,
     val settings: List<JsonAppSetting>
 )
 
@@ -789,7 +790,7 @@ object ImportExportService {
                     toyHtml.append("<br>B = Brass, M = Magnesium, NP = Nickel Plated , R = Resin, W = Wood, \n")
                     toyHtml.append("<br>T = Tin, S = Steel, AA = Anodised Aluminum, C - Circuit board\n")
                     toyHtml.append("<br>TJ = 'Tjet' vertical motor shaft, IF = ISO-Fulcrum, V = Vibrator\n")
-                    toyHtml.append("<p>Back to the list of <a href=\"$brandHtmlFilename\">brand '${toy.bodyMaker}'</a><HR>Build 1052</body></HTML>\n")
+                    toyHtml.append("<p>Back to the list of <a href=\"$brandHtmlFilename\">brand '${toy.bodyMaker}'</a><HR>Build ${CommonConfig.versionCodeString}</body></HTML>\n")
 
                     fs.write(toyPath) {
                         write(toyHtml.toString().toIso8859_1Bytes())
@@ -849,7 +850,7 @@ object ImportExportService {
                 }
 
                 brandHtml.append("<p>Back to the <a href=\"$makerFilename\">Brand list</a></center>")
-                brandHtml.append("<HR>Build 1052</body></HTML>")
+                brandHtml.append("<HR>Build ${CommonConfig.versionCodeString}</body></HTML>")
 
                 fs.write(brandPath) {
                     write(brandHtml.toString().toIso8859_1Bytes())
@@ -863,9 +864,9 @@ object ImportExportService {
             makerHtml.append("$reproCount are reproductions.<br>$count24 are 1/28 scale or bigger, $count32 are 1/32 scale, $count44 are O scale, $countHO are HO scale and $countN are N scale or smaller.<br>")
             
             if (config.imagePrefix.startsWith("car", ignoreCase = true)) {
-                makerHtml.append("</center><HR><center><img src='pistagif.gif'></center><HR><br><img SRC=\"http://www.truegem.net/cgi-bin/gifcounter/valdetaro/collection${config.imagePrefix}\"--><br>Build 1052</body></HTML>")
+                makerHtml.append("</center><HR><center><img src='pistagif.gif'></center><HR><br><img SRC=\"http://www.truegem.net/cgi-bin/gifcounter/valdetaro/collection${config.imagePrefix}\"--><br>Build ${CommonConfig.versionCodeString}</body></HTML>")
             } else {
-                makerHtml.append("</center><HR><center><img src='pistagif.gif'><center><HR><br><img SRC=\"http://www.truegem.net/cgi-bin/gifcounter/valdetaro/trdlist${config.imagePrefix}\"--><br>Build 1052</body></HTML>")
+                makerHtml.append("</center><HR><center><img src='pistagif.gif'><center><HR><br><img SRC=\"http://www.truegem.net/cgi-bin/gifcounter/valdetaro/trdlist${config.imagePrefix}\"--><br>Build ${CommonConfig.versionCodeString}</body></HTML>")
             }
 
             fs.write(makerPath) {

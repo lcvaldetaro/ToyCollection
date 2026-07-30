@@ -1,6 +1,6 @@
 {
-    "date": "July 17, 2026",
-    "buildNumber": "1052",
+    "date": "July 30, 2026",
+    "buildNumber": "5",
     "makers": [
         {
             "name": "A2M",
@@ -510,8 +510,8 @@
             "name": "Gilbert",
             "country": "USA",
             "bitmaps": "gilbert.jpg",
-            "bitmapsSize": "273705",
-            "bitmapsTimeStamp": "1781632884611",
+            "bitmapsSize": "5114",
+            "bitmapsTimeStamp": "1785414826874",
             "comments": ""
         },
         {
@@ -1230,8 +1230,8 @@
             "name": "Rokkar",
             "country": "USA",
             "bitmaps": "rokkar.jpg",
-            "bitmapsSize": "0",
-            "bitmapsTimeStamp": "0",
+            "bitmapsSize": "150486",
+            "bitmapsTimeStamp": "1785414826885",
             "comments": "          HO Slot car company started by Jim Russell"
         },
         {
@@ -1295,7 +1295,7 @@
             "country": "Spain",
             "bitmaps": "slotclassic.jpg",
             "bitmapsSize": "5824",
-            "bitmapsTimeStamp": "1782842826000",
+            "bitmapsTimeStamp": "1785425664607",
             "comments": "          Small Company from The North of Spain. A place called Asturias."
         },
         {
@@ -1319,7 +1319,7 @@
             "country": "Italy",
             "bitmaps": "slotit.jpg",
             "bitmapsSize": "7383",
-            "bitmapsTimeStamp": "1781632895073",
+            "bitmapsTimeStamp": "1785425664609",
             "comments": ""
         },
         {

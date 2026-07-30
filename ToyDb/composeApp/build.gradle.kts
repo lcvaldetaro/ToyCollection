@@ -35,6 +35,7 @@ val generateCommonConfig = tasks.register("generateCommonConfig") {
             object CommonConfig {
                 const val versionName = "$vName"
                 const val versionCode = ${vCode}L
+                const val versionCodeString = "$vCode"
             }
         """.trimIndent())
     }
