@@ -26,6 +26,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import club.gepetto.composeutils.GcFilterButton
+import club.gepetto.composeutils.textAsBitmap
+import androidx.compose.ui.graphics.toArgb
 import club.gepetto.composeutils.GcSpacing
 import club.gepetto.composeutils.sysBackgroundColor
 import club.gepetto.composeutils.sysForegroundColor
@@ -202,63 +204,78 @@ fun ExplorerScreen(
 }
 
 @Composable
-fun ToyItemCard(toy: Toy, prefix: String, onClick: () -> Unit) {
-    Card(
-        modifier = Modifier
+fun ToyItemCard(
+    toy: Toy,
+    prefix: String,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    val textColor = sysTextColor()
+    val imgUri = remember(toy.refNum) { resolveImageUri(prefix, toy.refNum) }
+
+    Column(
+        modifier = modifier
             .fillMaxWidth()
             .alpha(if (toy.traded.isNotBlank()) 0.5f else 1f)
-            .clickable { onClick() },
-        colors = CardDefaults.cardColors(containerColor = sysBackgroundColor()),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+            .background(sysBackgroundColor())
     ) {
+        HorizontalDivider()
+
         Row(
-            modifier = Modifier.padding(GcSpacing.Standard),
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier
+                .clickable { onClick() }
+                .fillMaxWidth()
         ) {
-            val imgUri = remember(toy.refNum) { resolveImageUri(prefix, toy.refNum) }
-            if (imgUri != null) {
+            if (imgUri == null) {
+                val textBitmap = remember(toy.refNum, textColor) {
+                    textAsBitmap(text = toy.refNum.toString(), textColor = textColor.toArgb())
+                }
                 GcImage(
-                    imageFile = imgUri,
+                    modifier = Modifier.align(Alignment.Top),
+                    imageBitmap = textBitmap,
                     contentDescription = toy.description,
-                    modifier = Modifier
-                        .size(80.dp)
-                        .clip(RoundedCornerShape(8.dp)),
-                    contentScale = ContentScale.Crop,
-                    fullImageOnClick = true
+                    fullImageOnClick = false,
+                    size = 48.dp,
+                    cornerSize = 16.dp,
+                    paddingSize = 4.dp,
+                    onClick = onClick
                 )
             } else {
-                // Placeholder
-                Box(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(MaterialTheme.colorScheme.secondaryContainer),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("No Pic", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSecondaryContainer)
-                }
+                GcImage(
+                    modifier = Modifier.align(Alignment.Top),
+                    imageFile = imgUri,
+                    contentDescription = toy.description,
+                    fullImageOnClick = false,
+                    size = 48.dp,
+                    cornerSize = 16.dp,
+                    paddingSize = 4.dp,
+                    onClick = onClick
+                )
             }
 
-            Spacer(modifier = Modifier.width(GcSpacing.Standard))
-
-            Column(modifier = Modifier.weight(1f)) {
+            Column(
+                modifier = Modifier
+                    .padding(8.dp)
+                    .fillMaxWidth()
+                    .align(Alignment.CenterVertically)
+            ) {
                 Text(
-                    text = "#${toy.refNum} - ${toy.description}",
-                    fontSize = 16.sp,
+                    text = toy.description,
+                    style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.Bold,
-                    color = sysTextColor()
+                    fontSize = 14.sp,
+                    color = textColor,
                 )
                 Text(
-                    text = "Maker: ${toy.makerCombo} | Scale: ${toy.scale}",
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = "${toy.scale} (${toy.refNum})",
+                    fontSize = 12.sp,
+                    color = textColor,
                 )
-                if (toy.value > 0) {
+                if (toy.traded.isNotEmpty()) {
                     Text(
-                        text = "Value: $${toy.value}",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.primary
+                        text = "* gone *",
+                        fontSize = 12.sp,
+                        color = textColor,
                     )
                 }
             }

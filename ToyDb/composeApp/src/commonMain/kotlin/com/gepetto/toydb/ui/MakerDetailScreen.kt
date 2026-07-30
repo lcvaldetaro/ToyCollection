@@ -294,8 +294,9 @@ fun MakerDetailScreen(
                                     imageFile = bitmapUri,
                                     files = allImagePaths,
                                     contentDescription = filename,
-                                    modifier = Modifier.size(100.dp),
-                                    contentScale = ContentScale.Crop,
+                                    size = 100.dp,
+                                    cornerSize = 16.dp,
+                                    contentScale = ContentScale.Fit,
                                     fullImageOnClick = true
                                 )
                             } else {
