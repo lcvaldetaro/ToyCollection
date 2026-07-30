@@ -146,6 +146,11 @@ fun SettingsScreen(
     var showImportDialog by remember { mutableStateOf(false) }
     val importCountsMap = remember { mutableStateMapOf<String, Int>() }
 
+    // HTML export success dialog state
+    var showHtmlExportDialog by remember { mutableStateOf(false) }
+    var htmlExportPath by remember { mutableStateOf("") }
+    var htmlExportCount by remember { mutableStateOf(0) }
+
     // Paths state
     var customImagesPath by remember { mutableStateOf(repository.getImagesPathSetting()) }
     var customImportExportPath by remember { mutableStateOf(repository.getImportExportPathSetting()) }
@@ -444,6 +449,53 @@ fun SettingsScreen(
             },
             confirmButton = {
                 Button(onClick = { showImportDialog = false }) {
+                    Text("OK")
+                }
+            }
+        )
+    }
+
+    // HTML Export Success Dialog
+    if (showHtmlExportDialog) {
+        AlertDialog(
+            onDismissRequest = { showHtmlExportDialog = false },
+            containerColor = sysBackgroundColor(),
+            title = {
+                Text(
+                    text = "HTML Export Successful",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    color = sysTextColor()
+                )
+            },
+            text = {
+                Column {
+                    Text("The legacy HTML pages were generated successfully in the following directory:", color = sysTextColor())
+                    Spacer(modifier = Modifier.height(GcSpacing.Small))
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = sysBackgroundColor()),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = htmlExportPath,
+                            fontSize = 13.sp,
+                            modifier = Modifier.padding(GcSpacing.Small),
+                            color = sysTextColor()
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(GcSpacing.Standard))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(vertical = 2.dp)
+                    ) {
+                        Text("✓ ", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                        Text("Generated $htmlExportCount HTML pages.", fontSize = 14.sp, color = sysTextColor())
+                    }
+                }
+            },
+            confirmButton = {
+                Button(onClick = { showHtmlExportDialog = false }) {
                     Text("OK")
                 }
             }
@@ -809,6 +861,12 @@ fun SettingsScreen(
                                     showExportDialog = true
                                     statusText = "Export Complete!"
                                 },
+                                onHtmlExportComplete = { path, count ->
+                                    htmlExportPath = path
+                                    htmlExportCount = count
+                                    showHtmlExportDialog = true
+                                    statusText = "HTML Export Complete!"
+                                },
                                 onSetStatus = { statusText = it },
                                 readJsonFile = { name, dir -> readJsonFile(name, dir) },
                                 writeJsonFile = { name, content, dir -> writeJsonFile(name, content, dir) }
@@ -986,6 +1044,12 @@ fun SettingsScreen(
                                 exportedFiles.addAll(files)
                                 showExportDialog = true
                                 statusText = "Export Complete!"
+                            },
+                            onHtmlExportComplete = { path, count ->
+                                htmlExportPath = path
+                                htmlExportCount = count
+                                showHtmlExportDialog = true
+                                statusText = "HTML Export Complete!"
                             },
                             onSetStatus = { statusText = it },
                             readJsonFile = { name, dir -> readJsonFile(name, dir) },
@@ -1294,6 +1358,7 @@ fun ImportExportActions(
     db: ToyDatabase,
     onImportComplete: (counts: Map<String, Int>) -> Unit,
     onExportComplete: (path: String, files: List<String>) -> Unit,
+    onHtmlExportComplete: (path: String, count: Int) -> Unit,
     onSetStatus: (String) -> Unit,
     readJsonFile: (fileName: String, dirPath: String?) -> String?,
     writeJsonFile: (fileName: String, content: String, dirPath: String?) -> String?
@@ -1473,6 +1538,7 @@ fun ImportExportActions(
                                     ImportExportService.exportHtml(db, selectedDir)
                                 }
                                 isExportingHtml = false
+                                onHtmlExportComplete(selectedDir, generatedCount)
                                 onSetStatus("HTML generation completed! Generated $generatedCount files in $selectedDir.")
                             } catch (e: Exception) {
                                 isExportingHtml = false
