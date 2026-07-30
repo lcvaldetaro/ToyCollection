@@ -126,7 +126,7 @@ class ToyRepository(private val db: ToyDatabase) {
             bindArgs.add(makerFilter)
         }
 
-        sql.append(" ORDER BY ref_num ASC")
+        sql.append(" ORDER BY description ASC")
 
         try {
             val cursor = db.query(sql.toString(), bindArgs)
@@ -230,7 +230,7 @@ class ToyRepository(private val db: ToyDatabase) {
         val toysList = mutableListOf<Toy>()
         try {
             val cursor = db.query(
-                "SELECT * FROM toys WHERE body_maker = ? ORDER BY ref_num ASC",
+                "SELECT * FROM toys WHERE body_maker = ? ORDER BY description ASC",
                 listOf(makerName)
             )
             while (cursor.next()) {
@@ -472,6 +472,9 @@ class ToyRepository(private val db: ToyDatabase) {
             GcLog.e("ToyRepository", "Error saving setting $key: ${e.message}", e)
         }
     }
+
+    fun getAppTitleSetting(): String = getAppSetting("app_title") ?: "Gepetto Toy Database Manager"
+    fun setAppTitleSetting(title: String) = setAppSetting("app_title", title)
 
     fun getSftpHostSetting(): String? = getAppSetting("sftp_host")
     fun setSftpHostSetting(host: String?) = setAppSetting("sftp_host", host)

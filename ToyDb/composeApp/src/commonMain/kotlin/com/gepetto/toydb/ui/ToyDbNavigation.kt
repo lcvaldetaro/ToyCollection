@@ -91,6 +91,7 @@ private fun copyMakerImages(repository: ToyRepository, selectedImagesPath: Strin
 fun ToyDbNavigation(
     db: ToyDatabase,
     sftpService: SftpService,
+    onAppTitleChanged: ((String) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val repository = remember { ToyRepository(db) }
@@ -384,7 +385,10 @@ fun ToyDbNavigation(
                                     onCategoriesChanged = {
                                         categoriesSettings = repository.getCategorySettings()
                                     },
-                                    onNavigate = { backStack.add(it) }
+                                    onNavigate = { backStack.add(it) },
+                                    onAppTitleChanged = { newTitle ->
+                                        onAppTitleChanged?.invoke(newTitle)
+                                    }
                                 )
                             }
                             entry<Destination.Info> {

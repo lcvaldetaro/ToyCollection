@@ -69,17 +69,20 @@ fun main(args: Array<String>) {
             height = 800.dp
         )
         val sftpService = remember { DesktopSftpService() }
+        val repository = remember { ToyRepository(database) }
+        var appTitle by remember { mutableStateOf(repository.getAppTitleSetting()) }
+
         Window(
             onCloseRequest = {
                 database.close()
                 exitApplication()
             },
             state = windowState,
-            title = "Gepetto Toy Database Manager",
+            title = appTitle,
             icon = painterResource(Res.drawable.icon)
         ) {
             GcTheme {
-                ToyDbNavigation(database, sftpService)
+                ToyDbNavigation(database, sftpService, onAppTitleChanged = { appTitle = it })
             }
         }
     }

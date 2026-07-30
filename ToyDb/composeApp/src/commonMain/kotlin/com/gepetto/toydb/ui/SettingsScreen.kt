@@ -55,11 +55,13 @@ fun SettingsScreen(
     onThemeChanged: (Int) -> Unit = {},
     onCategoriesChanged: () -> Unit,
     onNavigate: (Destination) -> Unit = {},
+    onAppTitleChanged: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val repository = remember { ToyRepository(db) }
     var statusText by remember { mutableStateOf("Ready") }
     val coroutineScope = rememberCoroutineScope()
+    var appTitle by remember { mutableStateOf(repository.getAppTitleSetting()) }
 
     // SFTP Config States
     var sftpHost by remember { mutableStateOf(repository.getSftpHostSetting() ?: "") }
@@ -756,6 +758,14 @@ fun SettingsScreen(
                             SyncWarningBanner()
                         }
                         ThemeSelector(currentTheme, onThemeChanged)
+                        AppTitleSettings(
+                            title = appTitle,
+                            onTitleChange = { newTitle ->
+                                repository.setAppTitleSetting(newTitle)
+                                appTitle = newTitle
+                                onAppTitleChanged(newTitle)
+                            }
+                        )
                         AppInfoSettings { onNavigate(Destination.Info) }
                         if (isDesktopPlatform()) {
                             ImagesDirectorySettings(
@@ -926,6 +936,14 @@ fun SettingsScreen(
                         SyncWarningBanner()
                     }
                     ThemeSelector(currentTheme, onThemeChanged)
+                    AppTitleSettings(
+                        title = appTitle,
+                        onTitleChange = { newTitle ->
+                            repository.setAppTitleSetting(newTitle)
+                            appTitle = newTitle
+                            onAppTitleChanged(newTitle)
+                        }
+                    )
                     AppInfoSettings { onNavigate(Destination.Info) }
                     if (isDesktopPlatform()) {
                         ImagesDirectorySettings(
@@ -1779,6 +1797,42 @@ fun SyncWarningBanner() {
                 text = "Do not navigate away from this screen or minimize the app. Doing so will abort the active upload or download.",
                 fontSize = 12.sp,
                 color = sysTextColor()
+            )
+        }
+    }
+}
+
+@Composable
+fun AppTitleSettings(
+    title: String,
+    onTitleChange: (String) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = sysBackgroundColor()),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+    ) {
+        Column(modifier = Modifier.padding(GcSpacing.Standard)) {
+            Text("App Title Configuration", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = sysTextColor())
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "Set a custom title for the application window.",
+                fontSize = 12.sp,
+                color = sysTextColor().copy(alpha = 0.6f)
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            OutlinedTextField(
+                value = title,
+                onValueChange = onTitleChange,
+                label = { Text("Title") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = sysTextColor(),
+                    unfocusedTextColor = sysTextColor(),
+                    focusedLabelColor = MaterialTheme.colorScheme.primary,
+                    unfocusedLabelColor = sysTextColor().copy(alpha = 0.6f)
+                )
             )
         }
     }
