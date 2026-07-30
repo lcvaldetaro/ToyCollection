@@ -45,6 +45,9 @@ data class Toy (
     var hasPicture: String = "",
     @SerialName("factoryCar") var factoryToy: String = "",
     var acquired: String = "",
+    var yearMade: String = "",
+    var number: String = "",
+    var myComments: String = ""
 ) {
     @Transient var bitmapFiles          : List<String>? = null
     @Transient var bitmapFilesTimeStamp : List<String>? = null

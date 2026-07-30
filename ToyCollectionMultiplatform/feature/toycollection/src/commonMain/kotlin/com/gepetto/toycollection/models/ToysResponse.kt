@@ -58,10 +58,12 @@ data class ToysResponse (
     }
 
     companion object {
+        private val json = Json { ignoreUnknownKeys = true }
+
         fun fromJson(jsonStr: String) : ToysResponse? {
             var result : ToysResponse? = null
             try {
-               result = Json.decodeFromString<ToysResponse>(jsonStr)
+               result = json.decodeFromString<ToysResponse>(jsonStr)
             }
             catch (e: Exception) {
                 GcLog.e("Exception ${e}")
