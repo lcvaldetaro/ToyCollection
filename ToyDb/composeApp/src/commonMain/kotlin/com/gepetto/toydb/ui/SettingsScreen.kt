@@ -11,7 +11,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -1558,6 +1562,8 @@ fun SftpSettingsCard(
                 Spacer(modifier = Modifier.height(8.dp))
             }
 
+            var passwordVisible by remember { mutableStateOf(false) }
+
             if (!isDesktopPlatform() || authType == "password") {
                 OutlinedTextField(
                     value = password,
@@ -1566,6 +1572,14 @@ fun SftpSettingsCard(
                     placeholder = { Text("Password") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
+                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                        val description = if (passwordVisible) "Hide password" else "Show password"
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(imageVector = image, contentDescription = description)
+                        }
+                    },
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = sysTextColor(),
                         unfocusedTextColor = sysTextColor()

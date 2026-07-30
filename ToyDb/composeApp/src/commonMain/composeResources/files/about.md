@@ -1,6 +1,6 @@
 # About Gepetto Toy Database Manager
 
-The **Gepetto Toy Database Manager** is a Kotlin Multiplatform desktop application built to assist in cataloging, tracking, and organizing toy collections.
+The **Gepetto Toy Database Manager** is an app built to assist in cataloging, tracking, and organizing toy collections.
 
 ## Key Features
 
