@@ -6,6 +6,12 @@ plugins {
     alias(libs.plugins.android.application)
 }
 
+base {
+    val vName = libs.versions.versionName.get()
+    val vCode = libs.versions.versionCode.get()
+    archivesName.set("GepettoToyDatabaseManager-v$vName-($vCode)")
+}
+
 val desktopMajor = libs.versions.versionName.get().split(".").getOrElse(0) { "1" }
 val desktopMinor = libs.versions.versionName.get().split(".").getOrElse(1) { "0" }
 val desktopBuildNum = libs.versions.versionCode.get()
