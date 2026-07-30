@@ -129,13 +129,23 @@ class DesktopSftpService : SftpService {
             try {
                 val sftp = client.newSFTPClient()
                 try {
+                    val allLocalFiles = mutableListOf<okio.Path>()
                     val localImagesPath = localImagesDir.toPath()
-                    val localImageFiles = if (FileSystem.SYSTEM.exists(localImagesPath)) {
-                        FileSystem.SYSTEM.list(localImagesPath).filter { 
-                            FileSystem.SYSTEM.metadata(it).isRegularFile && isAllowedFile(it.name)
-                        }
-                    } else {
-                        emptyList()
+                    if (FileSystem.SYSTEM.exists(localImagesPath)) {
+                        allLocalFiles.addAll(
+                            FileSystem.SYSTEM.list(localImagesPath).filter { 
+                                FileSystem.SYSTEM.metadata(it).isRegularFile && isAllowedFile(it.name)
+                            }
+                        )
+                    }
+                    val localImportExportPath = localImportExportDir.toPath()
+                    if (FileSystem.SYSTEM.exists(localImportExportPath)) {
+                        allLocalFiles.addAll(
+                            FileSystem.SYSTEM.list(localImportExportPath).filter {
+                                val name = it.name.lowercase()
+                                FileSystem.SYSTEM.metadata(it).isRegularFile && name.endsWith(".html")
+                            }
+                        )
                     }
 
                     val remoteFiles = try {
@@ -145,7 +155,7 @@ class DesktopSftpService : SftpService {
                     }
                     val remoteFileMap = remoteFiles.associateBy { getFileNameFromPath(it.path) }
 
-                    localImageFiles.forEach { localImgPath ->
+                    allLocalFiles.forEach { localImgPath ->
                         val fileName = localImgPath.name
                         val localMeta = FileSystem.SYSTEM.metadata(localImgPath)
                         val localSize = localMeta.size ?: 0L
@@ -289,14 +299,24 @@ class DesktopSftpService : SftpService {
                         sftp.put(net.schmizz.sshj.xfer.FileSystemFile(localFile), remoteFile)
                     }
 
-                    onProgress("Uploading media...", 0.7f)
+                    onProgress("Uploading media and HTML files...", 0.7f)
+                    val allLocalFiles = mutableListOf<okio.Path>()
                     val localImagesPath = localImagesDir.toPath()
-                    val localImageFiles = if (FileSystem.SYSTEM.exists(localImagesPath)) {
-                        FileSystem.SYSTEM.list(localImagesPath).filter { 
-                            FileSystem.SYSTEM.metadata(it).isRegularFile && isAllowedFile(it.name)
-                        }
-                    } else {
-                        emptyList()
+                    if (FileSystem.SYSTEM.exists(localImagesPath)) {
+                        allLocalFiles.addAll(
+                            FileSystem.SYSTEM.list(localImagesPath).filter { 
+                                FileSystem.SYSTEM.metadata(it).isRegularFile && isAllowedFile(it.name)
+                            }
+                        )
+                    }
+                    val localImportExportPath = localImportExportDir.toPath()
+                    if (FileSystem.SYSTEM.exists(localImportExportPath)) {
+                        allLocalFiles.addAll(
+                            FileSystem.SYSTEM.list(localImportExportPath).filter {
+                                val name = it.name.lowercase()
+                                FileSystem.SYSTEM.metadata(it).isRegularFile && name.endsWith(".html")
+                            }
+                        )
                     }
 
                     val remoteFiles = try {
@@ -306,7 +326,7 @@ class DesktopSftpService : SftpService {
                     }
                     val remoteFileMap = remoteFiles.associateBy { getFileNameFromPath(it.path) }
 
-                    localImageFiles.forEachIndexed { index, localImgPath ->
+                    allLocalFiles.forEachIndexed { index, localImgPath ->
                         val fileName = localImgPath.name
                         if (selectedFiles == null || selectedFiles.contains(fileName)) {
                             val localFile = localImgPath.toNioPath().toFile()
@@ -334,8 +354,8 @@ class DesktopSftpService : SftpService {
                             }
                         }
                         
-                        val progressVal = 0.7f + (0.3f * (index + 1) / localImageFiles.size.coerceAtLeast(1))
-                        onProgress("Uploading media ($index/${localImageFiles.size})...", progressVal)
+                        val progressVal = 0.7f + (0.3f * (index + 1) / allLocalFiles.size.coerceAtLeast(1))
+                        onProgress("Uploading media and HTML files ($index/${allLocalFiles.size})...", progressVal)
                     }
 
                 } finally {

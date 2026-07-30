@@ -296,8 +296,9 @@ class ToyRepository(private val db: ToyDatabase) {
                     motor_maker, motor_details, catalog_number, comments, major_work, 
                     minor_work, repro, value, amount_paid, amount_sold, traded, buy, 
                     maintenance, to_make, detail, boxed, picture, picture_size, 
-                    picture_timestamp, has_picture, bitmaps, bitmaps_size, bitmaps_timestamp
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    picture_timestamp, has_picture, bitmaps, bitmaps_size, bitmaps_timestamp,
+                    year_made, number, my_comments
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """.trimIndent(),
                 listOf(
                     toy.refNum, toy.toyType, toy.description, calculatedMakerCombo, toy.scale, toy.factoryCar,
@@ -305,7 +306,8 @@ class ToyRepository(private val db: ToyDatabase) {
                     toy.motorMaker, toy.motorDetails, toy.catalogNumber, toy.comments, toy.majorWork,
                     toy.minorWork, toy.repro, toy.value, toy.amountPaid, toy.amountSold, toy.traded, toy.buy,
                     toy.maintenance, toy.toMake, toy.detail, toy.boxed, toy.picture, toy.pictureSize,
-                    toy.pictureTimeStamp, toy.hasPicture, toy.bitmaps, toy.bitmapsSize, toy.bitmapsTimeStamp
+                    toy.pictureTimeStamp, toy.hasPicture, toy.bitmaps, toy.bitmapsSize, toy.bitmapsTimeStamp,
+                    toy.yearMade, toy.number, toy.myComments
                 )
             )
             GcLog.d("ToyRepository", "Saved toy ${toy.toyType}:${toy.refNum}")
@@ -587,7 +589,10 @@ class ToyRepository(private val db: ToyDatabase) {
             hasPicture = cursor.getString("has_picture") ?: "n",
             bitmaps = cursor.getString("bitmaps") ?: "",
             bitmapsSize = cursor.getString("bitmaps_size") ?: "",
-            bitmapsTimeStamp = cursor.getString("bitmaps_timestamp") ?: ""
+            bitmapsTimeStamp = cursor.getString("bitmaps_timestamp") ?: "",
+            yearMade = cursor.getString("year_made") ?: "",
+            number = cursor.getString("number") ?: "",
+            myComments = cursor.getString("my_comments") ?: ""
         )
     }
 }

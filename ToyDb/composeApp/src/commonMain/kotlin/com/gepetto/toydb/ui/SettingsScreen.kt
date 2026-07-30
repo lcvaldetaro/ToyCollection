@@ -1302,6 +1302,7 @@ fun ImportExportActions(
     val coroutineScope = rememberCoroutineScope()
     var isImporting by remember { mutableStateOf(false) }
     var isExporting by remember { mutableStateOf(false) }
+    var isExportingHtml by remember { mutableStateOf(false) }
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Text("Import / Export Actions", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = sysTextColor())
@@ -1311,7 +1312,7 @@ fun ImportExportActions(
             horizontalArrangement = Arrangement.spacedBy(GcSpacing.Standard)
         ) {
             Button(
-                enabled = !isImporting && !isExporting,
+                enabled = !isImporting && !isExporting && !isExportingHtml,
                 onClick = {
                     val selectedDir = customImportExportPath
                     if (selectedDir != null) {
@@ -1384,7 +1385,7 @@ fun ImportExportActions(
             }
 
             Button(
-                enabled = !isImporting && !isExporting,
+                enabled = !isImporting && !isExporting && !isExportingHtml,
                 onClick = {
                     val selectedDir = customImportExportPath
                     if (selectedDir != null) {
@@ -1456,6 +1457,49 @@ fun ImportExportActions(
                     Text("Exporting...")
                 } else {
                     Text("Export JSON Data")
+                }
+            }
+
+            Button(
+                enabled = !isImporting && !isExporting && !isExportingHtml,
+                onClick = {
+                    val selectedDir = customImportExportPath
+                    if (selectedDir != null) {
+                        coroutineScope.launch {
+                            isExportingHtml = true
+                            onSetStatus("Generating HTML pages to $selectedDir...")
+                            try {
+                                val generatedCount = withContext(Dispatchers.IO) {
+                                    ImportExportService.exportHtml(db, selectedDir)
+                                }
+                                isExportingHtml = false
+                                onSetStatus("HTML generation completed! Generated $generatedCount files in $selectedDir.")
+                            } catch (e: Exception) {
+                                isExportingHtml = false
+                                onSetStatus("Error during HTML generation: ${e.message}")
+                                GcLog.e("SettingsScreen", "HTML export error", e)
+                            }
+                        }
+                    } else {
+                        onSetStatus("HTML export failed: Import/Export directory is not configured.")
+                    }
+                },
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.tertiary,
+                    contentColor = MaterialTheme.colorScheme.onTertiary
+                )
+            ) {
+                if (isExportingHtml) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        color = MaterialTheme.colorScheme.onTertiary,
+                        strokeWidth = 2.dp
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Exporting HTML...")
+                } else {
+                    Text("Export HTML Data")
                 }
             }
         }

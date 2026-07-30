@@ -3,7 +3,7 @@ package com.gepetto.toydb.database
 import club.gepetto.GcLog
 import kotlinx.serialization.Serializable
 
-const val DATABASE_VERSION = 3
+const val DATABASE_VERSION = 4
 const val TAG = "ToyDbDatabase"
 
 interface SqlCursor {
@@ -58,7 +58,10 @@ data class Toy(
     // List of secondary images parsed
     val bitmaps: String = "",
     val bitmapsSize: String = "",
-    val bitmapsTimeStamp: String = ""
+    val bitmapsTimeStamp: String = "",
+    val yearMade: String = "",
+    val number: String = "",
+    val myComments: String = ""
 ) {
     /**
      * Resolves the primary image filename based on category prefix rules.
@@ -178,6 +181,9 @@ val CREATE_SCHEMA_SQL_LIST = listOf(
         bitmaps TEXT,
         bitmaps_size TEXT,
         bitmaps_timestamp TEXT,
+        year_made TEXT DEFAULT '',
+        number TEXT DEFAULT '',
+        my_comments TEXT DEFAULT '',
         PRIMARY KEY (toy_type, ref_num)
     );
     """.trimIndent(),
@@ -248,6 +254,11 @@ fun runMigration(db: ToyDatabase, version: Int) {
         }
         3 -> {
             db.execute("UPDATE category_settings SET label = 'Others' WHERE category = 'misc'")
+        }
+        4 -> {
+            db.execute("ALTER TABLE toys ADD COLUMN year_made TEXT DEFAULT ''")
+            db.execute("ALTER TABLE toys ADD COLUMN number TEXT DEFAULT ''")
+            db.execute("ALTER TABLE toys ADD COLUMN my_comments TEXT DEFAULT ''")
         }
     }
 }
