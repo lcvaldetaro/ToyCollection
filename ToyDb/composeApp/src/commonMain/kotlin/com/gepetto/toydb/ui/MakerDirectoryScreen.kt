@@ -37,6 +37,8 @@ import club.gepetto.composeutils.sysForegroundColor
 import club.gepetto.composeutils.sysTextColor
 import com.gepetto.toydb.database.Maker
 import com.gepetto.toydb.database.ToyRepository
+import org.jetbrains.compose.resources.stringResource
+import toydb.composeapp.generated.resources.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,10 +61,9 @@ fun MakerDirectoryScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { onNavigate(Destination.AddMaker) },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
+                containerColor = MaterialTheme.colorScheme.primary
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Add Manufacturer")
+                Icon(Icons.Default.Add, contentDescription = stringResource(Res.string.add_maker_desc))
             }
         }
     ) { innerPadding ->
@@ -73,11 +74,11 @@ fun MakerDirectoryScreen(
                 .padding(GcSpacing.Standard)
         ) {
             Text(
-                text = "Makers Directory",
+                text = stringResource(Res.string.makers_directory_title),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = sysTextColor(),
-                modifier = Modifier.padding(bottom = GcSpacing.Small)
+                modifier = Modifier.padding(vertical = GcSpacing.Small)
             )
 
             // Search Bar
@@ -85,12 +86,12 @@ fun MakerDirectoryScreen(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
                 modifier = Modifier.fillMaxWidth().padding(bottom = GcSpacing.Standard),
-                placeholder = { Text("Search manufacturers...") },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                placeholder = { Text(stringResource(Res.string.search_placeholder_maker)) },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(Res.string.search)) },
                 trailingIcon = {
                     if (searchQuery.isNotEmpty()) {
                         IconButton(onClick = { searchQuery = "" }) {
-                            Icon(Icons.Default.Clear, contentDescription = "Clear")
+                            Icon(Icons.Default.Clear, contentDescription = stringResource(Res.string.clear))
                         }
                     }
                 },
@@ -103,7 +104,7 @@ fun MakerDirectoryScreen(
 
             if (filteredMakers.isEmpty()) {
                 Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    Text("No manufacturers found.", color = MaterialTheme.colorScheme.outline)
+                    Text(stringResource(Res.string.no_makers_found), color = MaterialTheme.colorScheme.outline)
                 }
             } else {
                 BoxWithConstraints(modifier = Modifier.weight(1f)) {
@@ -211,9 +212,9 @@ fun MakerItemCard(
                     color = textColor,
                 )
                 Text(
-                    text = "$toyCount models",
+                    text = stringResource(Res.string.models_count, toyCount),
                     fontSize = 12.sp,
-                    color = textColor
+                    color = textColor.copy(alpha = 0.6f)
                 )
             }
         }

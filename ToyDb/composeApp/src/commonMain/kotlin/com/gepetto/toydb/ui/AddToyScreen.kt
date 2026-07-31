@@ -10,6 +10,8 @@ import androidx.compose.ui.Modifier
 import com.gepetto.toydb.database.Toy
 import com.gepetto.toydb.database.ToyRepository
 import androidx.compose.ui.graphics.Color
+import org.jetbrains.compose.resources.stringResource
+import toydb.composeapp.generated.resources.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,10 +34,10 @@ fun AddToyScreen(
         containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
-                title = { Text("Add New Toy (#$nextRef)") },
+                title = { Text(stringResource(Res.string.add_new_toy, nextRef)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(Res.string.back))
                     }
                 }
             )

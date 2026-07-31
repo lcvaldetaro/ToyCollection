@@ -39,6 +39,8 @@ import androidx.compose.material.icons.filled.Add
 import okio.FileSystem
 import okio.Path.Companion.toPath
 import club.gepetto.GcLog
+import org.jetbrains.compose.resources.stringResource
+import toydb.composeapp.generated.resources.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -116,16 +118,16 @@ fun ToyDetailScreen(
 
     if (toy == null) {
         Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("Toy not found.")
+            Text(stringResource(Res.string.toy_not_found))
         }
         return
     }
 
     if (showDeleteConfirmation) {
         GcGenericDialog(
-            title = "Delete Toy",
-            message = "Are you sure you want to delete toy #${toy.refNum}?",
-            buttonText = "Delete",
+            title = stringResource(Res.string.delete_toy_title),
+            message = stringResource(Res.string.delete_toy_confirm, toy.refNum),
+            buttonText = stringResource(Res.string.delete),
             onClick = {
                 repository.deleteToy(toyType, refNum)
                 showDeleteConfirmation = false
@@ -141,18 +143,18 @@ fun ToyDetailScreen(
         containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
-                title = { Text("Toy Details #${toy.refNum}") },
+                title = { Text(stringResource(Res.string.toy_details_title, toy.refNum)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(Res.string.back))
                     }
                 },
                 actions = {
                     IconButton(onClick = { onNavigate(Destination.EditToy(toyType, refNum)) }) {
-                        Icon(Icons.Default.Edit, contentDescription = "Edit")
+                        Icon(Icons.Default.Edit, contentDescription = stringResource(Res.string.edit))
                     }
                     IconButton(onClick = { showDeleteConfirmation = true }) {
-                        Icon(Icons.Default.Delete, contentDescription = "Delete")
+                        Icon(Icons.Default.Delete, contentDescription = stringResource(Res.string.delete))
                     }
                 }
             )
@@ -189,13 +191,12 @@ fun ToyDetailScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(150.dp)
+                        .height(260.dp)
                         .clip(RoundedCornerShape(8.dp))
-                        .background(MaterialTheme.colorScheme.secondaryContainer)
-                        .padding(vertical = GcSpacing.Small),
+                        .background(MaterialTheme.colorScheme.secondaryContainer),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("No Main Picture available", color = MaterialTheme.colorScheme.onSecondaryContainer)
+                    Text(stringResource(Res.string.no_main_picture), color = MaterialTheme.colorScheme.onSecondaryContainer)
                 }
             }
 
@@ -213,34 +214,34 @@ fun ToyDetailScreen(
 
             // Primary stats grid
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(GcSpacing.Standard)) {
-                DetailCard(label = "Scale", value = toy.scale, modifier = Modifier.weight(1f))
-                DetailCard(label = "Condition", value = toy.condition, modifier = Modifier.weight(1f))
-                DetailCard(label = "Value", value = if (toy.value > 0) "$${toy.value}" else "Not Set", modifier = Modifier.weight(1f))
+                DetailCard(label = stringResource(Res.string.form_field_scale), value = toy.scale, modifier = Modifier.weight(1f))
+                DetailCard(label = stringResource(Res.string.form_field_condition), value = toy.condition, modifier = Modifier.weight(1f))
+                DetailCard(label = stringResource(Res.string.value), value = if (toy.value > 0) "$${toy.value}" else stringResource(Res.string.not_set), modifier = Modifier.weight(1f))
             }
 
             Spacer(modifier = Modifier.height(GcSpacing.Small))
 
-            DetailField("Manufacturer", toy.makerCombo)
-            DetailField("Body Maker", toy.bodyMaker)
-            DetailField("Chassis Maker", toy.chassisMaker)
-            DetailField("Chassis Type", toy.chassisType)
-            DetailField("Motor", "${toy.motorMaker} ${toy.motorDetails}")
-            DetailField("Color", toy.color)
-            DetailField("Catalog Number", toy.catalogNumber)
-            DetailField("Acquired", toy.acquired)
-            DetailField("Amount Paid", if (toy.amountPaid > 0) "$${toy.amountPaid}" else "")
-            DetailField("Amount Sold", toy.amountSold)
-            DetailField("Boxed", if (toy.boxed == "y") "Yes" else "No")
-            DetailField("Factory Original", if (toy.factoryCar == "y") "Yes" else "No")
-            DetailField("Repro Parts", toy.repro)
-            DetailField("Traded Info", toy.traded)
-            DetailField("Buy Info", toy.buy)
-            DetailField("Maintenance Log", toy.maintenance)
-            DetailField("To Build Info", toy.toMake)
-            DetailField("Decals/Detail Work", toy.detail)
-            DetailField("Major Work Done", toy.majorWork)
-            DetailField("Minor Work Done", toy.minorWork)
-            DetailField("Comments", toy.comments)
+            DetailField(stringResource(Res.string.manufacturer), toy.makerCombo)
+            DetailField(stringResource(Res.string.form_field_body_maker), toy.bodyMaker)
+            DetailField(stringResource(Res.string.form_field_chassis_maker), toy.chassisMaker)
+            DetailField(stringResource(Res.string.form_field_chassis_type), toy.chassisType)
+            DetailField(stringResource(Res.string.motor), "${toy.motorMaker} ${toy.motorDetails}")
+            DetailField(stringResource(Res.string.form_field_color), toy.color)
+            DetailField(stringResource(Res.string.form_field_catalog_number), toy.catalogNumber)
+            DetailField(stringResource(Res.string.form_field_acquisition_details), toy.acquired)
+            DetailField(stringResource(Res.string.amount_paid), if (toy.amountPaid > 0) "$${toy.amountPaid}" else "")
+            DetailField(stringResource(Res.string.amount_sold), toy.amountSold)
+            DetailField(stringResource(Res.string.form_field_boxed), if (toy.boxed == "y") stringResource(Res.string.yes) else stringResource(Res.string.no))
+            DetailField(stringResource(Res.string.form_field_factory_car), if (toy.factoryCar == "y") stringResource(Res.string.yes) else stringResource(Res.string.no))
+            DetailField(stringResource(Res.string.repro_parts), toy.repro)
+            DetailField(stringResource(Res.string.form_field_traded_info), toy.traded)
+            DetailField(stringResource(Res.string.form_field_buy_info), toy.buy)
+            DetailField(stringResource(Res.string.form_field_maintenance_log), toy.maintenance)
+            DetailField(stringResource(Res.string.form_field_to_build_info), toy.toMake)
+            DetailField(stringResource(Res.string.form_field_detail_decal_work), toy.detail)
+            DetailField(stringResource(Res.string.form_field_major_work), toy.majorWork)
+            DetailField(stringResource(Res.string.form_field_minor_work), toy.minorWork)
+            DetailField(stringResource(Res.string.comments), toy.comments)
 
             // Secondary Images Gallery
             val secondaryImages = remember(toy) { toy.getSecondaryImages() }
@@ -251,7 +252,7 @@ fun ToyDetailScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Secondary Images (${secondaryImages.size})",
+                    text = stringResource(Res.string.secondary_images_title, secondaryImages.size),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = sysTextColor()
@@ -261,7 +262,7 @@ fun ToyDetailScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
-                        contentDescription = "Add Secondary Image",
+                        contentDescription = stringResource(Res.string.add_secondary_image_desc),
                         tint = MaterialTheme.colorScheme.primary
                     )
                 }

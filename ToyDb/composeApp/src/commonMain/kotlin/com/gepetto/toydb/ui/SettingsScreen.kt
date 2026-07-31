@@ -24,6 +24,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import club.gepetto.GcLog
+import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.resources.getString
+import toydb.composeapp.generated.resources.*
 import club.gepetto.composeutils.GcSpacing
 import club.gepetto.composeutils.sysBackgroundColor
 import club.gepetto.composeutils.sysTextColor
@@ -59,7 +62,14 @@ fun SettingsScreen(
     modifier: Modifier = Modifier
 ) {
     val repository = remember { ToyRepository(db) }
-    var statusText by remember { mutableStateOf("Ready") }
+    val readyText = stringResource(Res.string.status_ready)
+    var statusText by remember(readyText) { mutableStateOf(readyText) }
+    val allFieldsRequiredText = stringResource(Res.string.all_fields_required)
+    val categoryExistsText = stringResource(Res.string.category_exists)
+    val importCompleteText = stringResource(Res.string.import_complete)
+    val exportCompleteText = stringResource(Res.string.export_complete)
+    val htmlExportCompleteText = stringResource(Res.string.html_export_complete)
+    val sftpConfigSavedText = stringResource(Res.string.sftp_config_saved)
     val coroutineScope = rememberCoroutineScope()
     var appTitle by remember { mutableStateOf(repository.getAppTitleSetting()) }
 
@@ -132,6 +142,7 @@ fun SettingsScreen(
     var dialogCategoryLabel by remember { mutableStateOf("") }
     var dialogCategoryPrefix by remember { mutableStateOf("") }
     var dialogCategoryTitle by remember { mutableStateOf("") }
+    var dialogCategoryIcon by remember { mutableStateOf("") }
     var dialogErrorText by remember { mutableStateOf("") }
 
     // Delete Category confirmation state
@@ -212,7 +223,7 @@ fun SettingsScreen(
             containerColor = sysBackgroundColor(),
             title = {
                 Text(
-                    text = if (dialogIsEditMode) "Edit Category" else "Add New Category",
+                    text = if (dialogIsEditMode) stringResource(Res.string.edit_category_title) else stringResource(Res.string.add_new_category_title),
                     color = sysTextColor()
                 )
             },
@@ -224,8 +235,8 @@ fun SettingsScreen(
                     OutlinedTextField(
                         value = dialogCategoryKey,
                         onValueChange = { dialogCategoryKey = it.trim().lowercase() },
-                        label = { Text("Category ID (lowercase, unique)*") },
-                        placeholder = { Text("e.g. lego") },
+                        label = { Text(stringResource(Res.string.category_id_label)) },
+                        placeholder = { Text(stringResource(Res.string.category_id_placeholder)) },
                         enabled = !dialogIsEditMode, // Key cannot be edited
                         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                         singleLine = true,
@@ -238,8 +249,8 @@ fun SettingsScreen(
                     OutlinedTextField(
                         value = dialogCategoryLabel,
                         onValueChange = { dialogCategoryLabel = it },
-                        label = { Text("Category Name (Label)*") },
-                        placeholder = { Text("e.g. Lego Sets") },
+                        label = { Text(stringResource(Res.string.category_name_label)) },
+                        placeholder = { Text(stringResource(Res.string.category_name_placeholder)) },
                         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
@@ -250,8 +261,8 @@ fun SettingsScreen(
                     OutlinedTextField(
                         value = dialogCategoryPrefix,
                         onValueChange = { dialogCategoryPrefix = it.trim() },
-                        label = { Text("Filename Prefix (e.g. leg)*") },
-                        placeholder = { Text("e.g. leg") },
+                        label = { Text(stringResource(Res.string.filename_prefix_label)) },
+                        placeholder = { Text(stringResource(Res.string.filename_prefix_placeholder)) },
                         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
@@ -262,8 +273,20 @@ fun SettingsScreen(
                     OutlinedTextField(
                         value = dialogCategoryTitle,
                         onValueChange = { dialogCategoryTitle = it },
-                        label = { Text("Category Title (for HTML Page)*") },
-                        placeholder = { Text("e.g. Lego Sets Collection") },
+                        label = { Text(stringResource(Res.string.html_title_label)) },
+                        placeholder = { Text(stringResource(Res.string.html_title_placeholder)) },
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = sysTextColor(),
+                            unfocusedTextColor = sysTextColor()
+                        )
+                    )
+                    OutlinedTextField(
+                        value = dialogCategoryIcon,
+                        onValueChange = { dialogCategoryIcon = it.trim().lowercase() },
+                        label = { Text(stringResource(Res.string.category_icon_label)) },
+                        placeholder = { Text(stringResource(Res.string.category_icon_placeholder)) },
                         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
@@ -276,8 +299,8 @@ fun SettingsScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        if (dialogCategoryKey.trim().isEmpty() || dialogCategoryLabel.trim().isEmpty() || dialogCategoryPrefix.trim().isEmpty() || dialogCategoryTitle.trim().isEmpty()) {
-                            dialogErrorText = "All fields marked with * are required."
+                        if (dialogCategoryKey.trim().isEmpty() || dialogCategoryLabel.trim().isEmpty() || dialogCategoryPrefix.trim().isEmpty() || dialogCategoryTitle.trim().isEmpty() || dialogCategoryIcon.trim().isEmpty()) {
+                            dialogErrorText = allFieldsRequiredText
                             return@Button
                         }
                         
@@ -285,14 +308,15 @@ fun SettingsScreen(
                             category = dialogCategoryKey.trim(),
                             label = dialogCategoryLabel.trim(),
                             imagePrefix = dialogCategoryPrefix.trim(),
-                            title = dialogCategoryTitle.trim()
+                            title = dialogCategoryTitle.trim(),
+                            icon = dialogCategoryIcon.trim()
                         )
                         
                         if (dialogIsEditMode) {
                             repository.updateCategorySetting(newSetting)
                         } else {
                             if (categoriesList.any { it.category == newSetting.category }) {
-                                dialogErrorText = "Category ID '${newSetting.category}' already exists."
+                                dialogErrorText = categoryExistsText.format(newSetting.category)
                                 return@Button
                             }
                             repository.addCategorySetting(newSetting)
@@ -308,7 +332,7 @@ fun SettingsScreen(
                         contentColor = MaterialTheme.colorScheme.onPrimary
                     )
                 ) {
-                    Text("Save")
+                    Text(stringResource(Res.string.save))
                 }
             },
             dismissButton = {
@@ -318,7 +342,7 @@ fun SettingsScreen(
                         contentColor = MaterialTheme.colorScheme.primary
                     )
                 ) {
-                    Text("Cancel")
+                    Text(stringResource(Res.string.cancel))
                 }
             }
         )
@@ -330,11 +354,10 @@ fun SettingsScreen(
         AlertDialog(
             onDismissRequest = { showDeleteConfirmDialog = false },
             containerColor = sysBackgroundColor(),
-            title = { Text("Delete Category", color = sysTextColor()) },
+            title = { Text(stringResource(Res.string.delete_category_title), color = sysTextColor()) },
             text = {
                 Text(
-                    "Are you sure you want to delete category '${cat.label}'?\n\n" +
-                    "WARNING: This will permanently delete ALL toys belonging to this category from the database!",
+                    stringResource(Res.string.delete_category_confirm, cat.label),
                     color = MaterialTheme.colorScheme.error
                 )
             },
@@ -351,7 +374,7 @@ fun SettingsScreen(
                         contentColor = MaterialTheme.colorScheme.onError
                     )
                 ) {
-                    Text("Delete Category")
+                    Text(stringResource(Res.string.delete_category_title))
                 }
             },
             dismissButton = {
@@ -361,7 +384,7 @@ fun SettingsScreen(
                         contentColor = MaterialTheme.colorScheme.primary
                     )
                 ) {
-                    Text("Cancel")
+                    Text(stringResource(Res.string.cancel))
                 }
             }
         )
@@ -374,7 +397,7 @@ fun SettingsScreen(
             containerColor = sysBackgroundColor(),
             title = {
                 Text(
-                    text = "Export Successful",
+                    text = stringResource(Res.string.export_success_title),
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp,
                     color = sysTextColor()
@@ -382,7 +405,7 @@ fun SettingsScreen(
             },
             text = {
                 Column {
-                    Text("The database records were exported to the following directory:", color = sysTextColor())
+                    Text(stringResource(Res.string.export_success_desc), color = sysTextColor())
                     Spacer(modifier = Modifier.height(GcSpacing.Small))
                     Card(
                         colors = CardDefaults.cardColors(containerColor = sysBackgroundColor()),
@@ -397,7 +420,7 @@ fun SettingsScreen(
                         )
                     }
                     Spacer(modifier = Modifier.height(GcSpacing.Standard))
-                    Text("Exported Files:", fontWeight = FontWeight.SemiBold, color = sysTextColor())
+                    Text(stringResource(Res.string.export_success_files), fontWeight = FontWeight.SemiBold, color = sysTextColor())
                     Spacer(modifier = Modifier.height(4.dp))
                     exportedFiles.forEach { file ->
                         Row(
@@ -412,7 +435,7 @@ fun SettingsScreen(
             },
             confirmButton = {
                 Button(onClick = { showExportDialog = false }) {
-                    Text("OK")
+                    Text(stringResource(Res.string.ok))
                 }
             }
         )
@@ -425,7 +448,7 @@ fun SettingsScreen(
             containerColor = sysBackgroundColor(),
             title = {
                 Text(
-                    text = "Import Successful",
+                    text = stringResource(Res.string.import_success_title),
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp,
                     color = sysTextColor()
@@ -433,7 +456,7 @@ fun SettingsScreen(
             },
             text = {
                 Column {
-                    Text("The database records were imported successfully from the following directory:", color = sysTextColor())
+                    Text(stringResource(Res.string.import_success_desc), color = sysTextColor())
                     Spacer(modifier = Modifier.height(GcSpacing.Small))
                     Card(
                         colors = CardDefaults.cardColors(containerColor = sysBackgroundColor()),
@@ -441,14 +464,14 @@ fun SettingsScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            text = customImportExportPath ?: "Default directory",
+                            text = customImportExportPath ?: stringResource(Res.string.default_directory),
                             fontSize = 13.sp,
                             modifier = Modifier.padding(GcSpacing.Small),
                             color = sysTextColor()
                         )
                     }
                     Spacer(modifier = Modifier.height(GcSpacing.Standard))
-                    Text("Imported Records:", fontWeight = FontWeight.SemiBold, color = sysTextColor())
+                    Text(stringResource(Res.string.import_success_records), fontWeight = FontWeight.SemiBold, color = sysTextColor())
                     Spacer(modifier = Modifier.height(4.dp))
                     importCountsMap.forEach { (label, count) ->
                         Row(
@@ -463,7 +486,7 @@ fun SettingsScreen(
             },
             confirmButton = {
                 Button(onClick = { showImportDialog = false }) {
-                    Text("OK")
+                    Text(stringResource(Res.string.ok))
                 }
             }
         )
@@ -476,7 +499,7 @@ fun SettingsScreen(
             containerColor = sysBackgroundColor(),
             title = {
                 Text(
-                    text = "HTML Export Successful",
+                    text = stringResource(Res.string.html_export_success_title),
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp,
                     color = sysTextColor()
@@ -484,7 +507,7 @@ fun SettingsScreen(
             },
             text = {
                 Column {
-                    Text("The legacy HTML pages were generated successfully in the following directory:", color = sysTextColor())
+                    Text(stringResource(Res.string.html_export_success_desc), color = sysTextColor())
                     Spacer(modifier = Modifier.height(GcSpacing.Small))
                     Card(
                         colors = CardDefaults.cardColors(containerColor = sysBackgroundColor()),
@@ -504,13 +527,13 @@ fun SettingsScreen(
                         modifier = Modifier.padding(vertical = 2.dp)
                     ) {
                         Text("✓ ", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-                        Text("Generated $htmlExportCount HTML pages.", fontSize = 14.sp, color = sysTextColor())
+                        Text(stringResource(Res.string.html_export_success_count, htmlExportCount), fontSize = 14.sp, color = sysTextColor())
                     }
                 }
             },
             confirmButton = {
                 Button(onClick = { showHtmlExportDialog = false }) {
-                    Text("OK")
+                    Text(stringResource(Res.string.ok))
                 }
             }
         )
@@ -524,15 +547,15 @@ fun SettingsScreen(
                 activeVerification = null
             },
             containerColor = sysBackgroundColor(),
-            title = { Text("Verify Remote Host Fingerprint", color = sysTextColor()) },
+            title = { Text(stringResource(Res.string.sftp_verify_host_title), color = sysTextColor()) },
             text = {
                 Column {
-                    Text("The authenticity of host '${verification.hostname}:${verification.port}' can't be established.", color = sysTextColor())
+                    Text(stringResource(Res.string.sftp_verify_host_desc, verification.hostname, verification.port.toString()), color = sysTextColor())
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("Fingerprint:", fontWeight = FontWeight.Bold, color = sysTextColor())
+                    Text(stringResource(Res.string.sftp_verify_host_fingerprint), fontWeight = FontWeight.Bold, color = sysTextColor())
                     Text(verification.fingerprint, style = MaterialTheme.typography.bodySmall, color = sysTextColor())
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("Are you sure you want to continue connecting?", color = sysTextColor())
+                    Text(stringResource(Res.string.sftp_verify_host_confirm), color = sysTextColor())
                 }
             },
             confirmButton = {
@@ -542,7 +565,7 @@ fun SettingsScreen(
                         activeVerification = null
                     }
                 ) {
-                    Text("Accept & Save")
+                    Text(stringResource(Res.string.sftp_verify_host_accept))
                 }
             },
             dismissButton = {
@@ -552,7 +575,7 @@ fun SettingsScreen(
                         activeVerification = null
                     }
                 ) {
-                    Text("Cancel")
+                    Text(stringResource(Res.string.cancel))
                 }
             }
         )
@@ -562,8 +585,8 @@ fun SettingsScreen(
         AlertDialog(
             onDismissRequest = { showTestSuccessDialog = false },
             containerColor = sysBackgroundColor(),
-            title = { Text("Connection Test Successful", color = sysTextColor(), fontWeight = FontWeight.Bold) },
-            text = { Text("The connection to the SFTP server was successfully established.", color = sysTextColor()) },
+            title = { Text(stringResource(Res.string.sftp_test_success_title), color = sysTextColor(), fontWeight = FontWeight.Bold) },
+            text = { Text(stringResource(Res.string.sftp_test_success_desc), color = sysTextColor()) },
             confirmButton = {
                 Button(onClick = { showTestSuccessDialog = false }) {
                     Text("OK")
@@ -576,8 +599,8 @@ fun SettingsScreen(
         AlertDialog(
             onDismissRequest = { showDownloadSuccessDialog = false },
             containerColor = sysBackgroundColor(),
-            title = { Text("Download Completed", color = sysTextColor(), fontWeight = FontWeight.Bold) },
-            text = { Text("The data was successfully downloaded from the SFTP server.", color = sysTextColor()) },
+            title = { Text(stringResource(Res.string.sftp_status_completed), color = sysTextColor(), fontWeight = FontWeight.Bold) },
+            text = { Text(stringResource(Res.string.sftp_status_download_completed_desc), color = sysTextColor()) },
             confirmButton = {
                 Button(onClick = { showDownloadSuccessDialog = false }) {
                     Text("OK")
@@ -590,8 +613,8 @@ fun SettingsScreen(
         AlertDialog(
             onDismissRequest = { showTestErrorDialog = false },
             containerColor = sysBackgroundColor(),
-            title = { Text("Connection Test Failed", color = sysTextColor(), fontWeight = FontWeight.Bold) },
-            text = { Text("Could not connect to the SFTP server:\n\n$testErrorMsg", color = sysTextColor()) },
+            title = { Text(stringResource(Res.string.sftp_test_failed_title), color = sysTextColor(), fontWeight = FontWeight.Bold) },
+            text = { Text(stringResource(Res.string.sftp_test_failed_desc, testErrorMsg), color = sysTextColor()) },
             confirmButton = {
                 Button(onClick = { showTestErrorDialog = false }) {
                     Text("OK")
@@ -606,7 +629,7 @@ fun SettingsScreen(
             containerColor = sysBackgroundColor(),
             title = {
                 Text(
-                    text = "Confirm Sync ($syncDirection)",
+                    text = stringResource(Res.string.sftp_sync_direction_label, syncDirection),
                     fontWeight = FontWeight.Bold,
                     color = sysTextColor()
                 )
@@ -616,12 +639,12 @@ fun SettingsScreen(
                     Text(
                         text = if (proposedSftpActions.isEmpty()) {
                             if (syncDirection == "Upload") {
-                                "All files on the server are up-to-date. No changes detected. Do you want to continue with the upload?"
+                                stringResource(Res.string.sftp_sync_ready_upload)
                             } else {
-                                "All local files are up-to-date. No changes detected. Do you want to continue with the download?"
+                                stringResource(Res.string.sftp_sync_ready_download)
                             }
                         } else {
-                            "The following actions will be performed to synchronize with the server:"
+                            stringResource(Res.string.sftp_sync_actions_needed)
                         },
                         color = sysTextColor()
                     )
@@ -645,7 +668,7 @@ fun SettingsScreen(
                                 modifier = Modifier.padding(end = 8.dp)
                             )
                             Text(
-                                text = "Select All",
+                                text = stringResource(Res.string.select_all),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.SemiBold,
                                 color = sysTextColor()
@@ -687,7 +710,7 @@ fun SettingsScreen(
                                             modifier = Modifier.weight(1f)
                                         )
                                         Text(
-                                            text = action.reason,
+                                            text = if (action.reason == "New File") stringResource(Res.string.sftp_sync_new_file) else if (action.reason.startsWith("Overwrite")) stringResource(Res.string.sftp_sync_overwrite) else action.reason,
                                             style = MaterialTheme.typography.labelSmall,
                                             color = if (action.reason == "New File") {
                                                 MaterialTheme.colorScheme.primary
@@ -719,12 +742,12 @@ fun SettingsScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "Total files: $totalCount",
+                                text = stringResource(Res.string.sftp_sync_total_files, totalCount),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = sysTextColor()
                             )
                             Text(
-                                text = "Selected: $selectedCount",
+                                text = stringResource(Res.string.selected_count, selectedCount),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary
@@ -733,7 +756,7 @@ fun SettingsScreen(
                     }
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = "⚠️ Warning: Navigating away from this screen or backgrounding the app during transfer will abort the synchronization.",
+                        text = stringResource(Res.string.sftp_sync_warning),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.error,
                         fontWeight = FontWeight.SemiBold
@@ -748,30 +771,30 @@ fun SettingsScreen(
                             isSftpSyncing = true
                             val selectedSet = selectedSftpActions.filterValues { it }.keys
                             if (syncDirection == "Upload") {
-                                statusText = "Uploading data to SFTP server..."
+                                statusText = getString(Res.string.sftp_status_uploading)
                                 sftpSyncProgress = 0.0f
                                 val result = sftpService.uploadData(buildSftpConfig(), db, onHostKeyUnverified, selectedSet) { status, progress ->
                                     statusText = status
                                     sftpSyncProgress = progress
                                 }
                                 if (result.isSuccess) {
-                                    statusText = "Data successfully uploaded to server!"
+                                    statusText = getString(Res.string.sftp_status_upload_success)
                                 } else {
-                                    statusText = "Upload failed: ${result.exceptionOrNull()?.message}"
+                                    statusText = getString(Res.string.sftp_status_upload_failed, result.exceptionOrNull()?.message ?: "")
                                 }
                             } else {
-                                statusText = "Downloading data from SFTP server..."
+                                statusText = getString(Res.string.sftp_status_downloading)
                                 sftpSyncProgress = 0.0f
                                 val result = sftpService.downloadData(buildSftpConfig(), db, onHostKeyUnverified, selectedSet) { status, progress ->
                                     statusText = status
                                     sftpSyncProgress = progress
                                 }
                                 if (result.isSuccess) {
-                                    statusText = "Data successfully downloaded from server!"
+                                    statusText = getString(Res.string.sftp_status_download_success)
                                     onCategoriesChanged()
                                     showDownloadSuccessDialog = true
                                 } else {
-                                    statusText = "Download failed: ${result.exceptionOrNull()?.message}"
+                                    statusText = getString(Res.string.sftp_status_download_failed, result.exceptionOrNull()?.message ?: "")
                                 }
                             }
                             isSftpSyncing = false
@@ -785,7 +808,7 @@ fun SettingsScreen(
                 OutlinedButton(
                     onClick = { showSyncConfirmDialog = false }
                 ) {
-                    Text("Cancel")
+                    Text(stringResource(Res.string.cancel))
                 }
             }
         )
@@ -803,7 +826,7 @@ fun SettingsScreen(
                 .padding(GcSpacing.Standard)
         ) {
             item {
-                Text("Database & System Settings", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = sysTextColor())
+                Text(stringResource(Res.string.settings_title), fontSize = 24.sp, fontWeight = FontWeight.Bold, color = sysTextColor())
                 Spacer(modifier = Modifier.height(GcSpacing.Standard))
             }
             item {
@@ -832,7 +855,6 @@ fun SettingsScreen(
                                 onAppTitleChanged(newTitle)
                             }
                         )
-                        AppInfoSettings { onNavigate(Destination.Info) }
                         if (isDesktopPlatform()) {
                             ImagesDirectorySettings(
                                 customImagesPath = customImagesPath,
@@ -866,20 +888,20 @@ fun SettingsScreen(
                                     importCountsMap.clear()
                                     importCountsMap.putAll(counts)
                                     showImportDialog = true
-                                    statusText = "Import Complete!"
+                                    statusText = importCompleteText
                                 },
                                 onExportComplete = { path, files ->
                                     exportDirectoryPath = path
                                     exportedFiles.clear()
                                     exportedFiles.addAll(files)
                                     showExportDialog = true
-                                    statusText = "Export Complete!"
+                                    statusText = exportCompleteText
                                 },
                                 onHtmlExportComplete = { path, count ->
                                     htmlExportPath = path
                                     htmlExportCount = count
                                     showHtmlExportDialog = true
-                                    statusText = "HTML Export Complete!"
+                                    statusText = htmlExportCompleteText
                                 },
                                 onSetStatus = { statusText = it },
                                 readJsonFile = { name, dir -> readJsonFile(name, dir) },
@@ -903,20 +925,20 @@ fun SettingsScreen(
                                     repository.setSftpKeyPathSetting(sftpKeyPath)
                                     repository.setSftpKeyPassphraseSetting(sftpKeyPassphrase)
                                     repository.setSftpRemoteDirSetting(sftpRemoteDir)
-                                    statusText = "SFTP connection configuration saved."
+                                    statusText = sftpConfigSavedText
                                 },
                                 onTestConnection = {
                                     coroutineScope.launch {
                                         isTestingSftp = true
-                                        statusText = "Testing SFTP Connection..."
+                                        statusText = getString(Res.string.sftp_testing_connection)
                                         val result = sftpService.testConnection(buildSftpConfig(), onHostKeyUnverified)
                                         isTestingSftp = false
                                         if (result.isSuccess) {
-                                            statusText = "SFTP Connection Successful!"
+                                            statusText = getString(Res.string.sftp_status_test_success)
                                             showTestSuccessDialog = true
                                         } else {
-                                            statusText = "SFTP Connection Failed: ${result.exceptionOrNull()?.message}"
-                                            testErrorMsg = result.exceptionOrNull()?.message ?: "Unknown error"
+                                            statusText = getString(Res.string.sftp_status_test_failed, result.exceptionOrNull()?.message ?: "")
+                                            testErrorMsg = result.exceptionOrNull()?.message ?: getString(Res.string.unknown)
                                             showTestErrorDialog = true
                                         }
                                     }
@@ -926,7 +948,7 @@ fun SettingsScreen(
                             SftpSyncActions(
                                 onUploadClick = {
                                     coroutineScope.launch {
-                                        statusText = "Calculating upload changes..."
+                                        statusText = getString(Res.string.sftp_status_calculating_upload)
                                         isSftpSyncing = true
                                         val result = sftpService.calculateUploadPlan(buildSftpConfig(), db, onHostKeyUnverified)
                                         isSftpSyncing = false
@@ -939,13 +961,13 @@ fun SettingsScreen(
                                             syncDirection = "Upload"
                                             showSyncConfirmDialog = true
                                         } else {
-                                            statusText = "Plan calculation failed: ${result.exceptionOrNull()?.message}"
+                                            statusText = getString(Res.string.sftp_status_plan_failed, result.exceptionOrNull()?.message ?: "")
                                         }
                                     }
                                 },
                                 onDownloadClick = {
                                     coroutineScope.launch {
-                                        statusText = "Calculating download changes..."
+                                        statusText = getString(Res.string.sftp_status_calculating_download)
                                         isSftpSyncing = true
                                         val result = sftpService.calculateDownloadPlan(buildSftpConfig(), db, onHostKeyUnverified)
                                         isSftpSyncing = false
@@ -958,7 +980,7 @@ fun SettingsScreen(
                                             syncDirection = "Download"
                                             showSyncConfirmDialog = true
                                         } else {
-                                            statusText = "Plan calculation failed: ${result.exceptionOrNull()?.message}"
+                                            statusText = getString(Res.string.sftp_status_plan_failed, result.exceptionOrNull()?.message ?: "")
                                         }
                                     }
                                 },
@@ -980,6 +1002,7 @@ fun SettingsScreen(
                                 dialogCategoryLabel = ""
                                 dialogCategoryPrefix = ""
                                 dialogCategoryTitle = ""
+                                dialogCategoryIcon = "category"
                                 dialogErrorText = ""
                                 showCategoryDialog = true
                             },
@@ -989,6 +1012,7 @@ fun SettingsScreen(
                                 dialogCategoryLabel = cat.label
                                 dialogCategoryPrefix = cat.imagePrefix
                                 dialogCategoryTitle = cat.title
+                                dialogCategoryIcon = cat.icon
                                 dialogErrorText = ""
                                 showCategoryDialog = true
                             },
@@ -1018,7 +1042,6 @@ fun SettingsScreen(
                             onAppTitleChanged(newTitle)
                         }
                     )
-                    AppInfoSettings { onNavigate(Destination.Info) }
                     if (isDesktopPlatform()) {
                         ImagesDirectorySettings(
                             customImagesPath = customImagesPath,
@@ -1052,20 +1075,20 @@ fun SettingsScreen(
                                 importCountsMap.clear()
                                 importCountsMap.putAll(counts)
                                 showImportDialog = true
-                                statusText = "Import Complete!"
+                                statusText = importCompleteText
                             },
                             onExportComplete = { path, files ->
                                 exportDirectoryPath = path
                                 exportedFiles.clear()
                                 exportedFiles.addAll(files)
                                 showExportDialog = true
-                                statusText = "Export Complete!"
+                                statusText = exportCompleteText
                             },
                             onHtmlExportComplete = { path, count ->
                                 htmlExportPath = path
                                 htmlExportCount = count
                                 showHtmlExportDialog = true
-                                statusText = "HTML Export Complete!"
+                                statusText = htmlExportCompleteText
                             },
                             onSetStatus = { statusText = it },
                             readJsonFile = { name, dir -> readJsonFile(name, dir) },
@@ -1089,20 +1112,20 @@ fun SettingsScreen(
                                 repository.setSftpKeyPathSetting(sftpKeyPath)
                                 repository.setSftpKeyPassphraseSetting(sftpKeyPassphrase)
                                 repository.setSftpRemoteDirSetting(sftpRemoteDir)
-                                statusText = "SFTP connection configuration saved."
+                                statusText = sftpConfigSavedText
                             },
                             onTestConnection = {
                                 coroutineScope.launch {
                                     isTestingSftp = true
-                                    statusText = "Testing SFTP Connection..."
+                                    statusText = getString(Res.string.sftp_testing_connection)
                                     val result = sftpService.testConnection(buildSftpConfig(), onHostKeyUnverified)
                                     isTestingSftp = false
                                     if (result.isSuccess) {
-                                        statusText = "SFTP Connection Successful!"
+                                        statusText = getString(Res.string.sftp_status_test_success)
                                         showTestSuccessDialog = true
                                     } else {
-                                        statusText = "SFTP Connection Failed: ${result.exceptionOrNull()?.message}"
-                                        testErrorMsg = result.exceptionOrNull()?.message ?: "Unknown error"
+                                        statusText = getString(Res.string.sftp_status_test_failed, result.exceptionOrNull()?.message ?: "")
+                                        testErrorMsg = result.exceptionOrNull()?.message ?: getString(Res.string.unknown)
                                         showTestErrorDialog = true
                                     }
                                 }
@@ -1112,7 +1135,7 @@ fun SettingsScreen(
                         SftpSyncActions(
                             onUploadClick = {
                                 coroutineScope.launch {
-                                    statusText = "Calculating upload changes..."
+                                    statusText = getString(Res.string.sftp_status_calculating_upload)
                                     isSftpSyncing = true
                                     val result = sftpService.calculateUploadPlan(buildSftpConfig(), db, onHostKeyUnverified)
                                     isSftpSyncing = false
@@ -1125,13 +1148,13 @@ fun SettingsScreen(
                                         syncDirection = "Upload"
                                         showSyncConfirmDialog = true
                                     } else {
-                                        statusText = "Plan calculation failed: ${result.exceptionOrNull()?.message}"
+                                        statusText = getString(Res.string.sftp_status_plan_failed, result.exceptionOrNull()?.message ?: "")
                                     }
                                 }
                             },
                             onDownloadClick = {
                                 coroutineScope.launch {
-                                    statusText = "Calculating download changes..."
+                                    statusText = getString(Res.string.sftp_status_calculating_download)
                                     isSftpSyncing = true
                                     val result = sftpService.calculateDownloadPlan(buildSftpConfig(), db, onHostKeyUnverified)
                                     isSftpSyncing = false
@@ -1144,7 +1167,7 @@ fun SettingsScreen(
                                         syncDirection = "Download"
                                         showSyncConfirmDialog = true
                                     } else {
-                                        statusText = "Plan calculation failed: ${result.exceptionOrNull()?.message}"
+                                        statusText = getString(Res.string.sftp_status_plan_failed, result.exceptionOrNull()?.message ?: "")
                                     }
                                 }
                             },
@@ -1159,6 +1182,7 @@ fun SettingsScreen(
                             dialogCategoryLabel = ""
                             dialogCategoryPrefix = ""
                             dialogCategoryTitle = ""
+                            dialogCategoryIcon = "category"
                             dialogErrorText = ""
                             showCategoryDialog = true
                         },
@@ -1168,6 +1192,7 @@ fun SettingsScreen(
                             dialogCategoryLabel = cat.label
                             dialogCategoryPrefix = cat.imagePrefix
                             dialogCategoryTitle = cat.title
+                            dialogCategoryIcon = cat.icon
                             dialogErrorText = ""
                             showCategoryDialog = true
                         },
@@ -1199,9 +1224,9 @@ fun StatusBanner(statusText: String) {
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
     ) {
         Column(modifier = Modifier.padding(GcSpacing.Standard)) {
-            Text("Storage Type: SQLite Local Database", fontSize = 12.sp, color = MaterialTheme.colorScheme.outline)
+            Text(stringResource(Res.string.storage_type_sqlite), fontSize = 12.sp, color = MaterialTheme.colorScheme.outline)
             Spacer(modifier = Modifier.height(4.dp))
-            Text("Status: $statusText", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = sysTextColor())
+            Text(stringResource(Res.string.status_prefix, statusText), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = sysTextColor())
         }
     }
 }
@@ -1214,10 +1239,10 @@ fun AppInfoSettings(onNavigate: () -> Unit) {
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
     ) {
         Column(modifier = Modifier.padding(GcSpacing.Standard)) {
-            Text("About & Info", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = sysTextColor())
+            Text(stringResource(Res.string.about_info_title), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = sysTextColor())
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "View application version details, documentation, and copyright information.",
+                text = stringResource(Res.string.about_info_desc),
                 fontSize = 12.sp,
                 color = sysTextColor().copy(alpha = 0.6f)
             )
@@ -1229,7 +1254,7 @@ fun AppInfoSettings(onNavigate: () -> Unit) {
                     contentColor = MaterialTheme.colorScheme.onPrimary
                 )
             ) {
-                Text("View Info Screen")
+                Text(stringResource(Res.string.view_info_screen_btn))
             }
         }
     }
@@ -1239,7 +1264,7 @@ fun AppInfoSettings(onNavigate: () -> Unit) {
 @Composable
 fun ThemeSelector(currentTheme: Int, onThemeChanged: (Int) -> Unit) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        Text("Theme Mode", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = sysTextColor())
+        Text(stringResource(Res.string.theme_mode_title), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = sysTextColor())
         Spacer(modifier = Modifier.height(GcSpacing.Small))
         SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth().height(40.dp)) {
             val buttonColors = SegmentedButtonDefaults.colors(
@@ -1255,19 +1280,19 @@ fun ThemeSelector(currentTheme: Int, onThemeChanged: (Int) -> Unit) {
                 onClick = { onThemeChanged(0) },
                 shape = SegmentedButtonDefaults.itemShape(index = 0, count = 3),
                 colors = buttonColors
-            ) { Text("System Theme", fontSize = 12.sp) }
+            ) { Text(stringResource(Res.string.theme_system), fontSize = 12.sp) }
             SegmentedButton(
                 selected = currentTheme == 1,
                 onClick = { onThemeChanged(1) },
                 shape = SegmentedButtonDefaults.itemShape(index = 1, count = 3),
                 colors = buttonColors
-            ) { Text("Light", fontSize = 12.sp) }
+            ) { Text(stringResource(Res.string.theme_light), fontSize = 12.sp) }
             SegmentedButton(
                 selected = currentTheme == 2,
                 onClick = { onThemeChanged(2) },
                 shape = SegmentedButtonDefaults.itemShape(index = 2, count = 3),
                 colors = buttonColors
-            ) { Text("Dark", fontSize = 12.sp) }
+            ) { Text(stringResource(Res.string.theme_dark), fontSize = 12.sp) }
         }
     }
 }
@@ -1279,7 +1304,7 @@ fun ImagesDirectorySettings(
     onClearPath: () -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        Text("Images Directory", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = sysTextColor())
+        Text(stringResource(Res.string.images_dir_title), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = sysTextColor())
         Spacer(modifier = Modifier.height(GcSpacing.Small))
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -1289,9 +1314,9 @@ fun ImagesDirectorySettings(
             Column(modifier = Modifier.padding(GcSpacing.Standard)) {
                 Text(
                     text = if (customImagesPath.isNullOrEmpty()) {
-                        "Using default locations (relative to working directory)"
+                        stringResource(Res.string.images_dir_default)
                     } else {
-                        "Custom Path: $customImagesPath"
+                        stringResource(Res.string.images_dir_custom, customImagesPath ?: "")
                     },
                     fontSize = 14.sp,
                     color = sysTextColor()
@@ -1312,7 +1337,7 @@ fun ImagesDirectorySettings(
                     }
                     if (!customImagesPath.isNullOrEmpty()) {
                         OutlinedButton(onClick = onClearPath) {
-                            Text("Clear Custom Path")
+                            Text(stringResource(Res.string.clear_custom_path))
                         }
                     }
                 }
@@ -1328,7 +1353,7 @@ fun ImportExportDirectorySettings(
     onClearPath: () -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        Text("Import / Export Directory", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = sysTextColor())
+        Text(stringResource(Res.string.import_export_dir_title), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = sysTextColor())
         Spacer(modifier = Modifier.height(GcSpacing.Small))
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -1338,9 +1363,9 @@ fun ImportExportDirectorySettings(
             Column(modifier = Modifier.padding(GcSpacing.Standard)) {
                 Text(
                     text = if (customImportExportPath.isNullOrEmpty()) {
-                        "Using default locations (relative to working directory)"
+                        stringResource(Res.string.images_dir_default)
                     } else {
-                        "Custom Path: $customImportExportPath"
+                        stringResource(Res.string.images_dir_custom, customImportExportPath ?: "")
                     },
                     fontSize = 14.sp,
                     color = sysTextColor()
@@ -1361,7 +1386,7 @@ fun ImportExportDirectorySettings(
                     }
                     if (!customImportExportPath.isNullOrEmpty()) {
                         OutlinedButton(onClick = onClearPath) {
-                            Text("Clear Custom Path")
+                            Text(stringResource(Res.string.clear_custom_path))
                         }
                     }
                 }
@@ -1383,12 +1408,15 @@ fun ImportExportActions(
 ) {
     val repository = remember(db) { ToyRepository(db) }
     val coroutineScope = rememberCoroutineScope()
+    val errorImportNoDirText = stringResource(Res.string.error_import_no_dir)
+    val errorExportNoDirText = stringResource(Res.string.error_export_no_dir)
+    val errorHtmlNoDirText = stringResource(Res.string.error_html_no_dir)
     var isImporting by remember { mutableStateOf(false) }
     var isExporting by remember { mutableStateOf(false) }
     var isExportingHtml by remember { mutableStateOf(false) }
 
     Column(modifier = Modifier.fillMaxWidth()) {
-        Text("Import / Export Actions", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = sysTextColor())
+        Text(stringResource(Res.string.import_export_actions_title), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = sysTextColor())
         Spacer(modifier = Modifier.height(GcSpacing.Small))
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -1440,12 +1468,12 @@ fun ImportExportActions(
                                 onImportComplete(importedCounts)
                             } catch (e: Exception) {
                                 isImporting = false
-                                onSetStatus("Error during import: ${e.message}")
+                                onSetStatus(getString(Res.string.error_import, e.message ?: ""))
                                 GcLog.e("SettingsScreen", "Import error", e)
                             }
                         }
                     } else {
-                        onSetStatus("Import failed: Import/Export directory is not configured.")
+                        onSetStatus(errorImportNoDirText)
                     }
                 },
                 modifier = Modifier.weight(1f),
@@ -1461,9 +1489,9 @@ fun ImportExportActions(
                         strokeWidth = 2.dp
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Importing...")
+                    Text(stringResource(Res.string.status_importing))
                 } else {
-                    Text("Import JSON Data")
+                    Text(stringResource(Res.string.import_json_btn))
                 }
             }
 
@@ -1512,16 +1540,16 @@ fun ImportExportActions(
                                     val dirPath = lastWrittenPath.substringBeforeLast("/")
                                     onExportComplete(dirPath, exported)
                                 } else {
-                                    onSetStatus("Export Completed with errors ($successCount/${filesToWrite.size} succeeded).")
+                                    onSetStatus(getString(Res.string.error_export, "$successCount/${filesToWrite.size}"))
                                 }
                             } catch (e: Exception) {
                                 isExporting = false
-                                onSetStatus("Error during export: ${e.message}")
+                                onSetStatus(getString(Res.string.error_export, e.message ?: ""))
                                 GcLog.e("SettingsScreen", "Export error", e)
                             }
                         }
                     } else {
-                        onSetStatus("Export failed: Import/Export directory is not configured.")
+                        onSetStatus(errorExportNoDirText)
                     }
                 },
                 modifier = Modifier.weight(1f),
@@ -1537,9 +1565,9 @@ fun ImportExportActions(
                         strokeWidth = 2.dp
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Exporting...")
+                    Text(stringResource(Res.string.status_exporting))
                 } else {
-                    Text("Export JSON Data")
+                    Text(stringResource(Res.string.export_json_btn))
                 }
             }
 
@@ -1560,12 +1588,12 @@ fun ImportExportActions(
                                 onSetStatus("HTML generation completed! Generated $generatedCount files in $selectedDir.")
                             } catch (e: Exception) {
                                 isExportingHtml = false
-                                onSetStatus("Error during HTML generation: ${e.message}")
+                                onSetStatus(getString(Res.string.error_html, e.message ?: ""))
                                 GcLog.e("SettingsScreen", "HTML export error", e)
                             }
                         }
                     } else {
-                        onSetStatus("HTML export failed: Import/Export directory is not configured.")
+                        onSetStatus(errorHtmlNoDirText)
                     }
                 },
                 modifier = Modifier.weight(1f),
@@ -1581,9 +1609,9 @@ fun ImportExportActions(
                         strokeWidth = 2.dp
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Exporting HTML...")
+                    Text(stringResource(Res.string.status_exporting_html))
                 } else {
-                    Text("Export HTML Data")
+                    Text(stringResource(Res.string.export_html_btn))
                 }
             }
         }
@@ -1604,9 +1632,9 @@ fun CategoriesManager(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Toy Categories Manager", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = sysTextColor())
+            Text(stringResource(Res.string.categories_manager_title), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = sysTextColor())
             IconButton(onClick = onAddCategory) {
-                Icon(Icons.Default.Add, contentDescription = "Add Category", tint = MaterialTheme.colorScheme.primary)
+                Icon(Icons.Default.Add, contentDescription = stringResource(Res.string.add_category_desc), tint = MaterialTheme.colorScheme.primary)
             }
         }
         Spacer(modifier = Modifier.height(GcSpacing.Small))
@@ -1629,18 +1657,18 @@ fun CategoriesManager(
                         Column(modifier = Modifier.weight(1f)) {
                             Text(cat.label, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = sysTextColor())
                             Spacer(modifier = Modifier.height(2.dp))
-                            Text("Key: ${cat.category} | Prefix: ${cat.imagePrefix}", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(stringResource(Res.string.category_key_prefix_icon_info, cat.category, cat.imagePrefix, cat.icon), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             if (cat.title.isNotEmpty()) {
                                 Spacer(modifier = Modifier.height(2.dp))
-                                Text("HTML Title: ${cat.title}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f))
+                                Text(stringResource(Res.string.category_html_title_info, cat.title), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f))
                             }
                         }
                         Row {
                             IconButton(onClick = { onEditCategory(cat) }) {
-                                Icon(Icons.Default.Edit, contentDescription = "Edit Category", tint = MaterialTheme.colorScheme.primary)
+                                Icon(Icons.Default.Edit, contentDescription = stringResource(Res.string.edit_category_desc), tint = MaterialTheme.colorScheme.primary)
                             }
                             IconButton(onClick = { onDeleteCategory(cat) }) {
-                                Icon(Icons.Default.Delete, contentDescription = "Delete Category", tint = MaterialTheme.colorScheme.error)
+                                Icon(Icons.Default.Delete, contentDescription = stringResource(Res.string.delete_category_title), tint = MaterialTheme.colorScheme.error)
                             }
                         }
                     }
@@ -1671,14 +1699,14 @@ fun SftpSettingsCard(
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
     ) {
         Column(modifier = Modifier.padding(GcSpacing.Standard)) {
-            Text("SFTP Server Connection", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = sysTextColor())
+            Text(stringResource(Res.string.sftp_title), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = sysTextColor())
             Spacer(modifier = Modifier.height(GcSpacing.Small))
 
             OutlinedTextField(
                 value = host,
                 onValueChange = onHostChange,
-                label = { Text("SFTP Host") },
-                placeholder = { Text("e.g. sftp.example.com") },
+                label = { Text(stringResource(Res.string.sftp_host)) },
+                placeholder = { Text(stringResource(Res.string.sftp_host_placeholder)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
@@ -1692,7 +1720,7 @@ fun SftpSettingsCard(
                 OutlinedTextField(
                     value = port,
                     onValueChange = onPortChange,
-                    label = { Text("Port") },
+                    label = { Text(stringResource(Res.string.sftp_port)) },
                     placeholder = { Text("22") },
                     modifier = Modifier.width(100.dp),
                     singleLine = true,
@@ -1704,8 +1732,8 @@ fun SftpSettingsCard(
                 OutlinedTextField(
                     value = username,
                     onValueChange = onUsernameChange,
-                    label = { Text("Username") },
-                    placeholder = { Text("e.g. gepetto") },
+                    label = { Text(stringResource(Res.string.sftp_username)) },
+                    placeholder = { Text(stringResource(Res.string.sftp_username_placeholder)) },
                     modifier = Modifier.weight(1f),
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
@@ -1717,15 +1745,15 @@ fun SftpSettingsCard(
             Spacer(modifier = Modifier.height(8.dp))
 
             if (isDesktopPlatform()) {
-                Text("Authentication Type", style = MaterialTheme.typography.bodyMedium, color = sysTextColor())
+                Text(stringResource(Res.string.sftp_auth_type), style = MaterialTheme.typography.bodyMedium, color = sysTextColor())
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         RadioButton(selected = authType == "password", onClick = { onAuthTypeChange("password") })
-                        Text("Password", color = sysTextColor())
+                        Text(stringResource(Res.string.sftp_password_label), color = sysTextColor())
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         RadioButton(selected = authType == "key", onClick = { onAuthTypeChange("key") })
-                        Text("SSH Key File", color = sysTextColor())
+                        Text(stringResource(Res.string.sftp_ssh_key_label), color = sysTextColor())
                     }
                 }
                 Spacer(modifier = Modifier.height(8.dp))
@@ -1737,8 +1765,8 @@ fun SftpSettingsCard(
                 OutlinedTextField(
                     value = password,
                     onValueChange = onPasswordChange,
-                    label = { Text("Password") },
-                    placeholder = { Text("Password") },
+                    label = { Text(stringResource(Res.string.sftp_password_label)) },
+                    placeholder = { Text(stringResource(Res.string.sftp_password_label)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -1759,8 +1787,8 @@ fun SftpSettingsCard(
                     OutlinedTextField(
                         value = keyPath,
                         onValueChange = onKeyPathChange,
-                        label = { Text("Private Key Path") },
-                        placeholder = { Text("/path/to/id_rsa") },
+                        label = { Text(stringResource(Res.string.sftp_key_path)) },
+                        placeholder = { Text(stringResource(Res.string.sftp_key_path_placeholder)) },
                         modifier = Modifier.weight(1f),
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
@@ -1774,15 +1802,15 @@ fun SftpSettingsCard(
                             onKeyPathChange(path)
                         }
                     }) {
-                        Text("Choose")
+                        Text(stringResource(Res.string.choose))
                     }
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = keyPassphrase,
                     onValueChange = onKeyPassphraseChange,
-                    label = { Text("Key Passphrase (optional)") },
-                    placeholder = { Text("Passphrase") },
+                    label = { Text(stringResource(Res.string.sftp_passphrase)) },
+                    placeholder = { Text(stringResource(Res.string.sftp_passphrase_placeholder)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
@@ -1796,8 +1824,8 @@ fun SftpSettingsCard(
             OutlinedTextField(
                 value = remoteDir,
                 onValueChange = onRemoteDirChange,
-                label = { Text("Remote Base Directory") },
-                placeholder = { Text("e.g. /home/gepetto/toydb") },
+                label = { Text(stringResource(Res.string.sftp_remote_dir)) },
+                placeholder = { Text(stringResource(Res.string.sftp_remote_dir_placeholder)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
@@ -1809,7 +1837,7 @@ fun SftpSettingsCard(
 
             Row(horizontalArrangement = Arrangement.spacedBy(GcSpacing.Small)) {
                 Button(onClick = onSave) {
-                    Text("Save Config")
+                    Text(stringResource(Res.string.sftp_save_config))
                 }
                 OutlinedButton(
                     onClick = onTestConnection,
@@ -1818,9 +1846,9 @@ fun SftpSettingsCard(
                     if (isTesting) {
                         CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Testing...")
+                        Text(stringResource(Res.string.sftp_testing_connection))
                     } else {
-                        Text("Test Connection")
+                        Text(stringResource(Res.string.sftp_test_connection))
                     }
                 }
             }
@@ -1841,7 +1869,7 @@ fun SftpSyncActions(
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
     ) {
         Column(modifier = Modifier.padding(GcSpacing.Standard)) {
-            Text("SFTP Server Synchronization", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = sysTextColor())
+            Text(stringResource(Res.string.sftp_sync_title), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = sysTextColor())
             Spacer(modifier = Modifier.height(GcSpacing.Small))
             
             Row(
@@ -1860,9 +1888,9 @@ fun SftpSyncActions(
                             strokeWidth = 2.dp
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Syncing...")
+                        Text(stringResource(Res.string.sftp_status_syncing))
                     } else {
-                        Text("Upload")
+                        Text(stringResource(Res.string.upload))
                     }
                 }
 
@@ -1882,9 +1910,9 @@ fun SftpSyncActions(
                             strokeWidth = 2.dp
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Syncing...")
+                        Text(stringResource(Res.string.sftp_status_syncing))
                     } else {
-                        Text("Download")
+                        Text(stringResource(Res.string.download))
                     }
                 }
             }
@@ -1892,7 +1920,7 @@ fun SftpSyncActions(
             if (isSyncing) {
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "⚠️ Do not navigate away or minimize the app until sync is complete.",
+                    text = stringResource(Res.string.sftp_sync_warning),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error,
                     fontWeight = FontWeight.SemiBold
@@ -1919,14 +1947,14 @@ fun SyncWarningBanner() {
     ) {
         Column(modifier = Modifier.padding(GcSpacing.Standard)) {
             Text(
-                text = "⚠️ Active Transfer in Progress", 
+                text = stringResource(Res.string.sftp_transfer_warning_dialog_title), 
                 fontSize = 14.sp, 
                 fontWeight = FontWeight.Bold, 
                 color = MaterialTheme.colorScheme.error
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Do not navigate away from this screen or minimize the app. Doing so will abort the active upload or download.",
+                text = stringResource(Res.string.sftp_transfer_warning_dialog_desc),
                 fontSize = 12.sp,
                 color = sysTextColor()
             )
@@ -1945,10 +1973,10 @@ fun AppTitleSettings(
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
     ) {
         Column(modifier = Modifier.padding(GcSpacing.Standard)) {
-            Text("App Title Configuration", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = sysTextColor())
+            Text(stringResource(Res.string.app_title_config_title), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = sysTextColor())
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Set a custom title for the application window.",
+                text = stringResource(Res.string.app_title_config_desc),
                 fontSize = 12.sp,
                 color = sysTextColor().copy(alpha = 0.6f)
             )
@@ -1956,7 +1984,7 @@ fun AppTitleSettings(
             OutlinedTextField(
                 value = title,
                 onValueChange = onTitleChange,
-                label = { Text("Title") },
+                label = { Text(stringResource(Res.string.app_title_label)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(

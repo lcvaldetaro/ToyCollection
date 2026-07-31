@@ -12,6 +12,13 @@ import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Train
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Brush
+import androidx.compose.material.icons.filled.Toys
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.SportsEsports
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Extension
+import androidx.compose.material.icons.filled.SmartToy
 import androidx.compose.material3.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontWeight
@@ -21,7 +28,7 @@ import androidx.compose.foundation.BorderStroke
 import club.gepetto.composeutils.sysBackgroundColor
 import club.gepetto.composeutils.sysTextColor
 import club.gepetto.GcLog
-import club.gepetto.composeutils.Res
+import toydb.composeapp.generated.resources.Res
 import club.gepetto.composeutils.*
 import androidx.compose.ui.graphics.Color
 import okio.FileSystem
@@ -38,6 +45,8 @@ import club.gepetto.composeutils.navigation3.GcNavDisplay
 import club.gepetto.composeutils.navigation3.GcSceneStrategy
 import club.gepetto.composeutils.navigation3.rememberGcSceneStrategy
 import club.gepetto.composeutils.navigation3.removeUpToInclusive
+import org.jetbrains.compose.resources.stringResource
+import toydb.composeapp.generated.resources.*
 import club.gepetto.composeutils.scaffold.GcAdaptiveScaffold
 import com.gepetto.toydb.database.ToyDatabase
 import com.gepetto.toydb.database.ToyRepository
@@ -136,7 +145,7 @@ fun ToyDbNavigation(
                 textContentColor = sysTextColor(),
                 title = {
                     Text(
-                        text = "Initial System Setup",
+                        text = stringResource(Res.string.welcome_setup_title),
                         fontWeight = FontWeight.Bold,
                         color = sysTextColor()
                     )
@@ -144,7 +153,7 @@ fun ToyDbNavigation(
                 text = {
                     Column(modifier = Modifier.fillMaxWidth()) {
                         Text(
-                            text = "Please configure the required directory paths to initialize the application.",
+                            text = stringResource(Res.string.welcome_setup_desc),
                             style = MaterialTheme.typography.bodyMedium,
                             color = sysTextColor().copy(alpha = 0.8f)
                         )
@@ -152,7 +161,7 @@ fun ToyDbNavigation(
 
                         // Import/Export path
                         Text(
-                            text = "Import / Export Directory",
+                            text = stringResource(Res.string.import_export_dir_title),
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
                             color = sysTextColor()
@@ -168,7 +177,7 @@ fun ToyDbNavigation(
                                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
                             ) {
                                 Text(
-                                    text = if (importExportPath.isEmpty()) "Not Configured" else importExportPath,
+                                    text = if (importExportPath.isEmpty()) stringResource(Res.string.not_configured) else importExportPath,
                                     modifier = Modifier.padding(8.dp),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = sysTextColor(),
@@ -187,7 +196,7 @@ fun ToyDbNavigation(
                                     contentColor = MaterialTheme.colorScheme.onPrimary
                                 )
                             ) {
-                                Text("Choose")
+                                Text(stringResource(Res.string.choose))
                             }
                         }
 
@@ -195,7 +204,7 @@ fun ToyDbNavigation(
 
                         // Images path
                         Text(
-                            text = "Images Directory",
+                            text = stringResource(Res.string.images_dir_title),
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
                             color = sysTextColor()
@@ -211,7 +220,7 @@ fun ToyDbNavigation(
                                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
                             ) {
                                 Text(
-                                    text = if (imagesPath.isEmpty()) "Not Configured" else imagesPath,
+                                    text = if (imagesPath.isEmpty()) stringResource(Res.string.not_configured) else imagesPath,
                                     modifier = Modifier.padding(8.dp),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = sysTextColor(),
@@ -230,7 +239,7 @@ fun ToyDbNavigation(
                                     contentColor = MaterialTheme.colorScheme.onPrimary
                                 )
                             ) {
-                                Text("Choose")
+                                Text(stringResource(Res.string.choose))
                             }
                         }
                     }
@@ -256,7 +265,7 @@ fun ToyDbNavigation(
                             showSetupPrompt = false
                         }
                     ) {
-                        Text("Finish Setup & Start")
+                        Text(stringResource(Res.string.finish_setup_btn))
                     }
                 }
             )
@@ -284,14 +293,7 @@ fun ToyDbNavigation(
             )
             if (isLandscape) {
                 categoriesSettings.forEach { setting ->
-                    val icon = when (setting.category) {
-                        "slot" -> Icons.Default.DirectionsCar
-                        "train" -> Icons.Default.Train
-                        "static" -> Icons.Default.DirectionsCar
-                        "kit" -> Icons.Default.Build
-                        "misc" -> Icons.Default.Category
-                        else -> Icons.Default.Category
-                    }
+                    val icon = getIconByName(setting.icon)
                     list.add(
                         GcNavButton(
                             label = setting.label,
@@ -413,5 +415,22 @@ fun ToyDbNavigation(
             )
         }
         }
+    }
+}
+
+fun getIconByName(name: String): androidx.compose.ui.graphics.vector.ImageVector {
+    return when (name.lowercase()) {
+        "car", "directionscar", "slot", "static" -> Icons.Default.DirectionsCar
+        "train" -> Icons.Default.Train
+        "build", "kit", "tool" -> Icons.Default.Build
+        "category", "misc" -> Icons.Default.Category
+        "brush" -> Icons.Default.Brush
+        "toy", "toys" -> Icons.Default.Toys
+        "star" -> Icons.Default.Star
+        "game", "controller" -> Icons.Default.SportsEsports
+        "palette" -> Icons.Default.Palette
+        "extension", "puzzle" -> Icons.Default.Extension
+        "robot", "smarttoy" -> Icons.Default.SmartToy
+        else -> Icons.Default.Category
     }
 }

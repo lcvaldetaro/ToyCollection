@@ -11,6 +11,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.gepetto.toydb.database.ToyRepository
 import androidx.compose.ui.graphics.Color
+import org.jetbrains.compose.resources.stringResource
+import toydb.composeapp.generated.resources.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -25,7 +27,7 @@ fun EditToyScreen(
 
     if (toy == null) {
         Box(modifier = modifier.fillMaxSize()) {
-            Text("Toy not found.")
+            Text(stringResource(Res.string.toy_not_found))
         }
         return
     }
@@ -34,10 +36,10 @@ fun EditToyScreen(
         containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
-                title = { Text("Edit Toy #${toy.refNum}") },
+                title = { Text(stringResource(Res.string.edit_toy_title, toy.refNum)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(Res.string.back))
                     }
                 }
             )

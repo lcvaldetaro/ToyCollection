@@ -326,7 +326,8 @@ class ToyRepository(private val db: ToyDatabase) {
                         category = cursor.getString("category") ?: "",
                         imagePrefix = cursor.getString("image_prefix") ?: "",
                         label = cursor.getString("label") ?: "",
-                        title = cursor.getString("title") ?: ""
+                        title = cursor.getString("title") ?: "",
+                        icon = cursor.getString("icon") ?: "category"
                     )
                 )
             }
@@ -340,8 +341,8 @@ class ToyRepository(private val db: ToyDatabase) {
     fun addCategorySetting(setting: CategorySetting) {
         try {
             db.execute(
-                "INSERT INTO category_settings (category, image_prefix, label, title) VALUES (?, ?, ?, ?)",
-                listOf(setting.category.trim().lowercase(), setting.imagePrefix.trim(), setting.label.trim(), setting.title.trim())
+                "INSERT INTO category_settings (category, image_prefix, label, title, icon) VALUES (?, ?, ?, ?, ?)",
+                listOf(setting.category.trim().lowercase(), setting.imagePrefix.trim(), setting.label.trim(), setting.title.trim(), setting.icon.trim())
             )
             GcLog.d("ToyRepository", "Added category ${setting.category}")
         } catch (e: Exception) {
@@ -352,8 +353,8 @@ class ToyRepository(private val db: ToyDatabase) {
     fun updateCategorySetting(setting: CategorySetting) {
         try {
             db.execute(
-                "UPDATE category_settings SET image_prefix = ?, label = ?, title = ? WHERE category = ?",
-                listOf(setting.imagePrefix.trim(), setting.label.trim(), setting.title.trim(), setting.category)
+                "UPDATE category_settings SET image_prefix = ?, label = ?, title = ?, icon = ? WHERE category = ?",
+                listOf(setting.imagePrefix.trim(), setting.label.trim(), setting.title.trim(), setting.icon.trim(), setting.category)
             )
             GcLog.d("ToyRepository", "Updated category ${setting.category}")
         } catch (e: Exception) {

@@ -11,6 +11,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.gepetto.toydb.database.ToyRepository
 import androidx.compose.ui.graphics.Color
+import org.jetbrains.compose.resources.stringResource
+import toydb.composeapp.generated.resources.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -24,7 +26,7 @@ fun EditMakerScreen(
 
     if (maker == null) {
         Box(modifier = modifier.fillMaxSize()) {
-            Text("Manufacturer not found.")
+            Text(stringResource(Res.string.manufacturer_not_found))
         }
         return
     }
@@ -33,10 +35,10 @@ fun EditMakerScreen(
         containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
-                title = { Text("Edit Manufacturer") },
+                title = { Text(stringResource(Res.string.edit_manufacturer)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(Res.string.back))
                     }
                 }
             )

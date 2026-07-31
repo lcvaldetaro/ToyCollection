@@ -10,6 +10,8 @@ import androidx.compose.ui.Modifier
 import com.gepetto.toydb.database.Maker
 import com.gepetto.toydb.database.ToyRepository
 import androidx.compose.ui.graphics.Color
+import org.jetbrains.compose.resources.stringResource
+import toydb.composeapp.generated.resources.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,10 +35,10 @@ fun AddMakerScreen(
         containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
-                title = { Text("Add Manufacturer") },
+                title = { Text(stringResource(Res.string.add_manufacturer)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(Res.string.back))
                     }
                 }
             )

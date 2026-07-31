@@ -13,6 +13,8 @@ import androidx.compose.ui.unit.sp
 import club.gepetto.composeutils.GcSpacing
 import club.gepetto.composeutils.sysTextColor
 import com.gepetto.toydb.database.Toy
+import org.jetbrains.compose.resources.stringResource
+import toydb.composeapp.generated.resources.*
 
 @Composable
 fun ToyForm(
@@ -22,7 +24,13 @@ fun ToyForm(
     modifier: Modifier = Modifier
 ) {
     var tabIndex by remember { mutableStateOf(0) }
-    val tabs = listOf("General", "Makers & Parts", "Financials", "Restoration", "Images")
+    val tabs = listOf(
+        stringResource(Res.string.tab_general),
+        stringResource(Res.string.tab_makers_parts),
+        stringResource(Res.string.tab_financials),
+        stringResource(Res.string.tab_restoration),
+        stringResource(Res.string.tab_images)
+    )
 
     // General state
     var description by remember { mutableStateOf(initialToy.description) }
@@ -85,59 +93,59 @@ fun ToyForm(
         ) {
             when (tabIndex) {
                 0 -> { // General
-                    FormField(label = "Description*", value = description, onValueChange = { description = it })
-                    FormField(label = "Scale", value = scale, onValueChange = { scale = it })
-                    FormField(label = "Condition", value = condition, onValueChange = { condition = it })
-                    FormField(label = "Color", value = color, onValueChange = { color = it })
+                    FormField(label = stringResource(Res.string.form_field_description_required), value = description, onValueChange = { description = it })
+                    FormField(label = stringResource(Res.string.form_field_scale), value = scale, onValueChange = { scale = it })
+                    FormField(label = stringResource(Res.string.form_field_condition), value = condition, onValueChange = { condition = it })
+                    FormField(label = stringResource(Res.string.form_field_color), value = color, onValueChange = { color = it })
                     
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(vertical = GcSpacing.Small),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Checkbox(checked = boxed, onCheckedChange = { boxed = it })
-                        Text("Boxed", color = sysTextColor())
+                        Text(stringResource(Res.string.form_field_boxed), color = sysTextColor())
                         Spacer(modifier = Modifier.width(GcSpacing.Large))
                         Checkbox(checked = factoryCar, onCheckedChange = { factoryCar = it })
-                        Text("Factory Original", color = sysTextColor())
+                        Text(stringResource(Res.string.form_field_factory_car), color = sysTextColor())
                     }
-                    FormField(label = "General Comments", value = comments, onValueChange = { comments = it })
+                    FormField(label = stringResource(Res.string.form_field_general_comments), value = comments, onValueChange = { comments = it })
                 }
                 1 -> { // Makers
-                    FormField(label = "Body Maker", value = bodyMaker, onValueChange = { bodyMaker = it })
-                    FormField(label = "Chassis Maker", value = chassisMaker, onValueChange = { chassisMaker = it })
-                    FormField(label = "Chassis Type", value = chassisType, onValueChange = { chassisType = it })
-                    FormField(label = "Motor Maker", value = motorMaker, onValueChange = { motorMaker = it })
-                    FormField(label = "Motor Details", value = motorDetails, onValueChange = { motorDetails = it })
-                    FormField(label = "Catalog/Model Number", value = catalogNumber, onValueChange = { catalogNumber = it })
+                    FormField(label = stringResource(Res.string.form_field_body_maker), value = bodyMaker, onValueChange = { bodyMaker = it })
+                    FormField(label = stringResource(Res.string.form_field_chassis_maker), value = chassisMaker, onValueChange = { chassisMaker = it })
+                    FormField(label = stringResource(Res.string.form_field_chassis_type), value = chassisType, onValueChange = { chassisType = it })
+                    FormField(label = stringResource(Res.string.form_field_motor_maker), value = motorMaker, onValueChange = { motorMaker = it })
+                    FormField(label = stringResource(Res.string.form_field_motor_details), value = motorDetails, onValueChange = { motorDetails = it })
+                    FormField(label = stringResource(Res.string.form_field_catalog_number), value = catalogNumber, onValueChange = { catalogNumber = it })
                 }
                 2 -> { // Financials
-                    FormField(label = "Acquisition Details", value = acquired, onValueChange = { acquired = it })
-                    FormField(label = "Amount Paid ($)", value = amountPaid, onValueChange = { amountPaid = it })
-                    FormField(label = "Estimated Value ($)", value = value, onValueChange = { value = it })
-                    FormField(label = "Amount Sold ($ / Traded)", value = amountSold, onValueChange = { amountSold = it })
-                    FormField(label = "Traded Info", value = traded, onValueChange = { traded = it })
-                    FormField(label = "Buy Info", value = buy, onValueChange = { buy = it })
+                    FormField(label = stringResource(Res.string.form_field_acquisition_details), value = acquired, onValueChange = { acquired = it })
+                    FormField(label = stringResource(Res.string.form_field_amount_paid), value = amountPaid, onValueChange = { amountPaid = it })
+                    FormField(label = stringResource(Res.string.form_field_estimated_value), value = value, onValueChange = { value = it })
+                    FormField(label = stringResource(Res.string.form_field_amount_sold), value = amountSold, onValueChange = { amountSold = it })
+                    FormField(label = stringResource(Res.string.form_field_traded_info), value = traded, onValueChange = { traded = it })
+                    FormField(label = stringResource(Res.string.form_field_buy_info), value = buy, onValueChange = { buy = it })
                 }
                 3 -> { // Restoration
-                    FormField(label = "Major Work Done", value = majorWork, onValueChange = { majorWork = it })
-                    FormField(label = "Minor Work Done", value = minorWork, onValueChange = { minorWork = it })
-                    FormField(label = "Repro Details (y/r)", value = repro, onValueChange = { repro = it })
-                    FormField(label = "Maintenance Log", value = maintenance, onValueChange = { maintenance = it })
-                    FormField(label = "To Build Info", value = toMake, onValueChange = { toMake = it })
-                    FormField(label = "Detail/Decal Work", value = detail, onValueChange = { detail = it })
+                    FormField(label = stringResource(Res.string.form_field_major_work), value = majorWork, onValueChange = { majorWork = it })
+                    FormField(label = stringResource(Res.string.form_field_minor_work), value = minorWork, onValueChange = { minorWork = it })
+                    FormField(label = stringResource(Res.string.form_field_repro_details), value = repro, onValueChange = { repro = it })
+                    FormField(label = stringResource(Res.string.form_field_maintenance_log), value = maintenance, onValueChange = { maintenance = it })
+                    FormField(label = stringResource(Res.string.form_field_to_build_info), value = toMake, onValueChange = { toMake = it })
+                    FormField(label = stringResource(Res.string.form_field_detail_decal_work), value = detail, onValueChange = { detail = it })
                 }
                 4 -> { // Images
-                    FormField(label = "Main Picture Filename", value = picture, onValueChange = { picture = it })
+                    FormField(label = stringResource(Res.string.form_field_main_picture), value = picture, onValueChange = { picture = it })
                     
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(vertical = GcSpacing.Small),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Checkbox(checked = hasPicture, onCheckedChange = { hasPicture = it })
-                        Text("Has Picture", color = sysTextColor())
+                        Text(stringResource(Res.string.form_field_has_picture), color = sysTextColor())
                     }
                     
-                    FormField(label = "Secondary Bitmaps (space separated)", value = bitmaps, onValueChange = { bitmaps = it })
+                    FormField(label = stringResource(Res.string.form_field_secondary_bitmaps), value = bitmaps, onValueChange = { bitmaps = it })
                 }
             }
         }
@@ -156,7 +164,7 @@ fun ToyForm(
                 ),
                 modifier = Modifier.padding(end = GcSpacing.Small)
             ) {
-                Text("Cancel")
+                Text(stringResource(Res.string.cancel))
             }
             Button(
                 onClick = {
@@ -217,7 +225,7 @@ fun ToyForm(
                     contentColor = MaterialTheme.colorScheme.onPrimary
                 )
             ) {
-                Text("Save")
+                Text(stringResource(Res.string.save))
             }
         }
     }

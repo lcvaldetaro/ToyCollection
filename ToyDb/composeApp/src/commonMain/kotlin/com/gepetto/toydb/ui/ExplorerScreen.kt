@@ -38,6 +38,8 @@ import com.gepetto.toydb.database.Toy
 import com.gepetto.toydb.database.ToyRepository
 import com.gepetto.toydb.utils.resolveImageUri
 import com.gepetto.toydb.utils.scrollHorizontallyWithMouseWheel
+import org.jetbrains.compose.resources.stringResource
+import toydb.composeapp.generated.resources.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,8 +61,11 @@ fun ExplorerScreen(
     val distinctScales = remember { repository.getDistinctScales(category) }
     val distinctMakers = remember { repository.getDistinctMakers(category) }
     
-    val prefix = remember {
-        repository.getCategorySettings().find { it.category == category }?.imagePrefix ?: "car"
+    val categorySetting = remember(category) {
+        repository.getCategorySettings().find { it.category == category }
+    }
+    val prefix = remember(categorySetting) {
+        categorySetting?.imagePrefix ?: "car"
     }
 
     val toysList = repository.getToys(
@@ -71,13 +76,8 @@ fun ExplorerScreen(
         makerFilter = selectedMaker
     )
 
-    val categoryLabel = when (category) {
-        "slot" -> "Slot Cars"
-        "train" -> "Model Trains"
-        "static" -> "Static Models"
-        "kit" -> "Model Kits"
-        "misc" -> "Others"
-        else -> category.replaceFirstChar { it.uppercase() }
+    val categoryLabel = remember(categorySetting) {
+        categorySetting?.label ?: category.replaceFirstChar { it.uppercase() }
     }
 
     Scaffold(
@@ -87,7 +87,7 @@ fun ExplorerScreen(
                 onClick = { onNavigate(Destination.AddToy(category)) },
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Add Toy")
+                Icon(Icons.Default.Add, contentDescription = stringResource(Res.string.add_toy_desc))
             }
         }
     ) { innerPadding ->
@@ -98,7 +98,7 @@ fun ExplorerScreen(
                 .padding(horizontal = GcSpacing.Standard)
         ) {
             Text(
-                text = "$categoryLabel Explorer",
+                text = stringResource(Res.string.explorer_title, categoryLabel),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = sysTextColor(),
@@ -110,12 +110,12 @@ fun ExplorerScreen(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
                 modifier = Modifier.fillMaxWidth().padding(vertical = GcSpacing.Small),
-                placeholder = { Text("Search by description, maker, or refNum...") },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                placeholder = { Text(stringResource(Res.string.search_placeholder_toy)) },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(Res.string.search)) },
                 trailingIcon = {
                     if (searchQuery.isNotEmpty()) {
                         IconButton(onClick = { searchQuery = "" }) {
-                            Icon(Icons.Default.Clear, contentDescription = "Clear")
+                            Icon(Icons.Default.Clear, contentDescription = stringResource(Res.string.clear))
                         }
                     }
                 },
@@ -128,7 +128,7 @@ fun ExplorerScreen(
 
             // Filter Chips Rows
             if (distinctMakers.isNotEmpty()) {
-                Text("Maker Filter:", fontSize = 12.sp, color = sysTextColor(), modifier = Modifier.padding(top = 4.dp))
+                Text(stringResource(Res.string.maker_filter), fontSize = 12.sp, color = sysTextColor(), modifier = Modifier.padding(top = 4.dp))
                 LazyRow(
                     state = makersScrollState,
                     modifier = Modifier
@@ -138,7 +138,7 @@ fun ExplorerScreen(
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     item {
-                        GcFilterButton(label = "All Makers", selection = if (selectedMaker.isEmpty()) "All Makers" else "") {
+                        GcFilterButton(label = stringResource(Res.string.all_makers), selection = if (selectedMaker.isEmpty()) stringResource(Res.string.all_makers) else "") {
                             selectedMaker = ""
                         }
                     }
@@ -152,7 +152,7 @@ fun ExplorerScreen(
 
             if (distinctScales.isNotEmpty()) {
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    Text("Scale Filter:", fontSize = 12.sp, color = sysTextColor())
+                    Text(stringResource(Res.string.scale_filter), fontSize = 12.sp, color = sysTextColor())
                     LazyRow(
                         state = scalesScrollState,
                         modifier = Modifier
@@ -162,7 +162,7 @@ fun ExplorerScreen(
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         item {
-                            GcFilterButton(label = "All Scales", selection = if (selectedScale.isEmpty()) "All Scales" else "") {
+                             GcFilterButton(label = stringResource(Res.string.all_scales), selection = if (selectedScale.isEmpty()) stringResource(Res.string.all_scales) else "") {
                                 selectedScale = ""
                             }
                         }
@@ -180,7 +180,7 @@ fun ExplorerScreen(
             // Toys List
             if (toysList.isEmpty()) {
                 Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    Text("No toys found matching filters.", color = MaterialTheme.colorScheme.outline)
+                    Text(stringResource(Res.string.no_toys_matching), color = MaterialTheme.colorScheme.outline)
                 }
             } else {
                 Row(modifier = Modifier.weight(1f)) {
@@ -273,13 +273,13 @@ fun ToyItemCard(
                     color = textColor,
                 )
                 Text(
-                    text = "${toy.scale} (${toy.refNum})",
+                    text = stringResource(Res.string.toy_scale_ref_format, toy.scale, toy.refNum.toString()),
                     fontSize = 12.sp,
                     color = textColor,
                 )
                 if (toy.traded.isNotEmpty()) {
                     Text(
-                        text = "* gone *",
+                        text = stringResource(Res.string.traded_gone_label),
                         fontSize = 12.sp,
                         color = textColor,
                     )

@@ -38,6 +38,9 @@ import androidx.compose.material.icons.filled.Add
 import okio.FileSystem
 import okio.Path.Companion.toPath
 import club.gepetto.GcLog
+import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.resources.StringResource
+import toydb.composeapp.generated.resources.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,22 +66,15 @@ fun MakerDetailScreen(
         }
     }
 
-    val totalAll = toysList.size
-    val totalSlot = remember(toysList) { toysList.count { it.toyType == "slot" } }
-    val totalTrain = remember(toysList) { toysList.count { it.toyType == "train" } }
-    val totalStatic = remember(toysList) { toysList.count { it.toyType == "static" } }
-    val totalKit = remember(toysList) { toysList.count { it.toyType == "kit" } }
-    val totalMisc = remember(toysList) { toysList.count { it.toyType == "misc" } }
-
-    val categories = remember(totalAll, totalSlot, totalTrain, totalStatic, totalKit, totalMisc) {
-        listOf(
-            CategoryFilter("all", "All", totalAll),
-            CategoryFilter("slot", "Slot Cars", totalSlot),
-            CategoryFilter("train", "Trains", totalTrain),
-            CategoryFilter("static", "Static Models", totalStatic),
-            CategoryFilter("kit", "Model Kits", totalKit),
-            CategoryFilter("misc", "Others", totalMisc)
-        ).filter { it.key == "all" || it.count > 0 }
+    val allLabel = stringResource(Res.string.all)
+    val categories = remember(toysList, settingsList, allLabel) {
+        val list = mutableListOf<CategoryFilter>()
+        list.add(CategoryFilter("all", allLabel, toysList.size))
+        settingsList.forEach { catSetting ->
+            val count = toysList.count { it.toyType == catSetting.category }
+            list.add(CategoryFilter(catSetting.category, catSetting.label, count))
+        }
+        list.filter { it.key == "all" || it.count > 0 }
     }
 
     val showFilters = remember(categories) {
@@ -148,7 +144,7 @@ fun MakerDetailScreen(
 
     if (maker == null) {
         Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("Manufacturer not found.", color = sysTextColor())
+            Text(stringResource(Res.string.manufacturer_not_found), color = sysTextColor())
         }
         return
     }
@@ -156,8 +152,8 @@ fun MakerDetailScreen(
     if (showDeleteConfirmation) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirmation = false },
-            title = { Text("Delete Manufacturer") },
-            text = { Text("Are you sure you want to delete manufacturer '${maker.name}'?") },
+            title = { Text(stringResource(Res.string.delete_manufacturer_title)) },
+            text = { Text(stringResource(Res.string.delete_manufacturer_confirm, maker.name)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -170,7 +166,7 @@ fun MakerDetailScreen(
                         contentColor = MaterialTheme.colorScheme.onError
                     )
                 ) {
-                    Text("Delete")
+                    Text(stringResource(Res.string.delete))
                 }
             },
             dismissButton = {
@@ -180,7 +176,7 @@ fun MakerDetailScreen(
                         contentColor = MaterialTheme.colorScheme.primary
                     )
                 ) {
-                    Text("Cancel")
+                    Text(stringResource(Res.string.cancel))
                 }
             }
         )
@@ -190,18 +186,18 @@ fun MakerDetailScreen(
         containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
-                title = { Text("Manufacturer Details") },
+                title = { Text(stringResource(Res.string.manufacturer_details_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(Res.string.back))
                     }
                 },
                 actions = {
                     IconButton(onClick = { onNavigate(Destination.EditMaker(makerName)) }) {
-                        Icon(Icons.Default.Edit, contentDescription = "Edit")
+                        Icon(Icons.Default.Edit, contentDescription = stringResource(Res.string.edit))
                     }
                     IconButton(onClick = { showDeleteConfirmation = true }) {
-                        Icon(Icons.Default.Delete, contentDescription = "Delete")
+                        Icon(Icons.Default.Delete, contentDescription = stringResource(Res.string.delete))
                     }
                 }
             )
@@ -236,7 +232,7 @@ fun MakerDetailScreen(
                         )
                         Spacer(modifier = Modifier.height(GcSpacing.Small))
                         Text(
-                            text = "Country: ${if (maker.country.isEmpty()) "Unknown" else maker.country}",
+                            text = stringResource(Res.string.country_label, if (maker.country.isEmpty()) stringResource(Res.string.unknown) else maker.country),
                             fontWeight = FontWeight.SemiBold,
                             color = sysTextColor()
                         )
@@ -260,7 +256,7 @@ fun MakerDetailScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Manufacturer Images (${makerImages.size})",
+                        text = stringResource(Res.string.manufacturer_images_title, makerImages.size),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = sysTextColor()
@@ -270,7 +266,7 @@ fun MakerDetailScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Add,
-                            contentDescription = "Add Manufacturer Image",
+                            contentDescription = stringResource(Res.string.add_manufacturer_image_desc),
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
@@ -319,7 +315,7 @@ fun MakerDetailScreen(
             item(span = { GridItemSpan(maxLineSpan) }) {
                 Column {
                     Text(
-                        text = "Associated Toys (${filteredToys.size})",
+                        text = stringResource(Res.string.associated_toys_title, filteredToys.size),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = sysTextColor(),
@@ -327,7 +323,7 @@ fun MakerDetailScreen(
                     )
                     
                     if (showFilters) {
-                        val selectedLabel = categories.find { it.key == selectedCategory }?.fullLabel ?: ""
+                        val selectedLabel = categories.find { it.key == selectedCategory }?.let { "${it.label} (${it.count})" } ?: ""
                         val filtersScrollState = rememberLazyListState()
                         
                         LazyRow(
@@ -339,8 +335,9 @@ fun MakerDetailScreen(
                             horizontalArrangement = Arrangement.spacedBy(GcSpacing.Small)
                         ) {
                             lazyItems(categories) { cat ->
+                                val labelText = "${cat.label} (${cat.count})"
                                 GcFilterButton(
-                                    label = cat.fullLabel,
+                                    label = labelText,
                                     selection = selectedLabel
                                 ) {
                                     selectedCategory = cat.key
@@ -358,7 +355,7 @@ fun MakerDetailScreen(
                         modifier = Modifier.fillMaxWidth().height(150.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("No toys found for this category.", color = MaterialTheme.colorScheme.outline)
+                        Text(stringResource(Res.string.no_toys_for_category), color = MaterialTheme.colorScheme.outline)
                     }
                 }
             } else {
@@ -377,6 +374,4 @@ fun MakerDetailScreen(
     }
 }
 
-private data class CategoryFilter(val key: String, val label: String, val count: Int) {
-    val fullLabel = "$label ($count)"
-}
+private data class CategoryFilter(val key: String, val label: String, val count: Int)

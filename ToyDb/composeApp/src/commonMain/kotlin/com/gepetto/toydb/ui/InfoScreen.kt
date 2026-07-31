@@ -17,9 +17,8 @@ import club.gepetto.composeutils.sysTextColor
 import androidx.compose.ui.graphics.Color
 import com.gepetto.toydb.CommonConfig
 import org.jetbrains.compose.resources.stringResource
-import toydb.composeapp.generated.resources.Res
-import toydb.composeapp.generated.resources.app_name
-import toydb.composeapp.generated.resources.copyright
+import org.jetbrains.compose.resources.getString
+import toydb.composeapp.generated.resources.*
 
 @Composable
 fun InfoScreen(
@@ -35,7 +34,7 @@ fun InfoScreen(
             aboutMarkdown = Res.readBytes("files/about.md").decodeToString()
         } catch (e: Exception) {
             GcLog.e("InfoScreen", "Failed to load about.md: ${e.message}", e)
-            aboutMarkdown = "Failed to load application information."
+            aboutMarkdown = getString(Res.string.failed_load_about)
         }
     }
 
@@ -45,7 +44,7 @@ fun InfoScreen(
                 privacyPolicyMarkdown = Res.readBytes("files/en_privacypolicy.md").decodeToString()
             } catch (e: Exception) {
                 GcLog.e("InfoScreen", "Failed to load en_privacypolicy.md: ${e.message}", e)
-                privacyPolicyMarkdown = "Failed to load privacy policy."
+                privacyPolicyMarkdown = getString(Res.string.failed_load_privacy)
             }
         }
     }
@@ -72,7 +71,7 @@ fun InfoScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Version ${CommonConfig.versionName} (${CommonConfig.versionCode})",
+                text = stringResource(Res.string.version_format, CommonConfig.versionName, CommonConfig.versionCode),
                 style = MaterialTheme.typography.bodyMedium,
                 color = sysTextColor().copy(alpha = 0.7f),
                 textAlign = TextAlign.Center
@@ -81,7 +80,7 @@ fun InfoScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = stringResource(Res.string.copyright) + "\nAll rights reserved.",
+                text = stringResource(Res.string.copyright) + stringResource(Res.string.rights_reserved),
                 style = MaterialTheme.typography.bodySmall,
                 color = sysTextColor().copy(alpha = 0.5f),
                 textAlign = TextAlign.Center
@@ -113,14 +112,14 @@ fun InfoScreen(
                         .padding(horizontal = 8.dp)
                 ) {
                     Text(
-                        text = "Backup & Synchronization",
+                        text = stringResource(Res.string.backup_sync_title),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = sysTextColor()
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "If you want to back up your collection data safely to the cloud, or synchronize your data across several devices (such as your phone, tablet, and computer), you will need to set up a private SFTP server.",
+                        text = stringResource(Res.string.backup_sync_description),
                         style = MaterialTheme.typography.bodyMedium,
                         color = sysTextColor().copy(alpha = 0.8f)
                     )
@@ -133,7 +132,7 @@ fun InfoScreen(
                         ),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("SFTP Server Setup Guide")
+                        Text(stringResource(Res.string.sftp_setup_guide_btn))
                     }
 
                     Spacer(modifier = Modifier.height(24.dp))
@@ -145,7 +144,7 @@ fun InfoScreen(
                         modifier = Modifier.align(Alignment.CenterHorizontally)
                     ) {
                         Text(
-                            text = "Privacy Policy",
+                            text = stringResource(Res.string.privacy_policy_btn),
                             style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.primary
                         )
@@ -164,12 +163,12 @@ fun InfoScreen(
             onDismissRequest = { showPrivacyPolicyDialog = false },
             confirmButton = {
                 TextButton(onClick = { showPrivacyPolicyDialog = false }) {
-                    Text("Close", color = sysTextColor())
+                    Text(stringResource(Res.string.close), color = sysTextColor())
                 }
             },
             title = {
                 Text(
-                    text = "Privacy Policy",
+                    text = stringResource(Res.string.privacy_policy_btn),
                     fontWeight = FontWeight.Bold,
                     color = sysTextColor()
                 )

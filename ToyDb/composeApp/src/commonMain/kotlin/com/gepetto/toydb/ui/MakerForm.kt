@@ -13,6 +13,8 @@ import androidx.compose.ui.unit.sp
 import club.gepetto.composeutils.GcSpacing
 import club.gepetto.composeutils.sysTextColor
 import com.gepetto.toydb.database.Maker
+import org.jetbrains.compose.resources.stringResource
+import toydb.composeapp.generated.resources.*
 
 @Composable
 fun MakerForm(
@@ -35,7 +37,7 @@ fun MakerForm(
             .padding(GcSpacing.Standard)
     ) {
         Text(
-            text = if (isEditMode) "Edit Manufacturer" else "Add Manufacturer",
+            text = if (isEditMode) stringResource(Res.string.edit_manufacturer) else stringResource(Res.string.add_manufacturer),
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
             color = sysTextColor()
@@ -46,7 +48,7 @@ fun MakerForm(
         OutlinedTextField(
             value = name,
             onValueChange = { name = it },
-            label = { Text("Manufacturer Name*") },
+            label = { Text(stringResource(Res.string.manufacturer_name_required)) },
             enabled = !isEditMode, // Name is primary key, cannot edit
             modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
             singleLine = true
@@ -55,7 +57,7 @@ fun MakerForm(
         OutlinedTextField(
             value = country,
             onValueChange = { country = it },
-            label = { Text("Country") },
+            label = { Text(stringResource(Res.string.manufacturer_country)) },
             modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
             singleLine = true
         )
@@ -63,8 +65,8 @@ fun MakerForm(
         OutlinedTextField(
             value = bitmaps,
             onValueChange = { bitmaps = it },
-            label = { Text("Bitmaps (Space-separated image filenames)") },
-            placeholder = { Text("e.g. monogram.jpg monogram-logo.png") },
+            label = { Text(stringResource(Res.string.manufacturer_bitmaps)) },
+            placeholder = { Text(stringResource(Res.string.manufacturer_bitmaps_placeholder)) },
             modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
             singleLine = true
         )
@@ -72,7 +74,7 @@ fun MakerForm(
         OutlinedTextField(
             value = comments,
             onValueChange = { comments = it },
-            label = { Text("Comments / Notes") },
+            label = { Text(stringResource(Res.string.manufacturer_comments)) },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(150.dp)
@@ -93,7 +95,7 @@ fun MakerForm(
                 ),
                 modifier = Modifier.padding(end = GcSpacing.Small)
             ) {
-                Text("Cancel")
+                Text(stringResource(Res.string.cancel))
             }
             Button(
                 onClick = {
@@ -114,7 +116,7 @@ fun MakerForm(
                 ),
                 enabled = name.trim().isNotEmpty()
             ) {
-                Text("Save")
+                Text(stringResource(Res.string.save))
             }
         }
     }

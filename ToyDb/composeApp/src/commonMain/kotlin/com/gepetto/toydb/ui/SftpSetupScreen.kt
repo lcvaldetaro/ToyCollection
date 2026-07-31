@@ -15,7 +15,9 @@ import club.gepetto.composeutils.GcMarkdown
 import club.gepetto.composeutils.sysBackgroundColor
 import club.gepetto.composeutils.sysTextColor
 import androidx.compose.ui.graphics.Color
-import toydb.composeapp.generated.resources.Res
+import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.resources.getString
+import toydb.composeapp.generated.resources.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,7 +32,7 @@ fun SftpSetupScreen(
             setupMarkdown = Res.readBytes("files/sftp_setup.md").decodeToString()
         } catch (e: Exception) {
             GcLog.e("SftpSetupScreen", "Failed to load sftp_setup.md: ${e.message}", e)
-            setupMarkdown = "Failed to load SFTP server setup guide."
+            setupMarkdown = getString(Res.string.failed_load_sftp_guide)
         }
     }
 
@@ -38,10 +40,10 @@ fun SftpSetupScreen(
         containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
-                title = { Text("SFTP Setup Guide") },
+                title = { Text(stringResource(Res.string.sftp_setup_guide_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(Res.string.back))
                     }
                 }
             )

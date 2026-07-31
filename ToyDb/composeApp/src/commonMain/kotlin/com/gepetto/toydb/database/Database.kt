@@ -3,7 +3,7 @@ package com.gepetto.toydb.database
 import club.gepetto.GcLog
 import kotlinx.serialization.Serializable
 
-const val DATABASE_VERSION = 6
+const val DATABASE_VERSION = 7
 const val TAG = "ToyDbDatabase"
 
 interface SqlCursor {
@@ -112,7 +112,8 @@ data class CategorySetting(
     val category: String, // slots, trains, static, kits, misc
     val imagePrefix: String,
     val label: String,
-    val title: String = ""
+    val title: String = "",
+    val icon: String = "category"
 )
 
 // SQL CREATE SCHEMA
@@ -122,17 +123,18 @@ val CREATE_SCHEMA_SQL_LIST = listOf(
         category TEXT PRIMARY KEY,
         image_prefix TEXT NOT NULL,
         label TEXT NOT NULL,
-        title TEXT NOT NULL DEFAULT ''
+        title TEXT NOT NULL DEFAULT '',
+        icon TEXT NOT NULL DEFAULT 'category'
     );
     """.trimIndent(),
     
     """
-    INSERT OR REPLACE INTO category_settings (category, image_prefix, label, title) VALUES
-    ('slot', 'car', 'Slot Cars', 'Slot car'),
-    ('train', 'tra', 'Model Trains', 'Train'),
-    ('static', 'sta', 'Static Models', 'Static Models'),
-    ('kit', 'pla', 'Model Kits', 'Models Kit'),
-    ('misc', 'mis', 'Others', 'Miscelaneous toys');
+    INSERT OR REPLACE INTO category_settings (category, image_prefix, label, title, icon) VALUES
+    ('slot', 'car', 'Slot Cars', 'Slot car', 'car'),
+    ('train', 'tra', 'Model Trains', 'Train', 'train'),
+    ('static', 'sta', 'Static Models', 'Static Models', 'car'),
+    ('kit', 'pla', 'Model Kits', 'Models Kit', 'build'),
+    ('misc', 'mis', 'Others', 'Miscelaneous toys', 'category');
     """.trimIndent(),
     
     """
@@ -276,6 +278,14 @@ fun runMigration(db: ToyDatabase, version: Int) {
             db.execute("UPDATE category_settings SET title = 'Static Models' WHERE category = 'static' AND (title IS NULL OR title = '')")
             db.execute("UPDATE category_settings SET title = 'Models Kit' WHERE category = 'kit' AND (title IS NULL OR title = '')")
             db.execute("UPDATE category_settings SET title = 'Miscelaneous toys' WHERE category = 'misc' AND (title IS NULL OR title = '')")
+        }
+        7 -> {
+            db.execute("ALTER TABLE category_settings ADD COLUMN icon TEXT NOT NULL DEFAULT 'category'")
+            db.execute("UPDATE category_settings SET icon = 'car' WHERE category = 'slot'")
+            db.execute("UPDATE category_settings SET icon = 'train' WHERE category = 'train'")
+            db.execute("UPDATE category_settings SET icon = 'car' WHERE category = 'static'")
+            db.execute("UPDATE category_settings SET icon = 'build' WHERE category = 'kit'")
+            db.execute("UPDATE category_settings SET icon = 'category' WHERE category = 'misc'")
         }
     }
 }

@@ -23,6 +23,8 @@ import club.gepetto.composeutils.sysForegroundColor
 import club.gepetto.composeutils.sysTextColor
 import com.gepetto.toydb.database.ToyRepository
 import androidx.compose.ui.graphics.Color
+import org.jetbrains.compose.resources.stringResource
+import toydb.composeapp.generated.resources.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,6 +34,7 @@ fun DashboardScreen(
     modifier: Modifier = Modifier
 ) {
     val stats = remember { repository.getDashboardStats() }
+    val categoriesSettings = remember { repository.getCategorySettings() }
     
     Column(
         modifier = modifier
@@ -40,7 +43,7 @@ fun DashboardScreen(
             .padding(GcSpacing.Standard)
     ) {
         Text(
-            text = "Toy Database Dashboard",
+            text = stringResource(Res.string.dashboard_title),
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             color = sysTextColor(),
@@ -57,7 +60,7 @@ fun DashboardScreen(
         ) {
             Column(modifier = Modifier.padding(GcSpacing.Standard)) {
                 Text(
-                    text = "Total Collection Summary",
+                    text = stringResource(Res.string.total_summary),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = sysTextColor()
@@ -68,15 +71,15 @@ fun DashboardScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Column {
-                        Text(text = "Total Toys", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(text = stringResource(Res.string.total_toys), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(text = "${stats.totalToys}", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = sysTextColor())
                     }
                     Column {
-                        Text(text = "Total Spent", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(text = stringResource(Res.string.total_spent), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(text = "$${String.format("%.2f", stats.totalSpent)}", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = sysTextColor())
                     }
                     Column {
-                        Text(text = "Estimated Value", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(text = stringResource(Res.string.estimated_value), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(text = "$${String.format("%.2f", stats.totalValue)}", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = sysTextColor())
                     }
                 }
@@ -93,7 +96,7 @@ fun DashboardScreen(
                 .padding(horizontal = 12.dp, vertical = 6.dp)
         ) {
             Text(
-                text = "Categories",
+                text = stringResource(Res.string.categories),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = sysTextColor()
@@ -106,14 +109,8 @@ fun DashboardScreen(
             contentPadding = PaddingValues(bottom = GcSpacing.Standard)
         ) {
             items(stats.categories) { catStat ->
-                val categoryName = when (catStat.category) {
-                    "slot" -> "Slot Cars"
-                    "train" -> "Model Trains"
-                    "static" -> "Static Models"
-                    "kit" -> "Model Kits"
-                    "misc" -> "Others"
-                    else -> catStat.category.replaceFirstChar { it.uppercase() }
-                }
+                val categoryName = categoriesSettings.find { it.category == catStat.category }?.label
+                    ?: catStat.category.replaceFirstChar { it.uppercase() }
 
                 Card(
                     modifier = Modifier
@@ -135,7 +132,7 @@ fun DashboardScreen(
                         )
                         Spacer(modifier = Modifier.height(GcSpacing.Small))
                         Text(
-                            text = "${catStat.count} items",
+                            text = stringResource(Res.string.items_count, catStat.count),
                             fontSize = 14.sp,
                             color = sysTextColor()
                         )
@@ -144,8 +141,8 @@ fun DashboardScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text(text = "Spent: $${String.format("%.2f", catStat.totalSpent)}", fontSize = 12.sp, color = sysTextColor())
-                            Text(text = "Value: $${String.format("%.2f", catStat.totalValue)}", fontSize = 12.sp, color = sysTextColor())
+                            Text(text = stringResource(Res.string.spent_value_label, String.format("%.2f", catStat.totalSpent)), fontSize = 12.sp, color = sysTextColor())
+                            Text(text = stringResource(Res.string.est_value_label, String.format("%.2f", catStat.totalValue)), fontSize = 12.sp, color = sysTextColor())
                         }
                     }
                 }
