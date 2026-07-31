@@ -3,7 +3,7 @@ package com.gepetto.toydb.database
 import club.gepetto.GcLog
 import kotlinx.serialization.Serializable
 
-const val DATABASE_VERSION = 7
+const val DATABASE_VERSION = 8
 const val TAG = "ToyDbDatabase"
 
 interface SqlCursor {
@@ -245,16 +245,6 @@ fun checkUpgrade(db: ToyDatabase, currentVersion: Int = DATABASE_VERSION) {
         db.execute("PRAGMA user_version = $currentVersion")
         GcLog.d(TAG, "Database upgraded successfully to version $currentVersion")
     }
-    
-    // Run self-healing updates to fix any standard category icons that were reset to 'category'
-    try {
-        db.execute("UPDATE category_settings SET icon = 'car' WHERE category = 'slot' AND icon = 'category'")
-        db.execute("UPDATE category_settings SET icon = 'train' WHERE category = 'train' AND icon = 'category'")
-        db.execute("UPDATE category_settings SET icon = 'car' WHERE category = 'static' AND icon = 'category'")
-        db.execute("UPDATE category_settings SET icon = 'build' WHERE category = 'kit' AND icon = 'category'")
-    } catch (e: Exception) {
-        GcLog.e(TAG, "Error executing self-healing icon migrations: ${e.message}", e)
-    }
 }
 
 fun runMigration(db: ToyDatabase, version: Int) {
@@ -294,6 +284,12 @@ fun runMigration(db: ToyDatabase, version: Int) {
             db.execute("UPDATE category_settings SET icon = 'car' WHERE category = 'static'")
             db.execute("UPDATE category_settings SET icon = 'build' WHERE category = 'kit'")
             db.execute("UPDATE category_settings SET icon = 'category' WHERE category = 'misc'")
+        }
+        8 -> {
+            db.execute("UPDATE category_settings SET icon = 'car' WHERE category = 'slot' AND icon = 'category'")
+            db.execute("UPDATE category_settings SET icon = 'train' WHERE category = 'train' AND icon = 'category'")
+            db.execute("UPDATE category_settings SET icon = 'car' WHERE category = 'static' AND icon = 'category'")
+            db.execute("UPDATE category_settings SET icon = 'build' WHERE category = 'kit' AND icon = 'category'")
         }
     }
 }
