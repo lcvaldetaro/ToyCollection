@@ -84,7 +84,8 @@ data class JsonCategorySetting(
     val category: String,
     val imagePrefix: String,
     val label: String,
-    val title: String = ""
+    val title: String = "",
+    val icon: String = "category"
 )
 
 @Serializable
@@ -400,12 +401,24 @@ object ImportExportService {
                 else -> ""
             }
             val titleToSave = if (s.title.trim().isEmpty()) defaultTitle else s.title.trim()
+            
+            // Map standard icons for backwards compatibility if the JSON did not contain them
+            val defaultIcon = when (s.category) {
+                "slot" -> "car"
+                "train" -> "train"
+                "static" -> "car"
+                "kit" -> "build"
+                "misc" -> "category"
+                else -> "category"
+            }
+            val iconToSave = if (s.icon == "category" && s.category != "misc") defaultIcon else s.icon
+
             db.execute(
                 """
-                INSERT OR REPLACE INTO category_settings (category, image_prefix, label, title)
-                VALUES (?, ?, ?, ?)
+                INSERT OR REPLACE INTO category_settings (category, image_prefix, label, title, icon)
+                VALUES (?, ?, ?, ?, ?)
                 """.trimIndent(),
-                listOf(s.category, s.imagePrefix, s.label, titleToSave)
+                listOf(s.category, s.imagePrefix, s.label, titleToSave, iconToSave)
             )
             count++
         }
@@ -423,7 +436,8 @@ object ImportExportService {
                     category = cursor.getString("category") ?: "",
                     imagePrefix = cursor.getString("image_prefix") ?: "",
                     label = cursor.getString("label") ?: "",
-                    title = cursor.getString("title") ?: ""
+                    title = cursor.getString("title") ?: "",
+                    icon = cursor.getString("icon") ?: "category"
                 )
             )
         }

@@ -1,6 +1,6 @@
 <resources>
     <string name="about_info_desc">View application version details, documentation, and copyright information.</string>
-    <string name="about_info_title">About &amp;amp; Info</string>
+    <string name="about_info_title">About &amp; Info</string>
     <string name="add_category_desc">Add Category</string>
     <string name="add_maker_desc">Add Manufacturer</string>
     <string name="add_manufacturer">Add Manufacturer</string>
@@ -22,7 +22,7 @@
     <string name="associated_toys_title">Associated Toys (%1$d)</string>
     <string name="back">Back</string>
     <string name="backup_sync_description">If you want to back up your collection data safely to the cloud, or synchronize your data across several devices (such as your phone, tablet, and computer), you will need to set up a private SFTP server.</string>
-    <string name="backup_sync_title">Backup &amp;amp; Synchronization</string>
+    <string name="backup_sync_title">Backup &amp; Synchronization</string>
     <string name="cancel">Cancel</string>
     <string name="categories">Categories</string>
     <string name="categories_manager_title">Toy Categories Manager</string>
@@ -79,7 +79,7 @@
     <string name="failed_load_sftp_guide">Failed to load SFTP server setup guide.</string>
     <string name="filename_prefix_label">Filename Prefix (e.g. leg)*</string>
     <string name="filename_prefix_placeholder">e.g. leg</string>
-    <string name="finish_setup_btn">Finish Setup &amp;amp; Start</string>
+    <string name="finish_setup_btn">Finish Setup &amp; Start</string>
     <string name="form_field_acquisition_details">Acquisition Details</string>
     <string name="form_field_amount_paid">Amount Paid ($)</string>
     <string name="form_field_amount_sold">Amount Sold ($ / Traded)</string>
@@ -158,7 +158,7 @@ All rights reserved.</string>
     <string name="secondary_images_title">Secondary Images (%1$d)</string>
     <string name="select_all">Select All</string>
     <string name="selected_count">Selected: %1$d</string>
-    <string name="settings_title">Database &amp;amp; System Settings</string>
+    <string name="settings_title">Database &amp; System Settings</string>
     <string name="sftp_auth_type">Authentication Type</string>
     <string name="sftp_config_saved">SFTP connection configuration saved.</string>
     <string name="sftp_host">SFTP Host</string>
@@ -211,7 +211,7 @@ All rights reserved.</string>
     <string name="sftp_transfer_warning_dialog_title">⚠️ Active Transfer in Progress</string>
     <string name="sftp_username">Username</string>
     <string name="sftp_username_placeholder">e.g. gepetto</string>
-    <string name="sftp_verify_host_accept">Accept &amp;amp; Save</string>
+    <string name="sftp_verify_host_accept">Accept &amp; Save</string>
     <string name="sftp_verify_host_confirm">Are you sure you want to continue connecting?</string>
     <string name="sftp_verify_host_desc">The authenticity of host \'%1$s:%2$d\' can\'t be established.</string>
     <string name="sftp_verify_host_fingerprint">Fingerprint:</string>
@@ -226,7 +226,7 @@ All rights reserved.</string>
     <string name="tab_financials">Financials</string>
     <string name="tab_general">General</string>
     <string name="tab_images">Images</string>
-    <string name="tab_makers_parts">Makers &amp;amp; Parts</string>
+    <string name="tab_makers_parts">Makers &amp; Parts</string>
     <string name="tab_restoration">Restoration</string>
     <string name="theme_dark">Dark</string>
     <string name="theme_light">Light</string>

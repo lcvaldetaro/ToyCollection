@@ -42,13 +42,19 @@ fun DashboardScreen(
             .background(Color.Transparent)
             .padding(GcSpacing.Standard)
     ) {
-        Text(
-            text = stringResource(Res.string.dashboard_title),
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            color = sysTextColor(),
-            modifier = Modifier.padding(bottom = GcSpacing.Standard)
-        )
+        Box(
+            modifier = Modifier
+                .background(sysBackgroundColor(), shape = RoundedCornerShape(8.dp))
+                .padding(horizontal = 12.dp, vertical = 6.dp)
+        ) {
+            Text(
+                text = stringResource(Res.string.dashboard_title),
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = sysTextColor()
+            )
+        }
+        Spacer(modifier = Modifier.height(GcSpacing.Standard))
 
         // Summary Card
         Card(

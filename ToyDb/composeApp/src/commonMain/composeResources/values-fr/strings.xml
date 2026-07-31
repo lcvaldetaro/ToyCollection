@@ -1,6 +1,6 @@
 <resources>
     <string name="about_info_desc">Afficher les détails de la version de l\'application, la documentation et les informations de copyright.</string>
-    <string name="about_info_title">À Propos &amp;amp; Info</string>
+    <string name="about_info_title">À Propos &amp; Info</string>
     <string name="add_category_desc">Ajouter une Catégorie</string>
     <string name="add_maker_desc">Ajouter un Fabricant</string>
     <string name="add_manufacturer">Ajouter un Fabricant</string>
@@ -22,7 +22,7 @@
     <string name="associated_toys_title">Jouets Associés (%1$d)</string>
     <string name="back">Retour</string>
     <string name="backup_sync_description">Si vous souhaitez sauvegarder les données de votre collection en toute sécurité sur le cloud, ou synchroniser vos données sur plusieurs appareils (tels que votre téléphone, votre tablette et votre ordinateur), vous devrez configurer un serveur SFTP privé.</string>
-    <string name="backup_sync_title">Sauvegarde &amp;amp; Synchronisation</string>
+    <string name="backup_sync_title">Sauvegarde &amp; Synchronisation</string>
     <string name="cancel">Annuler</string>
     <string name="categories">Catégories</string>
     <string name="categories_manager_title">Gestionnaire des Catégories de Jouets</string>
@@ -79,7 +79,7 @@
     <string name="failed_load_sftp_guide">Échec du chargement du guide de configuration du serveur SFTP.</string>
     <string name="filename_prefix_label">Préfixe de Fichier (ex. leg)*</string>
     <string name="filename_prefix_placeholder">ex. leg</string>
-    <string name="finish_setup_btn">Terminer la Configuration &amp;amp; Démarrer</string>
+    <string name="finish_setup_btn">Terminer la Configuration &amp; Démarrer</string>
     <string name="form_field_acquisition_details">Détails d\'Acquisition</string>
     <string name="form_field_amount_paid">Montant Payé ($)</string>
     <string name="form_field_amount_sold">Montant Vendu ($ / Échange)</string>
@@ -158,7 +158,7 @@ Tous droits réservés.</string>
     <string name="secondary_images_title">Images Secondaires (%1$d)</string>
     <string name="select_all">Tout sélectionner</string>
     <string name="selected_count">Sélectionné: %1$d</string>
-    <string name="settings_title">Paramètres de Base de Données &amp;amp; Système</string>
+    <string name="settings_title">Paramètres de Base de Données &amp; Système</string>
     <string name="sftp_auth_type">Type d\'Authentification</string>
     <string name="sftp_config_saved">Configuration de connexion SFTP enregistrée.</string>
     <string name="sftp_host">Hôte SFTP</string>
@@ -211,7 +211,7 @@ Tous droits réservés.</string>
     <string name="sftp_transfer_warning_dialog_title">⚠️ Transfert Actif en Cours</string>
     <string name="sftp_username">Nom d\'Utilisateur</string>
     <string name="sftp_username_placeholder">ex. gepetto</string>
-    <string name="sftp_verify_host_accept">Accepter &amp;amp; Enregistrer</string>
+    <string name="sftp_verify_host_accept">Accepter &amp; Enregistrer</string>
     <string name="sftp_verify_host_confirm">Êtes-vous sûr de vouloir continuer à vous connecter ?</string>
     <string name="sftp_verify_host_desc">L\'authenticité de l\'hôte \'%1$s:%2$d\' ne peut pas être établie.</string>
     <string name="sftp_verify_host_fingerprint">Empreinte:</string>
@@ -226,7 +226,7 @@ Tous droits réservés.</string>
     <string name="tab_financials">Finances</string>
     <string name="tab_general">Général</string>
     <string name="tab_images">Images</string>
-    <string name="tab_makers_parts">Fabricants &amp;amp; Pièces</string>
+    <string name="tab_makers_parts">Fabricants &amp; Pièces</string>
     <string name="tab_restoration">Restauration</string>
     <string name="theme_dark">Sombre</string>
     <string name="theme_light">Clair</string>
