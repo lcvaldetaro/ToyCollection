@@ -85,7 +85,7 @@ data class JsonCategorySetting(
     val imagePrefix: String,
     val label: String,
     val title: String = "",
-    val icon: String = "category"
+    val icon: String? = null
 )
 
 @Serializable
@@ -402,16 +402,18 @@ object ImportExportService {
             }
             val titleToSave = if (s.title.trim().isEmpty()) defaultTitle else s.title.trim()
             
-            // Map standard icons for backwards compatibility if the JSON did not contain them
-            val defaultIcon = when (s.category) {
-                "slot" -> "car"
-                "train" -> "train"
-                "static" -> "car"
-                "kit" -> "build"
-                "misc" -> "category"
-                else -> "category"
+            // Map standard icons for backwards compatibility if the JSON did not contain the icon field at all (s.icon is null)
+            val iconToSave = if (s.icon == null) {
+                when (s.category) {
+                    "slot" -> "car"
+                    "train" -> "train"
+                    "static" -> "car"
+                    "kit" -> "build"
+                    else -> "category"
+                }
+            } else {
+                s.icon
             }
-            val iconToSave = if (s.icon == "category" && s.category != "misc") defaultIcon else s.icon
 
             db.execute(
                 """
