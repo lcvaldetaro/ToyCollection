@@ -14,6 +14,7 @@ import club.gepetto.GcLog
 import club.gepetto.composeutils.GcMarkdown
 import club.gepetto.composeutils.sysBackgroundColor
 import club.gepetto.composeutils.sysTextColor
+import androidx.compose.ui.graphics.Color
 import com.gepetto.toydb.CommonConfig
 import org.jetbrains.compose.resources.stringResource
 import toydb.composeapp.generated.resources.Res

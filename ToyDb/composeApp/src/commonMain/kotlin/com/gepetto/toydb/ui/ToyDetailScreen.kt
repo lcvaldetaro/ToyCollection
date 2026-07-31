@@ -26,6 +26,7 @@ import club.gepetto.composeutils.GcSpacing
 import club.gepetto.composeutils.sysBackgroundColor
 import club.gepetto.composeutils.sysForegroundColor
 import club.gepetto.composeutils.sysTextColor
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.lazy.rememberLazyListState
 import club.gepetto.composeutils.image.GcImage
 import com.gepetto.toydb.database.Toy
@@ -137,7 +138,7 @@ fun ToyDetailScreen(
     }
 
     Scaffold(
-        containerColor = sysBackgroundColor(),
+        containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
                 title = { Text("Toy Details #${toy.refNum}") },

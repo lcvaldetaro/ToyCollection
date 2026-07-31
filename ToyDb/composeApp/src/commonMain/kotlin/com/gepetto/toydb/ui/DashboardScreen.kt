@@ -4,6 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -21,6 +22,7 @@ import club.gepetto.composeutils.sysBackgroundColor
 import club.gepetto.composeutils.sysForegroundColor
 import club.gepetto.composeutils.sysTextColor
 import com.gepetto.toydb.database.ToyRepository
+import androidx.compose.ui.graphics.Color
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,7 +36,7 @@ fun DashboardScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(sysBackgroundColor())
+            .background(Color.Transparent)
             .padding(GcSpacing.Standard)
     ) {
         Text(
@@ -81,13 +83,22 @@ fun DashboardScreen(
             }
         }
 
-        Text(
-            text = "Categories",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            color = sysTextColor(),
-            modifier = Modifier.padding(vertical = GcSpacing.Small)
-        )
+        Box(
+            modifier = Modifier
+                .padding(vertical = GcSpacing.Small)
+                .background(
+                    color = sysBackgroundColor(),
+                    shape = RoundedCornerShape(8.dp)
+                )
+                .padding(horizontal = 12.dp, vertical = 6.dp)
+        ) {
+            Text(
+                text = "Categories",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = sysTextColor()
+            )
+        }
 
         LazyVerticalGrid(
             columns = GridCells.Adaptive(minSize = 250.dp),

@@ -21,6 +21,9 @@ import androidx.compose.foundation.BorderStroke
 import club.gepetto.composeutils.sysBackgroundColor
 import club.gepetto.composeutils.sysTextColor
 import club.gepetto.GcLog
+import club.gepetto.composeutils.Res
+import club.gepetto.composeutils.*
+import androidx.compose.ui.graphics.Color
 import okio.FileSystem
 import okio.Path.Companion.toPath
 import androidx.compose.runtime.*
@@ -268,8 +271,8 @@ fun ToyDbNavigation(
             else -> null
         }
 
-        val windowSize = LocalWindowInfo.current.containerSize
-        val isLandscape = windowSize.width > windowSize.height
+        BoxWithConstraints {
+            val isLandscape = maxWidth > maxHeight
 
         val buttons = remember(categoriesSettings, isLandscape) {
             val list = mutableListOf<GcNavButton>()
@@ -323,11 +326,18 @@ fun ToyDbNavigation(
             list
         }
 
-        GcE2eBox {
+        val showBackgroundImage = backStack.lastOrNull() is Destination.Dashboard
+
+        GcE2eBox(
+            imageResourceRes = if (showBackgroundImage) club.gepetto.composeutils.Res.drawable.gepetto else null,
+            darkImageResourceRes = if (showBackgroundImage) club.gepetto.composeutils.Res.drawable.invertedgepetto else null,
+            backgroundColor = sysBackgroundColor()
+        ) {
             GcAdaptiveScaffold(
                 modifier = modifier,
                 navChoice = currentChoice,
                 gcNavButtons = buttons,
+                iconBackgroundColor = sysBackgroundColor(),
                 content = { landscape ->
                     GcNavDisplay(
                         backStack = backStack,
@@ -401,6 +411,7 @@ fun ToyDbNavigation(
                     )
                 }
             )
+        }
         }
     }
 }

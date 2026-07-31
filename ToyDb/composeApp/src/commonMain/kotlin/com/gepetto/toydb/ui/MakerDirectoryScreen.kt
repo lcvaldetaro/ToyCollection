@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.background
 import club.gepetto.composeutils.GcSpacing
 import club.gepetto.composeutils.sysBackgroundColor
+import androidx.compose.ui.graphics.Color
 import club.gepetto.composeutils.sysForegroundColor
 import club.gepetto.composeutils.sysTextColor
 import com.gepetto.toydb.database.Maker
@@ -54,7 +55,7 @@ fun MakerDirectoryScreen(
     }
 
     Scaffold(
-        containerColor = sysBackgroundColor(),
+        containerColor = Color.Transparent,
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { onNavigate(Destination.AddMaker) },
@@ -93,7 +94,11 @@ fun MakerDirectoryScreen(
                         }
                     }
                 },
-                singleLine = true
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = sysBackgroundColor(),
+                    unfocusedContainerColor = sysBackgroundColor()
+                )
             )
 
             if (filteredMakers.isEmpty()) {

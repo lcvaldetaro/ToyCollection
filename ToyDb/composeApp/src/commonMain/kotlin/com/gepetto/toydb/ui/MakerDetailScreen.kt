@@ -28,6 +28,7 @@ import club.gepetto.composeutils.GcSpacing
 import club.gepetto.composeutils.sysBackgroundColor
 import club.gepetto.composeutils.sysForegroundColor
 import club.gepetto.composeutils.sysTextColor
+import androidx.compose.ui.graphics.Color
 import club.gepetto.composeutils.image.GcImage
 import com.gepetto.toydb.database.ToyRepository
 import com.gepetto.toydb.utils.resolveBitmapUri
@@ -186,7 +187,7 @@ fun MakerDetailScreen(
     }
 
     Scaffold(
-        containerColor = sysBackgroundColor(),
+        containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
                 title = { Text("Manufacturer Details") },

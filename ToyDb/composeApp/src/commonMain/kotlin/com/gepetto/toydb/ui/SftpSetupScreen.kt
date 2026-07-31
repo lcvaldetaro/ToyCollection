@@ -14,6 +14,7 @@ import club.gepetto.GcLog
 import club.gepetto.composeutils.GcMarkdown
 import club.gepetto.composeutils.sysBackgroundColor
 import club.gepetto.composeutils.sysTextColor
+import androidx.compose.ui.graphics.Color
 import toydb.composeapp.generated.resources.Res
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -34,6 +35,7 @@ fun SftpSetupScreen(
     }
 
     Scaffold(
+        containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
                 title = { Text("SFTP Setup Guide") },
@@ -44,14 +46,13 @@ fun SftpSetupScreen(
                 }
             )
         },
-        containerColor = sysBackgroundColor(),
         modifier = modifier.fillMaxSize().imePadding()
     ) { innerPadding ->
         Surface(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
-            color = sysBackgroundColor()
+            color = Color.Transparent
         ) {
             Column(
                 modifier = Modifier

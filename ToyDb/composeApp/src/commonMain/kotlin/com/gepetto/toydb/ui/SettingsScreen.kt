@@ -799,7 +799,7 @@ fun SettingsScreen(
             state = lazyListState,
             modifier = Modifier
                 .fillMaxSize()
-                .background(sysBackgroundColor())
+                .background(Color.Transparent)
                 .padding(GcSpacing.Standard)
         ) {
             item {
