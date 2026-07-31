@@ -27,6 +27,8 @@ fun InfoScreen(
     modifier: Modifier = Modifier
 ) {
     var aboutMarkdown by remember { mutableStateOf("") }
+    var showPrivacyPolicyDialog by remember { mutableStateOf(false) }
+    var privacyPolicyMarkdown by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
         try {
@@ -34,6 +36,17 @@ fun InfoScreen(
         } catch (e: Exception) {
             GcLog.e("InfoScreen", "Failed to load about.md: ${e.message}", e)
             aboutMarkdown = "Failed to load application information."
+        }
+    }
+
+    LaunchedEffect(showPrivacyPolicyDialog) {
+        if (showPrivacyPolicyDialog && privacyPolicyMarkdown.isEmpty()) {
+            try {
+                privacyPolicyMarkdown = Res.readBytes("files/en_privacypolicy.md").decodeToString()
+            } catch (e: Exception) {
+                GcLog.e("InfoScreen", "Failed to load en_privacypolicy.md: ${e.message}", e)
+                privacyPolicyMarkdown = "Failed to load privacy policy."
+            }
         }
     }
 
@@ -122,6 +135,21 @@ fun InfoScreen(
                     ) {
                         Text("SFTP Server Setup Guide")
                     }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    TextButton(
+                        onClick = { showPrivacyPolicyDialog = true },
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    ) {
+                        Text(
+                            text = "Privacy Policy",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
             } else {
                 CircularProgressIndicator(
@@ -129,5 +157,44 @@ fun InfoScreen(
                 )
             }
         }
+    }
+
+    if (showPrivacyPolicyDialog) {
+        AlertDialog(
+            onDismissRequest = { showPrivacyPolicyDialog = false },
+            confirmButton = {
+                TextButton(onClick = { showPrivacyPolicyDialog = false }) {
+                    Text("Close", color = sysTextColor())
+                }
+            },
+            title = {
+                Text(
+                    text = "Privacy Policy",
+                    fontWeight = FontWeight.Bold,
+                    color = sysTextColor()
+                )
+            },
+            text = {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 400.dp)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    if (privacyPolicyMarkdown.isNotEmpty()) {
+                        GcMarkdown(
+                            content = privacyPolicyMarkdown,
+                            textColor = sysTextColor()
+                        )
+                    } else {
+                        CircularProgressIndicator(
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+                    }
+                }
+            },
+            containerColor = sysBackgroundColor()
+        )
     }
 }
