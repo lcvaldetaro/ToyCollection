@@ -14,6 +14,7 @@ import club.gepetto.composeutils.sysBackgroundColor
 import club.gepetto.composeutils.sysForegroundColor
 import com.gepetto.common.Common
 import com.gepetto.common.WEBSITE_BASE_URL
+import com.gepetto.common.getDefaultBaseUrl
 import com.gepetto.common.models.Settings
 import club.gepetto.composeutils.image.gCsetImagesBaseUrl
 
@@ -168,7 +169,7 @@ fun SettingsView(
                     onClick = {
                         val trimmedUrl = baseUrlInput.trim()
                         val finalUrl = if (trimmedUrl.isNotEmpty() && !trimmedUrl.endsWith("/")) "$trimmedUrl/" else trimmedUrl
-                        val normalizedUrl = if (finalUrl == "https://gepetto.club/database/") "" else finalUrl
+                        val normalizedUrl = if (finalUrl == getDefaultBaseUrl()) "" else finalUrl
                         val changed = Common.customBaseUrl != normalizedUrl
                         Common.customBaseUrl = normalizedUrl
                         saveSettings()
@@ -186,7 +187,7 @@ fun SettingsView(
 
                 OutlinedButton(
                     onClick = {
-                        baseUrlInput = "https://gepetto.club/database/"
+                        baseUrlInput = getDefaultBaseUrl()
                         val changed = Common.customBaseUrl != ""
                         Common.customBaseUrl = ""
                         saveSettings()

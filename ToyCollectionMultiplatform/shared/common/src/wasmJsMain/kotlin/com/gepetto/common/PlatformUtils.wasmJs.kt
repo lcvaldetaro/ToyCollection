@@ -14,3 +14,6 @@ actual fun getSystemLanguage(): String {
         return "en"
     }
 }
+
+actual fun getDefaultBaseUrl(): String = "http://valdetaro.com/database/"
+

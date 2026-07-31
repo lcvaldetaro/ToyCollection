@@ -13,7 +13,7 @@ object Common  {
     var customBaseUrl: String = ""
 
     fun getActiveBaseUrl(): String {
-        return if (customBaseUrl.isNotEmpty()) customBaseUrl else "https://gepetto.club/database/"
+        return if (customBaseUrl.isNotEmpty()) customBaseUrl else getDefaultBaseUrl()
     }
 
     var versionString = ""

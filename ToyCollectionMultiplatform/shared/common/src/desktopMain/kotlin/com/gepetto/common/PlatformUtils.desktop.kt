@@ -9,3 +9,6 @@ actual fun getPlatformBaseUrl(): String = DESKTOP_BASE_URL
 actual fun getSystemLanguage(): String {
     return java.util.Locale.getDefault().language
 }
+
+actual fun getDefaultBaseUrl(): String = "https://gepetto.club/database/"
+
