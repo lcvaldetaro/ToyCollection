@@ -83,7 +83,8 @@ data class JsonToysFile(
 data class JsonCategorySetting(
     val category: String,
     val imagePrefix: String,
-    val label: String
+    val label: String,
+    val title: String = ""
 )
 
 @Serializable
@@ -390,12 +391,21 @@ object ImportExportService {
         val parsed = json.decodeFromString<JsonCategorySettingsFile>(jsonContent)
         var count = 0
         parsed.settings.forEach { s ->
+            val defaultTitle = when (s.category) {
+                "slot" -> "Slot car"
+                "train" -> "Train"
+                "static" -> "Static Models"
+                "kit" -> "Models Kit"
+                "misc" -> "Miscelaneous toys"
+                else -> ""
+            }
+            val titleToSave = if (s.title.trim().isEmpty()) defaultTitle else s.title.trim()
             db.execute(
                 """
-                INSERT OR REPLACE INTO category_settings (category, image_prefix, label)
-                VALUES (?, ?, ?)
+                INSERT OR REPLACE INTO category_settings (category, image_prefix, label, title)
+                VALUES (?, ?, ?, ?)
                 """.trimIndent(),
-                listOf(s.category, s.imagePrefix, s.label)
+                listOf(s.category, s.imagePrefix, s.label, titleToSave)
             )
             count++
         }
@@ -412,7 +422,8 @@ object ImportExportService {
                 JsonCategorySetting(
                     category = cursor.getString("category") ?: "",
                     imagePrefix = cursor.getString("image_prefix") ?: "",
-                    label = cursor.getString("label") ?: ""
+                    label = cursor.getString("label") ?: "",
+                    title = cursor.getString("title") ?: ""
                 )
             )
         }
@@ -619,6 +630,34 @@ object ImportExportService {
             )
         }
         makersCursor.close()
+
+        val appTitleCursor = db.query("SELECT value FROM app_settings WHERE key = 'app_title'")
+        var appTitle = "Gepetto Toy Database Manager"
+        if (appTitleCursor.next()) {
+            appTitle = appTitleCursor.getString("value") ?: "Gepetto Toy Database Manager"
+        }
+        appTitleCursor.close()
+
+        val categoryConfigs = mutableListOf<CategoryHtmlConfig>()
+        val catCursor = db.query("SELECT * FROM category_settings")
+        while (catCursor.next()) {
+            val toyType = catCursor.getString("category") ?: ""
+            val imagePrefix = catCursor.getString("image_prefix") ?: ""
+            val catTitle = catCursor.getString("title") ?: ""
+            var mainTitle = if (appTitle.isNotEmpty() && catTitle.isNotEmpty()) {
+                "$appTitle $catTitle"
+            } else if (catTitle.isNotEmpty()) {
+                catTitle
+            } else {
+                appTitle
+            }
+            mainTitle = mainTitle.trim()
+            if (!mainTitle.endsWith("collection", ignoreCase = true)) {
+                mainTitle = "$mainTitle collection"
+            }
+            categoryConfigs.add(CategoryHtmlConfig(toyType, imagePrefix, mainTitle))
+        }
+        catCursor.close()
 
         for (config in categoryConfigs) {
             // Query active toys for this category

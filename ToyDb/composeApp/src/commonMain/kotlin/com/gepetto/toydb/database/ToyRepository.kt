@@ -325,7 +325,8 @@ class ToyRepository(private val db: ToyDatabase) {
                     CategorySetting(
                         category = cursor.getString("category") ?: "",
                         imagePrefix = cursor.getString("image_prefix") ?: "",
-                        label = cursor.getString("label") ?: ""
+                        label = cursor.getString("label") ?: "",
+                        title = cursor.getString("title") ?: ""
                     )
                 )
             }
@@ -339,8 +340,8 @@ class ToyRepository(private val db: ToyDatabase) {
     fun addCategorySetting(setting: CategorySetting) {
         try {
             db.execute(
-                "INSERT INTO category_settings (category, image_prefix, label) VALUES (?, ?, ?)",
-                listOf(setting.category.trim().lowercase(), setting.imagePrefix.trim(), setting.label.trim())
+                "INSERT INTO category_settings (category, image_prefix, label, title) VALUES (?, ?, ?, ?)",
+                listOf(setting.category.trim().lowercase(), setting.imagePrefix.trim(), setting.label.trim(), setting.title.trim())
             )
             GcLog.d("ToyRepository", "Added category ${setting.category}")
         } catch (e: Exception) {
@@ -351,8 +352,8 @@ class ToyRepository(private val db: ToyDatabase) {
     fun updateCategorySetting(setting: CategorySetting) {
         try {
             db.execute(
-                "UPDATE category_settings SET image_prefix = ?, label = ? WHERE category = ?",
-                listOf(setting.imagePrefix.trim(), setting.label.trim(), setting.category)
+                "UPDATE category_settings SET image_prefix = ?, label = ?, title = ? WHERE category = ?",
+                listOf(setting.imagePrefix.trim(), setting.label.trim(), setting.title.trim(), setting.category)
             )
             GcLog.d("ToyRepository", "Updated category ${setting.category}")
         } catch (e: Exception) {

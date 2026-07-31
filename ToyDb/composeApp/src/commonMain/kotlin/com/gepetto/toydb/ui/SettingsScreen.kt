@@ -131,6 +131,7 @@ fun SettingsScreen(
     var dialogCategoryKey by remember { mutableStateOf("") }
     var dialogCategoryLabel by remember { mutableStateOf("") }
     var dialogCategoryPrefix by remember { mutableStateOf("") }
+    var dialogCategoryTitle by remember { mutableStateOf("") }
     var dialogErrorText by remember { mutableStateOf("") }
 
     // Delete Category confirmation state
@@ -258,12 +259,24 @@ fun SettingsScreen(
                             unfocusedTextColor = sysTextColor()
                         )
                     )
+                    OutlinedTextField(
+                        value = dialogCategoryTitle,
+                        onValueChange = { dialogCategoryTitle = it },
+                        label = { Text("Category Title (for HTML Page)*") },
+                        placeholder = { Text("e.g. Lego Sets Collection") },
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = sysTextColor(),
+                            unfocusedTextColor = sysTextColor()
+                        )
+                    )
                 }
             },
             confirmButton = {
                 Button(
                     onClick = {
-                        if (dialogCategoryKey.trim().isEmpty() || dialogCategoryLabel.trim().isEmpty() || dialogCategoryPrefix.trim().isEmpty()) {
+                        if (dialogCategoryKey.trim().isEmpty() || dialogCategoryLabel.trim().isEmpty() || dialogCategoryPrefix.trim().isEmpty() || dialogCategoryTitle.trim().isEmpty()) {
                             dialogErrorText = "All fields marked with * are required."
                             return@Button
                         }
@@ -271,7 +284,8 @@ fun SettingsScreen(
                         val newSetting = CategorySetting(
                             category = dialogCategoryKey.trim(),
                             label = dialogCategoryLabel.trim(),
-                            imagePrefix = dialogCategoryPrefix.trim()
+                            imagePrefix = dialogCategoryPrefix.trim(),
+                            title = dialogCategoryTitle.trim()
                         )
                         
                         if (dialogIsEditMode) {
@@ -965,6 +979,7 @@ fun SettingsScreen(
                                 dialogCategoryKey = ""
                                 dialogCategoryLabel = ""
                                 dialogCategoryPrefix = ""
+                                dialogCategoryTitle = ""
                                 dialogErrorText = ""
                                 showCategoryDialog = true
                             },
@@ -973,6 +988,7 @@ fun SettingsScreen(
                                 dialogCategoryKey = cat.category
                                 dialogCategoryLabel = cat.label
                                 dialogCategoryPrefix = cat.imagePrefix
+                                dialogCategoryTitle = cat.title
                                 dialogErrorText = ""
                                 showCategoryDialog = true
                             },
@@ -1142,6 +1158,7 @@ fun SettingsScreen(
                             dialogCategoryKey = ""
                             dialogCategoryLabel = ""
                             dialogCategoryPrefix = ""
+                            dialogCategoryTitle = ""
                             dialogErrorText = ""
                             showCategoryDialog = true
                         },
@@ -1150,6 +1167,7 @@ fun SettingsScreen(
                             dialogCategoryKey = cat.category
                             dialogCategoryLabel = cat.label
                             dialogCategoryPrefix = cat.imagePrefix
+                            dialogCategoryTitle = cat.title
                             dialogErrorText = ""
                             showCategoryDialog = true
                         },
@@ -1612,6 +1630,10 @@ fun CategoriesManager(
                             Text(cat.label, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = sysTextColor())
                             Spacer(modifier = Modifier.height(2.dp))
                             Text("Key: ${cat.category} | Prefix: ${cat.imagePrefix}", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            if (cat.title.isNotEmpty()) {
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text("HTML Title: ${cat.title}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f))
+                            }
                         }
                         Row {
                             IconButton(onClick = { onEditCategory(cat) }) {

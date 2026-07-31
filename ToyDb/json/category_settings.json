@@ -5,27 +5,32 @@
         {
             "category": "kit",
             "imagePrefix": "pla",
-            "label": "Model Kits"
+            "label": "Model Kits",
+            "title": "Models Kit"
         },
         {
             "category": "misc",
             "imagePrefix": "mis",
-            "label": "Others"
+            "label": "Others",
+            "title": "Miscelaneous toys"
         },
         {
             "category": "slot",
             "imagePrefix": "car",
-            "label": "Slot Cars"
+            "label": "Slot Cars",
+            "title": "Slot car"
         },
         {
             "category": "static",
             "imagePrefix": "sta",
-            "label": "Static Models"
+            "label": "Static Models",
+            "title": "Static Models"
         },
         {
             "category": "train",
             "imagePrefix": "tra",
-            "label": "Model Trains"
+            "label": "Model Trains",
+            "title": "Train"
         }
     ]
 }

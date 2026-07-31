@@ -3,7 +3,7 @@ package com.gepetto.toydb.database
 import club.gepetto.GcLog
 import kotlinx.serialization.Serializable
 
-const val DATABASE_VERSION = 4
+const val DATABASE_VERSION = 6
 const val TAG = "ToyDbDatabase"
 
 interface SqlCursor {
@@ -111,7 +111,8 @@ data class Maker(
 data class CategorySetting(
     val category: String, // slots, trains, static, kits, misc
     val imagePrefix: String,
-    val label: String
+    val label: String,
+    val title: String = ""
 )
 
 // SQL CREATE SCHEMA
@@ -120,17 +121,18 @@ val CREATE_SCHEMA_SQL_LIST = listOf(
     CREATE TABLE IF NOT EXISTS category_settings (
         category TEXT PRIMARY KEY,
         image_prefix TEXT NOT NULL,
-        label TEXT NOT NULL
+        label TEXT NOT NULL,
+        title TEXT NOT NULL DEFAULT ''
     );
     """.trimIndent(),
     
     """
-    INSERT OR REPLACE INTO category_settings (category, image_prefix, label) VALUES
-    ('slot', 'car', 'Slot Cars'),
-    ('train', 'tra', 'Model Trains'),
-    ('static', 'sta', 'Static Models'),
-    ('kit', 'pla', 'Model Kits'),
-    ('misc', 'mis', 'Others');
+    INSERT OR REPLACE INTO category_settings (category, image_prefix, label, title) VALUES
+    ('slot', 'car', 'Slot Cars', 'Slot car'),
+    ('train', 'tra', 'Model Trains', 'Train'),
+    ('static', 'sta', 'Static Models', 'Static Models'),
+    ('kit', 'pla', 'Model Kits', 'Models Kit'),
+    ('misc', 'mis', 'Others', 'Miscelaneous toys');
     """.trimIndent(),
     
     """
@@ -259,6 +261,21 @@ fun runMigration(db: ToyDatabase, version: Int) {
             db.execute("ALTER TABLE toys ADD COLUMN year_made TEXT DEFAULT ''")
             db.execute("ALTER TABLE toys ADD COLUMN number TEXT DEFAULT ''")
             db.execute("ALTER TABLE toys ADD COLUMN my_comments TEXT DEFAULT ''")
+        }
+        5 -> {
+            db.execute("ALTER TABLE category_settings ADD COLUMN title TEXT NOT NULL DEFAULT ''")
+            db.execute("UPDATE category_settings SET title = 'Slot car' WHERE category = 'slot'")
+            db.execute("UPDATE category_settings SET title = 'Train' WHERE category = 'train'")
+            db.execute("UPDATE category_settings SET title = 'Static Models' WHERE category = 'static'")
+            db.execute("UPDATE category_settings SET title = 'Models Kit' WHERE category = 'kit'")
+            db.execute("UPDATE category_settings SET title = 'Miscelaneous toys' WHERE category = 'misc'")
+        }
+        6 -> {
+            db.execute("UPDATE category_settings SET title = 'Slot car' WHERE category = 'slot' AND (title IS NULL OR title = '')")
+            db.execute("UPDATE category_settings SET title = 'Train' WHERE category = 'train' AND (title IS NULL OR title = '')")
+            db.execute("UPDATE category_settings SET title = 'Static Models' WHERE category = 'static' AND (title IS NULL OR title = '')")
+            db.execute("UPDATE category_settings SET title = 'Models Kit' WHERE category = 'kit' AND (title IS NULL OR title = '')")
+            db.execute("UPDATE category_settings SET title = 'Miscelaneous toys' WHERE category = 'misc' AND (title IS NULL OR title = '')")
         }
     }
 }
