@@ -99,8 +99,8 @@
     <string name="form_field_has_picture">Tem Imagem</string>
     <string name="form_field_main_picture">Nome do Arquivo da Imagem Principal</string>
     <string name="form_field_maintenance_log">Registro de Manutenção</string>
-    <string name="form_field_major_work">Trabalho Maior Realizado</string>
-    <string name="form_field_minor_work">Trabalho Menor Realizado</string>
+    <string name="form_field_major_work">Trabalho Maior</string>
+    <string name="form_field_minor_work">Trabalho Menor</string>
     <string name="form_field_motor_details">Detalhes do Motor</string>
     <string name="form_field_motor_maker">Fabricante do Motor</string>
     <string name="form_field_repro_details">Detalhes de Repro (y/r)</string>

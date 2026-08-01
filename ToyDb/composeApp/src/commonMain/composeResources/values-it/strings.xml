@@ -99,8 +99,8 @@
     <string name="form_field_has_picture">Ha un\'immagine</string>
     <string name="form_field_main_picture">Nome File Immagine Principale</string>
     <string name="form_field_maintenance_log">Registro Manutenzione</string>
-    <string name="form_field_major_work">Lavori Maggiori Eseguiti</string>
-    <string name="form_field_minor_work">Lavori Minori Eseguiti</string>
+    <string name="form_field_major_work">Lavori Maggiori</string>
+    <string name="form_field_minor_work">Lavori Minori</string>
     <string name="form_field_motor_details">Dettagli Motore</string>
     <string name="form_field_motor_maker">Produttore Motore</string>
     <string name="form_field_repro_details">Dettagli Repro (y/r)</string>

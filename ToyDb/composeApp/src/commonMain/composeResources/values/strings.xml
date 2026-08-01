@@ -99,8 +99,8 @@
     <string name="form_field_has_picture">Has Picture</string>
     <string name="form_field_main_picture">Main Picture Filename</string>
     <string name="form_field_maintenance_log">Maintenance Log</string>
-    <string name="form_field_major_work">Major Work Done</string>
-    <string name="form_field_minor_work">Minor Work Done</string>
+    <string name="form_field_major_work">Major Work</string>
+    <string name="form_field_minor_work">Minor Work</string>
     <string name="form_field_motor_details">Motor Details</string>
     <string name="form_field_motor_maker">Motor Maker</string>
     <string name="form_field_repro_details">Repro Details (y/r)</string>

@@ -99,8 +99,8 @@
     <string name="form_field_has_picture">Hat Bild</string>
     <string name="form_field_main_picture">Hauptbild-Dateiname</string>
     <string name="form_field_maintenance_log">Wartungsprotokoll</string>
-    <string name="form_field_major_work">Hauptarbeiten durchgeführt</string>
-    <string name="form_field_minor_work">Kleinere Arbeiten durchgeführt</string>
+    <string name="form_field_major_work">Hauptarbeiten</string>
+    <string name="form_field_minor_work">Kleinere Arbeiten</string>
     <string name="form_field_motor_details">Motordetails</string>
     <string name="form_field_motor_maker">Motorhersteller</string>
     <string name="form_field_repro_details">Repro-Details (y/r)</string>
