@@ -247,4 +247,10 @@ Tutti i diritti riservati.</string>
     <string name="welcome_setup_desc">Si prega di configurare i percorsi delle directory richiesti per inizializzare l\'applicazione.</string>
     <string name="welcome_setup_title">Configurazione Iniziale del Sistema</string>
     <string name="yes">Sì</string>
+    <string name="add_picture_btn">Aggiungi/Cambia immagine</string>
+    <string name="overwrite_image_title">Sovrascrivi immagine</string>
+    <string name="overwrite_image_confirm">Esiste già un\'immagine per questo giocattolo. Vuoi sovrascriverla?</string>
+    <string name="overwrite">Sovrascrivi</string>
+    <string name="current_image_label">Corrente</string>
+    <string name="new_image_label">Nuova</string>
 </resources>

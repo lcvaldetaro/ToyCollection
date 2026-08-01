@@ -247,4 +247,10 @@ Todos los derechos reservados.</string>
     <string name="welcome_setup_desc">Configure las rutas de directorio requeridas para inicializar la aplicación.</string>
     <string name="welcome_setup_title">Configuración Inicial del Sistema</string>
     <string name="yes">Sí</string>
+    <string name="add_picture_btn">Añadir/Cambiar imagen</string>
+    <string name="overwrite_image_title">Sobrescribir imagen</string>
+    <string name="overwrite_image_confirm">Ya existe una imagen para este juguete. ¿Desea sobrescribirla?</string>
+    <string name="overwrite">Sobrescribir</string>
+    <string name="current_image_label">Actual</string>
+    <string name="new_image_label">Nueva</string>
 </resources>

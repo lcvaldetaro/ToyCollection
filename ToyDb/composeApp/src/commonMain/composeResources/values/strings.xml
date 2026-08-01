@@ -247,4 +247,10 @@ All rights reserved.</string>
     <string name="welcome_setup_desc">Please configure the required directory paths to initialize the application.</string>
     <string name="welcome_setup_title">Initial System Setup</string>
     <string name="yes">Yes</string>
+    <string name="add_picture_btn">Add/Change Picture</string>
+    <string name="overwrite_image_title">Overwrite Image</string>
+    <string name="overwrite_image_confirm">An image for this toy already exists. Do you want to overwrite it?</string>
+    <string name="overwrite">Overwrite</string>
+    <string name="current_image_label">Current</string>
+    <string name="new_image_label">New</string>
 </resources>

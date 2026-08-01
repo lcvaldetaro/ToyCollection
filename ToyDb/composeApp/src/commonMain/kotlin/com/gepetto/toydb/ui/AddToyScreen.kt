@@ -44,6 +44,7 @@ fun AddToyScreen(
         }
     ) { innerPadding ->
         ToyForm(
+            repository = repository,
             initialToy = blankToy,
             onSave = { newToy ->
                 repository.saveToy(newToy)

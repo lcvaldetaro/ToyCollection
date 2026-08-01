@@ -247,4 +247,10 @@ Todos os direitos reservados.</string>
     <string name="welcome_setup_desc">Configure os caminhos de diretório necessários para inicializar o aplicativo.</string>
     <string name="welcome_setup_title">Configuração Inicial do Sistema</string>
     <string name="yes">Sim</string>
+    <string name="add_picture_btn">Adicionar/Alterar imagem</string>
+    <string name="overwrite_image_title">Substituir imagem</string>
+    <string name="overwrite_image_confirm">Já existe uma imagem para este brinquedo. Deseja substituí-la?</string>
+    <string name="overwrite">Substituir</string>
+    <string name="current_image_label">Atual</string>
+    <string name="new_image_label">Nova</string>
 </resources>

@@ -247,4 +247,10 @@ Alle Rechte vorbehalten.</string>
     <string name="welcome_setup_desc">Bitte konfigurieren Sie die erforderlichen Verzeichnispfade, um die Anwendung zu initialisieren.</string>
     <string name="welcome_setup_title">Ersteinrichtung des Systems</string>
     <string name="yes">Ja</string>
+    <string name="add_picture_btn">Bild hinzufügen/ändern</string>
+    <string name="overwrite_image_title">Bild überschreiben</string>
+    <string name="overwrite_image_confirm">Ein Bild für dieses Spielzeug existiert bereits. Möchten Sie es überschreiben?</string>
+    <string name="overwrite">Überschreiben</string>
+    <string name="current_image_label">Aktuell</string>
+    <string name="new_image_label">Neu</string>
 </resources>

@@ -15,9 +15,19 @@ import club.gepetto.composeutils.sysTextColor
 import com.gepetto.toydb.database.Toy
 import org.jetbrains.compose.resources.stringResource
 import toydb.composeapp.generated.resources.*
+import club.gepetto.GcLog
+import club.gepetto.composeutils.image.GcImage
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import com.gepetto.toydb.database.ToyRepository
+import com.gepetto.toydb.utils.rememberImagePicker
+import okio.FileSystem
+import okio.Path.Companion.toPath
 
 @Composable
 fun ToyForm(
+    repository: ToyRepository,
     initialToy: Toy,
     onSave: (Toy) -> Unit,
     onCancel: () -> Unit,
@@ -73,6 +83,75 @@ fun ToyForm(
     var bitmaps by remember { mutableStateOf(initialToy.bitmaps) }
     var bitmapsSize by remember { mutableStateOf(initialToy.bitmapsSize) }
     var bitmapsTimeStamp by remember { mutableStateOf(initialToy.bitmapsTimeStamp) }
+
+    val categorySettings = remember { repository.getCategorySettings() }
+    val prefix = remember(initialToy.toyType, categorySettings) {
+        categorySettings.find { it.category == initialToy.toyType }?.imagePrefix ?: "car"
+    }
+
+    var pendingImagePath by remember { mutableStateOf<String?>(null) }
+    var showOverwriteDialog by remember { mutableStateOf(false) }
+    var overwriteDestPath by remember { mutableStateOf("") }
+
+    fun performCopyImage(selectedPath: String) {
+        val srcPath = selectedPath.toPath()
+        val extension = srcPath.name.substringAfterLast('.', "jpg").lowercase()
+        val destFilename = "$prefix${initialToy.refNum}.$extension"
+        
+        val customPath = repository.getImagesPathSetting()
+        val targetDir = if (!customPath.isNullOrEmpty()) {
+            customPath.toPath()
+        } else {
+            val possibleDirs = listOf("images", "../images", "ToyDb/images", "../ToyDb/images")
+            possibleDirs.map { it.toPath() }.find { FileSystem.SYSTEM.exists(it) } ?: "images".toPath()
+        }
+        
+        val destPath = targetDir.div(destFilename)
+        try {
+            if (!FileSystem.SYSTEM.exists(targetDir)) {
+                FileSystem.SYSTEM.createDirectories(targetDir)
+            }
+            if (FileSystem.SYSTEM.exists(destPath)) {
+                FileSystem.SYSTEM.delete(destPath)
+            }
+            FileSystem.SYSTEM.copy(srcPath, destPath)
+            
+            val size = FileSystem.SYSTEM.metadataOrNull(destPath)?.size ?: 0L
+            val timestamp = System.currentTimeMillis()
+            
+            picture = destFilename
+            pictureSize = size.toString()
+            pictureTimeStamp = timestamp.toString()
+            hasPicture = true
+            
+            GcLog.d("ToyForm", "Successfully saved main picture $destFilename")
+        } catch (e: Exception) {
+            GcLog.e("ToyForm", "Error saving main picture: ${e.message}", e)
+        }
+    }
+
+    val imagePicker = rememberImagePicker { selectedPath ->
+        val srcPath = selectedPath.toPath()
+        val extension = srcPath.name.substringAfterLast('.', "jpg").lowercase()
+        val destFilename = "$prefix${initialToy.refNum}.$extension"
+        
+        val customPath = repository.getImagesPathSetting()
+        val targetDir = if (!customPath.isNullOrEmpty()) {
+            customPath.toPath()
+        } else {
+            val possibleDirs = listOf("images", "../images", "ToyDb/images", "../ToyDb/images")
+            possibleDirs.map { it.toPath() }.find { FileSystem.SYSTEM.exists(it) } ?: "images".toPath()
+        }
+        
+        val destPath = targetDir.div(destFilename)
+        if (FileSystem.SYSTEM.exists(destPath)) {
+            pendingImagePath = selectedPath
+            overwriteDestPath = destPath.toString()
+            showOverwriteDialog = true
+        } else {
+            performCopyImage(selectedPath)
+        }
+    }
 
     Column(modifier = modifier.fillMaxSize().imePadding()) {
         TabRow(selectedTabIndex = tabIndex) {
@@ -137,6 +216,14 @@ fun ToyForm(
                 4 -> { // Images
                     FormField(label = stringResource(Res.string.form_field_main_picture), value = picture, onValueChange = { picture = it })
                     
+                    Spacer(modifier = Modifier.height(GcSpacing.Small))
+                    Button(
+                        onClick = imagePicker,
+                        modifier = Modifier.fillMaxWidth().padding(vertical = GcSpacing.Small)
+                    ) {
+                        Text(stringResource(Res.string.add_picture_btn))
+                    }
+
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(vertical = GcSpacing.Small),
                         verticalAlignment = Alignment.CenterVertically
@@ -228,6 +315,76 @@ fun ToyForm(
                 Text(stringResource(Res.string.save))
             }
         }
+    }
+
+    if (showOverwriteDialog) {
+        AlertDialog(
+            onDismissRequest = { 
+                showOverwriteDialog = false
+                pendingImagePath = null
+            },
+            title = { Text(stringResource(Res.string.overwrite_image_title)) },
+            text = {
+                Column {
+                    Text(stringResource(Res.string.overwrite_image_confirm))
+                    Spacer(modifier = Modifier.height(GcSpacing.Small))
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = GcSpacing.Small),
+                        horizontalArrangement = Arrangement.spacedBy(GcSpacing.Small)
+                    ) {
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(stringResource(Res.string.current_image_label), style = MaterialTheme.typography.labelMedium)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            GcImage(
+                                imageFile = overwriteDestPath,
+                                contentDescription = "Current image",
+                                modifier = Modifier.size(100.dp).clip(RoundedCornerShape(4.dp)),
+                                contentScale = ContentScale.Crop
+                            )
+                        }
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(stringResource(Res.string.new_image_label), style = MaterialTheme.typography.labelMedium)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            pendingImagePath?.let { path ->
+                                GcImage(
+                                    imageFile = path,
+                                    contentDescription = "New image",
+                                    modifier = Modifier.size(100.dp).clip(RoundedCornerShape(4.dp)),
+                                    contentScale = ContentScale.Crop
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showOverwriteDialog = false
+                        pendingImagePath?.let { performCopyImage(it) }
+                        pendingImagePath = null
+                    }
+                ) {
+                    Text(stringResource(Res.string.overwrite))
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = {
+                        showOverwriteDialog = false
+                        pendingImagePath = null
+                    }
+                ) {
+                    Text(stringResource(Res.string.cancel))
+                }
+            }
+        )
     }
 }
 

@@ -247,4 +247,10 @@ Tous droits réservés.</string>
     <string name="welcome_setup_desc">Veuillez configurer les chemins de répertoire requis pour initialiser l\'application.</string>
     <string name="welcome_setup_title">Configuration Initiale du Système</string>
     <string name="yes">Oui</string>
+    <string name="add_picture_btn">Ajouter/Modifier l\'image</string>
+    <string name="overwrite_image_title">Remplacer l\'image</string>
+    <string name="overwrite_image_confirm">Une image pour ce jouet existe déjà. Voulez-vous la remplacer ?</string>
+    <string name="overwrite">Remplacer</string>
+    <string name="current_image_label">Actuelle</string>
+    <string name="new_image_label">Nouvelle</string>
 </resources>
