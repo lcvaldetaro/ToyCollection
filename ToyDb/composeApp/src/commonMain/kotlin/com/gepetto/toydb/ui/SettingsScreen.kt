@@ -998,6 +998,7 @@ fun SettingsScreen(
                                             selectedSftpActions.clear()
                                             actions.forEach { selectedSftpActions[it.filename] = true }
                                             syncDirection = "Upload"
+                                            syncDialogPhase = "Confirm"
                                             showSyncConfirmDialog = true
                                         } else {
                                             statusText = getString(Res.string.sftp_status_plan_failed, result.exceptionOrNull()?.message ?: "")
@@ -1017,6 +1018,7 @@ fun SettingsScreen(
                                             selectedSftpActions.clear()
                                             actions.forEach { selectedSftpActions[it.filename] = true }
                                             syncDirection = "Download"
+                                            syncDialogPhase = "Confirm"
                                             showSyncConfirmDialog = true
                                         } else {
                                             statusText = getString(Res.string.sftp_status_plan_failed, result.exceptionOrNull()?.message ?: "")
@@ -1171,6 +1173,7 @@ fun SettingsScreen(
                                         selectedSftpActions.clear()
                                         actions.forEach { selectedSftpActions[it.filename] = true }
                                         syncDirection = "Upload"
+                                        syncDialogPhase = "Confirm"
                                         showSyncConfirmDialog = true
                                     } else {
                                         statusText = getString(Res.string.sftp_status_plan_failed, result.exceptionOrNull()?.message ?: "")
@@ -1190,6 +1193,7 @@ fun SettingsScreen(
                                         selectedSftpActions.clear()
                                         actions.forEach { selectedSftpActions[it.filename] = true }
                                         syncDirection = "Download"
+                                        syncDialogPhase = "Confirm"
                                         showSyncConfirmDialog = true
                                     } else {
                                         statusText = getString(Res.string.sftp_status_plan_failed, result.exceptionOrNull()?.message ?: "")

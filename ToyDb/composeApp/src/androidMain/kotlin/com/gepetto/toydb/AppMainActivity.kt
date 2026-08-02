@@ -66,7 +66,7 @@ class AppMainActivity : ComponentActivity() {
         }
         ImageResolverConfig.imagesPath = repository.getDataPathSetting()
 
-        val sftpService = AndroidSftpService()
+        val sftpService = AndroidSftpService(this)
 
         setContent {
             ToyDbNavigation(

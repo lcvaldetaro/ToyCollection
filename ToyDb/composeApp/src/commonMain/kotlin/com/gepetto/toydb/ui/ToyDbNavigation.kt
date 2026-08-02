@@ -315,7 +315,7 @@ fun ToyDbNavigation(
                                     makerName = key.makerName,
                                     onNavigate = { backStack.add(it) },
                                     onBack = { backStack.removeLastOrNull() },
-                                    backStack = backStack
+                                    backStackLastItem = backStack.lastOrNull()
                                 )
                             }
                             entry<Destination.ToyDetail>(
@@ -327,7 +327,7 @@ fun ToyDbNavigation(
                                     refNum = key.refNum,
                                     onNavigate = { backStack.add(it) },
                                     onBack = { backStack.removeUpToInclusive(key) },
-                                    backStack = backStack
+                                    backStackLastItem = backStack.lastOrNull()
                                 )
                             }
                             entry<Destination.EditToy>(

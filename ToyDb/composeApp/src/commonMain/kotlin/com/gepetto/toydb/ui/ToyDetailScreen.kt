@@ -50,12 +50,12 @@ fun ToyDetailScreen(
     refNum: Int,
     onNavigate: (Destination) -> Unit,
     onBack: () -> Unit,
-    modifier: Modifier = Modifier,
-    backStack: List<Destination> = emptyList()
+    backStackLastItem: Destination?,
+    modifier: Modifier = Modifier
 ) {
     var toyState by remember(toyType, refNum) { mutableStateOf(repository.getToy(toyType, refNum)) }
 
-    LaunchedEffect(toyType, refNum, backStack.lastOrNull()) {
+    LaunchedEffect(toyType, refNum, backStackLastItem) {
         toyState = repository.getToy(toyType, refNum)
     }
     val toy = toyState

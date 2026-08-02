@@ -41,6 +41,8 @@ class DesktopSftpService : SftpService {
         onHostKeyUnverified: suspend (hostname: String, port: Int, fingerprint: String) -> Boolean
     ): SSHClient {
         val client = SSHClient()
+        client.connectTimeout = 15000
+        client.timeout = 30000
         client.addHostKeyVerifier(object : HostKeyVerifier {
             override fun verify(hostname: String, port: Int, key: PublicKey): Boolean {
                 val fingerprint = SecurityUtils.getFingerprint(key)
@@ -305,36 +307,40 @@ class DesktopSftpService : SftpService {
                     }
                     val remoteFileMap = remoteFiles.associateBy { getFileNameFromPath(it.path) }
 
-                    allLocalFiles.forEachIndexed { index, localFilePath ->
+                    val filesToUpload = if (selectedFiles != null) {
+                        allLocalFiles.filter { selectedFiles.contains(it.name) }
+                    } else {
+                        allLocalFiles
+                    }
+
+                    filesToUpload.forEachIndexed { index, localFilePath ->
                         val fileName = localFilePath.name
-                        if (selectedFiles == null || selectedFiles.contains(fileName)) {
-                            val localFile = localFilePath.toNioPath().toFile()
-                            val localMeta = FileSystem.SYSTEM.metadata(localFilePath)
-                            val localSize = localMeta.size ?: 0L
-                            val localMtimeSec = (localMeta.lastModifiedAtMillis ?: 0L) / 1000L
+                        val localFile = localFilePath.toNioPath().toFile()
+                        val localMeta = FileSystem.SYSTEM.metadata(localFilePath)
+                        val localSize = localMeta.size ?: 0L
+                        val localMtimeSec = (localMeta.lastModifiedAtMillis ?: 0L) / 1000L
 
-                            val remoteInfo = remoteFileMap[fileName]
-                            val remoteFile = if (config.remoteDir.endsWith("/")) "${config.remoteDir}$fileName" else "${config.remoteDir}/$fileName"
+                        val remoteInfo = remoteFileMap[fileName]
+                        val remoteFile = if (config.remoteDir.endsWith("/")) "${config.remoteDir}$fileName" else "${config.remoteDir}/$fileName"
 
-                            val shouldUpload = if (remoteInfo == null) {
+                        val shouldUpload = if (remoteInfo == null) {
+                            true
+                        } else {
+                            val remoteSize = remoteInfo.attributes.size
+                            val remoteMtimeSec = remoteInfo.attributes.mtime
+                            if (localSize != remoteSize) {
                                 true
                             } else {
-                                val remoteSize = remoteInfo.attributes.size
-                                val remoteMtimeSec = remoteInfo.attributes.mtime
-                                if (localSize != remoteSize) {
-                                    true
-                                } else {
-                                    localMtimeSec > remoteMtimeSec
-                                }
-                            }
-
-                            if (shouldUpload) {
-                                sftp.put(net.schmizz.sshj.xfer.FileSystemFile(localFile), remoteFile)
+                                localMtimeSec > remoteMtimeSec
                             }
                         }
+
+                        if (shouldUpload) {
+                            sftp.put(net.schmizz.sshj.xfer.FileSystemFile(localFile), remoteFile)
+                        }
                         
-                        val progressVal = 0.7f + (0.3f * (index + 1) / allLocalFiles.size.coerceAtLeast(1))
-                        onProgress("Uploading media and HTML files ($index/${allLocalFiles.size})...", progressVal)
+                        val progressVal = 0.7f + (0.3f * (index + 1) / filesToUpload.size.coerceAtLeast(1))
+                        onProgress("Uploading media and HTML files (${index + 1}/${filesToUpload.size})...", progressVal)
                     }
 
                 } finally {
@@ -390,35 +396,39 @@ class DesktopSftpService : SftpService {
                     // 2. Download media files
                     val allowedRemoteImages = remoteFiles.filter { it.isRegularFile && (isAllowedFile(getFileNameFromPath(it.path)) || getFileNameFromPath(it.path).lowercase().endsWith(".html")) }
 
-                    allowedRemoteImages.forEachIndexed { index, remoteImg ->
+                    val imagesToDownload = if (selectedFiles != null) {
+                        allowedRemoteImages.filter { selectedFiles.contains(getFileNameFromPath(it.path)) }
+                    } else {
+                        allowedRemoteImages
+                    }
+
+                    imagesToDownload.forEachIndexed { index, remoteImg ->
                         val fileName = getFileNameFromPath(remoteImg.path)
-                        if (selectedFiles == null || selectedFiles.contains(fileName)) {
-                            val remoteSize = remoteImg.attributes.size
-                            val remoteMtimeSec = remoteImg.attributes.mtime
-                            val remoteFile = if (config.remoteDir.endsWith("/")) "${config.remoteDir}$fileName" else "${config.remoteDir}/$fileName"
-                            val localFilePath = localDataPath.div(fileName)
-                            val localFile = localFilePath.toNioPath().toFile()
+                        val remoteSize = remoteImg.attributes.size
+                        val remoteMtimeSec = remoteImg.attributes.mtime
+                        val remoteFile = if (config.remoteDir.endsWith("/")) "${config.remoteDir}$fileName" else "${config.remoteDir}/$fileName"
+                        val localFilePath = localDataPath.div(fileName)
+                        val localFile = localFilePath.toNioPath().toFile()
 
-                            val shouldDownload = if (!FileSystem.SYSTEM.exists(localFilePath)) {
-                                  true
+                        val shouldDownload = if (!FileSystem.SYSTEM.exists(localFilePath)) {
+                            true
+                        } else {
+                            val localMeta = FileSystem.SYSTEM.metadata(localFilePath)
+                            val localSize = localMeta.size ?: 0L
+                            val localMtimeSec = (localMeta.lastModifiedAtMillis ?: 0L) / 1000L
+                            if (localSize != remoteSize) {
+                                true
                             } else {
-                                val localMeta = FileSystem.SYSTEM.metadata(localFilePath)
-                                val localSize = localMeta.size ?: 0L
-                                val localMtimeSec = (localMeta.lastModifiedAtMillis ?: 0L) / 1000L
-                                if (localSize != remoteSize) {
-                                    true
-                                } else {
-                                    remoteMtimeSec > localMtimeSec
-                                }
-                            }
-
-                            if (shouldDownload) {
-                                sftp.get(remoteFile, net.schmizz.sshj.xfer.FileSystemFile(localFile))
+                                remoteMtimeSec > localMtimeSec
                             }
                         }
+
+                        if (shouldDownload) {
+                            sftp.get(remoteFile, net.schmizz.sshj.xfer.FileSystemFile(localFile))
+                        }
                         
-                        val progressVal = 0.5f + (0.3f * (index + 1) / allowedRemoteImages.size.coerceAtLeast(1))
-                        onProgress("Downloading media ($index/${allowedRemoteImages.size})...", progressVal)
+                        val progressVal = 0.5f + (0.3f * (index + 1) / imagesToDownload.size.coerceAtLeast(1))
+                        onProgress("Downloading media (${index + 1}/${imagesToDownload.size})...", progressVal)
                     }
 
                     onProgress("Importing downloaded data to database...", 0.8f)
