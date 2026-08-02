@@ -1,39 +1,32 @@
 package com.gepetto.toydb.ui
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.PaddingValues
 import club.gepetto.composeutils.GcCard
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.Image
 import androidx.compose.ui.graphics.toArgb
 import club.gepetto.composeutils.textAsBitmap
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Business
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import com.gepetto.toydb.utils.resolveBitmapUri
 import club.gepetto.composeutils.image.GcImage
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.background
 import club.gepetto.composeutils.GcSpacing
 import club.gepetto.composeutils.sysBackgroundColor
 import androidx.compose.ui.graphics.Color
-import club.gepetto.composeutils.sysForegroundColor
 import club.gepetto.composeutils.sysTextColor
 import com.gepetto.toydb.database.Maker
 import com.gepetto.toydb.database.ToyRepository
@@ -47,7 +40,7 @@ fun MakerDirectoryScreen(
     onNavigate: (Destination) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var searchQuery by remember { mutableStateOf("") }
+    var searchQuery by rememberSaveable { mutableStateOf("") }
     // Fetch manufacturers dynamically to reflect additions/deletions immediately
     val makersList = repository.getMakers()
 

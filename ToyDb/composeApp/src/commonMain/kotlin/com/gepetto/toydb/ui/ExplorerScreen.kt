@@ -1,11 +1,9 @@
 package com.gepetto.toydb.ui
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.alpha
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items as lazyItems
@@ -19,9 +17,9 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,7 +29,6 @@ import androidx.compose.ui.graphics.toArgb
 import club.gepetto.composeutils.GcSpacing
 import club.gepetto.composeutils.sysBackgroundColor
 import androidx.compose.ui.graphics.Color
-import club.gepetto.composeutils.sysForegroundColor
 import club.gepetto.composeutils.sysTextColor
 import club.gepetto.composeutils.image.GcImage
 import com.gepetto.toydb.database.Toy
@@ -49,10 +46,10 @@ fun ExplorerScreen(
     onNavigate: (Destination) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var searchQuery by remember { mutableStateOf("") }
-    var selectedScale by remember { mutableStateOf("") }
+    var searchQuery by rememberSaveable(category) { mutableStateOf("") }
+    var selectedScale by rememberSaveable(category) { mutableStateOf("") }
     val selectedCondition = ""
-    var selectedMaker by remember { mutableStateOf("") }
+    var selectedMaker by rememberSaveable(category) { mutableStateOf("") }
 
     val makersScrollState = rememberLazyListState()
     val scalesScrollState = rememberLazyListState()

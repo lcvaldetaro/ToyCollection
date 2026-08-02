@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.ui.Modifier
@@ -22,11 +23,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import club.gepetto.composeutils.GcGenericDialog
 import club.gepetto.composeutils.GcFilterButton
 import club.gepetto.composeutils.GcSpacing
 import club.gepetto.composeutils.sysBackgroundColor
-import club.gepetto.composeutils.sysForegroundColor
 import club.gepetto.composeutils.sysTextColor
 import androidx.compose.ui.graphics.Color
 import club.gepetto.composeutils.image.GcImage
@@ -39,7 +38,6 @@ import okio.FileSystem
 import okio.Path.Companion.toPath
 import club.gepetto.GcLog
 import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.resources.StringResource
 import toydb.composeapp.generated.resources.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,7 +54,7 @@ fun MakerDetailScreen(
     val toysList = remember { repository.getToysByMaker(makerName) }
     val settingsList = remember { repository.getCategorySettings() }
 
-    var selectedCategory by remember { mutableStateOf("all") }
+    var selectedCategory by rememberSaveable(makerName) { mutableStateOf("all") }
     
     val filteredToys = remember(toysList, selectedCategory) {
         if (selectedCategory == "all") {

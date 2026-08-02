@@ -15,6 +15,7 @@ import club.gepetto.composeutils.GcMarkdown
 import club.gepetto.composeutils.sysBackgroundColor
 import club.gepetto.composeutils.sysTextColor
 import androidx.compose.ui.graphics.Color
+import club.gepetto.composeutils.sysLinkColor
 import com.gepetto.toydb.CommonConfig
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.getString
@@ -124,15 +125,15 @@ fun InfoScreen(
                         color = sysTextColor().copy(alpha = 0.8f)
                     )
                     Spacer(modifier = Modifier.height(12.dp))
-                    Button(
+                    TextButton(
                         onClick = onNavigateToSftpSetup,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.secondary,
-                            contentColor = MaterialTheme.colorScheme.onSecondary
-                        ),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
                     ) {
-                        Text(stringResource(Res.string.sftp_setup_guide_btn))
+                        Text(
+                            text = stringResource(Res.string.sftp_setup_guide_btn),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = sysLinkColor()
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(24.dp))
@@ -146,7 +147,7 @@ fun InfoScreen(
                         Text(
                             text = stringResource(Res.string.privacy_policy_btn),
                             style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.primary
+                            color = sysLinkColor()
                         )
                     }
                 }
