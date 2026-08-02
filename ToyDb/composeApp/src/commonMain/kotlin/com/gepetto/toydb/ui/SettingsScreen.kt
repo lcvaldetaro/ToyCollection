@@ -91,6 +91,8 @@ fun SettingsScreen(
     var showTestErrorDialog by remember { mutableStateOf(false) }
     var testErrorMsg by remember { mutableStateOf("") }
     var showSyncConfirmDialog by remember { mutableStateOf(false) }
+    var syncDialogPhase by remember { mutableStateOf("Confirm") } // "Confirm", "Progress", "Success", "Error"
+    var syncErrorMessage by remember { mutableStateOf("") }
     val proposedSftpActions = remember { mutableStateListOf<SyncAction>() }
     val selectedSftpActions = remember { mutableStateMapOf<String, Boolean>() }
     var syncDirection by remember { mutableStateOf("Upload") }
@@ -599,34 +601,6 @@ fun SettingsScreen(
         )
     }
 
-    if (showDownloadSuccessDialog) {
-        AlertDialog(
-            onDismissRequest = { showDownloadSuccessDialog = false },
-            containerColor = sysBackgroundColor(),
-            title = { Text(stringResource(Res.string.sftp_status_completed), color = sysTextColor(), fontWeight = FontWeight.Bold) },
-            text = { Text(stringResource(Res.string.sftp_status_download_completed_desc), color = sysTextColor()) },
-            confirmButton = {
-                Button(onClick = { showDownloadSuccessDialog = false }) {
-                    Text("OK")
-                }
-            }
-        )
-    }
-
-    if (showUploadSuccessDialog) {
-        AlertDialog(
-            onDismissRequest = { showUploadSuccessDialog = false },
-            containerColor = sysBackgroundColor(),
-            title = { Text(stringResource(Res.string.sftp_status_upload_completed), color = sysTextColor(), fontWeight = FontWeight.Bold) },
-            text = { Text(stringResource(Res.string.sftp_status_upload_completed_desc), color = sysTextColor()) },
-            confirmButton = {
-                Button(onClick = { showUploadSuccessDialog = false }) {
-                    Text("OK")
-                }
-            }
-        )
-    }
-
     if (showTestErrorDialog) {
         AlertDialog(
             onDismissRequest = { showTestErrorDialog = false },
@@ -643,191 +617,251 @@ fun SettingsScreen(
 
     if (showSyncConfirmDialog) {
         AlertDialog(
-            onDismissRequest = { showSyncConfirmDialog = false },
+            onDismissRequest = {
+                if (syncDialogPhase != "Progress") {
+                    showSyncConfirmDialog = false
+                }
+            },
             containerColor = sysBackgroundColor(),
             title = {
-                Text(
-                    text = stringResource(Res.string.sftp_sync_direction_label, syncDirection),
-                    fontWeight = FontWeight.Bold,
-                    color = sysTextColor()
-                )
+                val titleText = when (syncDialogPhase) {
+                    "Confirm" -> stringResource(Res.string.sftp_sync_direction_label, syncDirection)
+                    "Progress" -> stringResource(Res.string.sftp_status_syncing)
+                    "Success" -> {
+                        if (syncDirection == "Upload") {
+                            stringResource(Res.string.sftp_status_upload_completed)
+                        } else {
+                            stringResource(Res.string.sftp_status_completed)
+                        }
+                    }
+                    "Error" -> stringResource(Res.string.sftp_test_failed_title)
+                    else -> ""
+                }
+                Text(text = titleText, fontWeight = FontWeight.Bold, color = sysTextColor())
             },
             text = {
                 Column {
-                    Text(
-                        text = if (proposedSftpActions.isEmpty()) {
-                            if (syncDirection == "Upload") {
-                                stringResource(Res.string.sftp_sync_ready_upload)
-                            } else {
-                                stringResource(Res.string.sftp_sync_ready_download)
-                            }
-                        } else {
-                            stringResource(Res.string.sftp_sync_actions_needed)
-                        },
-                        color = sysTextColor()
-                    )
-                    
-                    if (proposedSftpActions.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(start = 13.dp, end = 13.dp, top = 2.dp, bottom = 2.dp)
-                        ) {
-                            val allSelected = proposedSftpActions.all { selectedSftpActions[it.filename] == true }
-                            Checkbox(
-                                checked = allSelected,
-                                onCheckedChange = { isChecked ->
-                                    proposedSftpActions.forEach { action ->
-                                        selectedSftpActions[action.filename] = isChecked
-                                    }
-                                },
-                                modifier = Modifier.padding(end = 8.dp)
-                            )
+                    when (syncDialogPhase) {
+                        "Confirm" -> {
                             Text(
-                                text = stringResource(Res.string.select_all),
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.SemiBold,
+                                text = if (proposedSftpActions.isEmpty()) {
+                                    if (syncDirection == "Upload") {
+                                        stringResource(Res.string.sftp_sync_ready_upload)
+                                    } else {
+                                        stringResource(Res.string.sftp_sync_ready_download)
+                                    }
+                                } else {
+                                    stringResource(Res.string.sftp_sync_actions_needed)
+                                },
                                 color = sysTextColor()
                             )
-                        }
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(max = 240.dp)
-                                .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
-                                .padding(4.dp)
-                        ) {
-                            val listState = androidx.compose.foundation.lazy.rememberLazyListState()
-                            androidx.compose.foundation.lazy.LazyColumn(
-                                state = listState,
-                                modifier = Modifier.weight(1f).padding(end = 4.dp)
-                            ) {
-                                items(proposedSftpActions.size) { index ->
-                                    val action = proposedSftpActions[index]
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(vertical = 4.dp, horizontal = 8.dp),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Checkbox(
-                                            checked = selectedSftpActions[action.filename] ?: true,
-                                            onCheckedChange = { isChecked ->
+                            
+                            if (proposedSftpActions.isNotEmpty()) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(start = 13.dp, end = 13.dp, top = 2.dp, bottom = 2.dp)
+                                ) {
+                                    val allSelected = proposedSftpActions.all { selectedSftpActions[it.filename] == true }
+                                    Checkbox(
+                                        checked = allSelected,
+                                        onCheckedChange = { isChecked ->
+                                            proposedSftpActions.forEach { action ->
                                                 selectedSftpActions[action.filename] = isChecked
-                                            },
-                                            modifier = Modifier.padding(end = 8.dp)
-                                        )
-                                        Text(
-                                            text = action.filename,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = sysTextColor(),
-                                            modifier = Modifier.weight(1f)
-                                        )
-                                        Text(
-                                            text = if (action.reason == "New File") stringResource(Res.string.sftp_sync_new_file) else if (action.reason.startsWith("Overwrite")) stringResource(Res.string.sftp_sync_overwrite) else action.reason,
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = if (action.reason == "New File") {
-                                                MaterialTheme.colorScheme.primary
-                                            } else if (action.reason.startsWith("Overwrite")) {
-                                                MaterialTheme.colorScheme.secondary
-                                            } else {
-                                                MaterialTheme.colorScheme.tertiary
-                                            },
-                                            fontWeight = FontWeight.SemiBold
-                                        )
+                                            }
+                                        },
+                                        modifier = Modifier.padding(end = 8.dp)
+                                    )
+                                    Text(
+                                        text = stringResource(Res.string.select_all),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = sysTextColor()
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .heightIn(max = 240.dp)
+                                        .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+                                        .padding(4.dp)
+                                ) {
+                                    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+                                    androidx.compose.foundation.lazy.LazyColumn(
+                                        state = listState,
+                                        modifier = Modifier.weight(1f).padding(end = 4.dp)
+                                    ) {
+                                        items(proposedSftpActions.size) { index ->
+                                            val action = proposedSftpActions[index]
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(vertical = 4.dp, horizontal = 8.dp),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Checkbox(
+                                                    checked = selectedSftpActions[action.filename] ?: true,
+                                                    onCheckedChange = { isChecked ->
+                                                        selectedSftpActions[action.filename] = isChecked
+                                                    },
+                                                    modifier = Modifier.padding(end = 8.dp)
+                                                )
+                                                Text(
+                                                    text = action.filename,
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = sysTextColor(),
+                                                    modifier = Modifier.weight(1f)
+                                                )
+                                                Text(
+                                                    text = if (action.reason == "New File") stringResource(Res.string.sftp_sync_new_file) else if (action.reason.startsWith("Overwrite")) stringResource(Res.string.sftp_sync_overwrite) else action.reason,
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = if (action.reason == "New File") {
+                                                        MaterialTheme.colorScheme.primary
+                                                    } else if (action.reason.startsWith("Overwrite")) {
+                                                        MaterialTheme.colorScheme.secondary
+                                                    } else {
+                                                        MaterialTheme.colorScheme.tertiary
+                                                    },
+                                                    fontWeight = FontWeight.SemiBold
+                                                )
+                                            }
+                                        }
                                     }
+                                    PlatformScrollbar(
+                                        state = listState,
+                                        modifier = Modifier
+                                            .fillMaxHeight()
+                                            .width(8.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(8.dp))
+                                val totalCount = proposedSftpActions.size
+                                val selectedCount = proposedSftpActions.count { selectedSftpActions[it.filename] == true }
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = GcSpacing.Small),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = stringResource(Res.string.sftp_sync_total_files, totalCount),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = sysTextColor()
+                                    )
+                                    Text(
+                                        text = stringResource(Res.string.selected_count, selectedCount),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
                                 }
                             }
-                            PlatformScrollbar(
-                                state = listState,
-                                modifier = Modifier
-                                    .fillMaxHeight()
-                                    .width(8.dp)
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = stringResource(Res.string.sftp_sync_warning),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error,
+                                fontWeight = FontWeight.SemiBold
                             )
                         }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        val totalCount = proposedSftpActions.size
-                        val selectedCount = proposedSftpActions.count { selectedSftpActions[it.filename] == true }
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = GcSpacing.Small),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = stringResource(Res.string.sftp_sync_total_files, totalCount),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = sysTextColor()
+                        "Progress" -> {
+                            Text(text = statusText, color = sysTextColor())
+                            Spacer(modifier = Modifier.height(16.dp))
+                            LinearProgressIndicator(
+                                progress = { sftpSyncProgress },
+                                modifier = Modifier.fillMaxWidth()
                             )
+                            Spacer(modifier = Modifier.height(16.dp))
                             Text(
-                                text = stringResource(Res.string.selected_count, selectedCount),
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
+                                text = stringResource(Res.string.sftp_transfer_warning_dialog_desc),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error,
+                                fontWeight = FontWeight.SemiBold
                             )
+                        }
+                        "Success" -> {
+                            val descText = if (syncDirection == "Upload") {
+                                stringResource(Res.string.sftp_status_upload_completed_desc)
+                            } else {
+                                stringResource(Res.string.sftp_status_download_completed_desc)
+                            }
+                            Text(text = descText, color = sysTextColor())
+                        }
+                        "Error" -> {
+                            val errorDesc = if (syncDirection == "Upload") {
+                                stringResource(Res.string.sftp_status_upload_failed, syncErrorMessage)
+                            } else {
+                                stringResource(Res.string.sftp_status_download_failed, syncErrorMessage)
+                            }
+                            Text(text = errorDesc, color = MaterialTheme.colorScheme.error)
                         }
                     }
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = stringResource(Res.string.sftp_sync_warning),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error,
-                        fontWeight = FontWeight.SemiBold
-                    )
                 }
             },
             confirmButton = {
-                Button(
-                    onClick = {
-                        showSyncConfirmDialog = false
-                        coroutineScope.launch {
-                            isSftpSyncing = true
-                            val selectedSet = selectedSftpActions.filterValues { it }.keys
-                            if (syncDirection == "Upload") {
-                                statusText = getString(Res.string.sftp_status_uploading)
-                                sftpSyncProgress = 0.0f
-                                val result = sftpService.uploadData(buildSftpConfig(), db, onHostKeyUnverified, selectedSet) { status, progress ->
-                                    statusText = status
-                                    sftpSyncProgress = progress
-                                }
-                                if (result.isSuccess) {
-                                    statusText = getString(Res.string.sftp_status_upload_success)
-                                    showUploadSuccessDialog = true
-                                } else {
-                                    statusText = getString(Res.string.sftp_status_upload_failed, result.exceptionOrNull()?.message ?: "")
+                if (syncDialogPhase != "Progress") {
+                    Button(
+                        onClick = {
+                            if (syncDialogPhase == "Confirm") {
+                                syncDialogPhase = "Progress"
+                                coroutineScope.launch {
+                                    isSftpSyncing = true
+                                    val selectedSet = selectedSftpActions.filterValues { it }.keys
+                                    if (syncDirection == "Upload") {
+                                        statusText = getString(Res.string.sftp_status_uploading)
+                                        sftpSyncProgress = 0.0f
+                                        val result = sftpService.uploadData(buildSftpConfig(), db, onHostKeyUnverified, selectedSet) { status, progress ->
+                                            statusText = status
+                                            sftpSyncProgress = progress
+                                        }
+                                        if (result.isSuccess) {
+                                            statusText = getString(Res.string.sftp_status_upload_success)
+                                            syncDialogPhase = "Success"
+                                        } else {
+                                            syncErrorMessage = result.exceptionOrNull()?.message ?: ""
+                                            statusText = getString(Res.string.sftp_status_upload_failed, syncErrorMessage)
+                                            syncDialogPhase = "Error"
+                                        }
+                                    } else {
+                                        statusText = getString(Res.string.sftp_status_downloading)
+                                        sftpSyncProgress = 0.0f
+                                        val result = sftpService.downloadData(buildSftpConfig(), db, onHostKeyUnverified, selectedSet) { status, progress ->
+                                            statusText = status
+                                            sftpSyncProgress = progress
+                                        }
+                                        if (result.isSuccess) {
+                                            statusText = getString(Res.string.sftp_status_download_success)
+                                            onCategoriesChanged()
+                                            syncDialogPhase = "Success"
+                                        } else {
+                                            syncErrorMessage = result.exceptionOrNull()?.message ?: ""
+                                            statusText = getString(Res.string.sftp_status_download_failed, syncErrorMessage)
+                                            syncDialogPhase = "Error"
+                                        }
+                                    }
+                                    isSftpSyncing = false
                                 }
                             } else {
-                                statusText = getString(Res.string.sftp_status_downloading)
-                                sftpSyncProgress = 0.0f
-                                val result = sftpService.downloadData(buildSftpConfig(), db, onHostKeyUnverified, selectedSet) { status, progress ->
-                                    statusText = status
-                                    sftpSyncProgress = progress
-                                }
-                                if (result.isSuccess) {
-                                    statusText = getString(Res.string.sftp_status_download_success)
-                                    onCategoriesChanged()
-                                    showDownloadSuccessDialog = true
-                                } else {
-                                    statusText = getString(Res.string.sftp_status_download_failed, result.exceptionOrNull()?.message ?: "")
-                                }
+                                showSyncConfirmDialog = false
                             }
-                            isSftpSyncing = false
                         }
+                    ) {
+                        Text(if (syncDialogPhase == "Confirm") "Continue" else "OK")
                     }
-                ) {
-                    Text("Continue")
                 }
             },
             dismissButton = {
-                OutlinedButton(
-                    onClick = { showSyncConfirmDialog = false }
-                ) {
-                    Text(stringResource(Res.string.cancel))
+                if (syncDialogPhase == "Confirm") {
+                    OutlinedButton(
+                        onClick = { showSyncConfirmDialog = false }
+                    ) {
+                        Text(stringResource(Res.string.cancel))
+                    }
                 }
             }
         )
@@ -862,9 +896,6 @@ fun SettingsScreen(
                         verticalArrangement = Arrangement.spacedBy(GcSpacing.Standard)
                     ) {
                         StatusBanner(statusText)
-                        if (isSftpSyncing) {
-                            SyncWarningBanner()
-                        }
                         ThemeSelector(currentTheme, onThemeChanged)
                         AppTitleSettings(
                             title = appTitle,
@@ -1038,9 +1069,6 @@ fun SettingsScreen(
                     verticalArrangement = Arrangement.spacedBy(GcSpacing.Standard)
                 ) {
                     StatusBanner(statusText)
-                    if (isSftpSyncing) {
-                        SyncWarningBanner()
-                    }
                     ThemeSelector(currentTheme, onThemeChanged)
                     AppTitleSettings(
                         title = appTitle,
@@ -1863,21 +1891,6 @@ fun SftpSyncActions(
                         Text(stringResource(Res.string.download))
                     }
                 }
-            }
-
-            if (isSyncing) {
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = stringResource(Res.string.sftp_sync_warning),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                LinearProgressIndicator(
-                    progress = { syncProgress },
-                    modifier = Modifier.fillMaxWidth()
-                )
             }
         }
     }
