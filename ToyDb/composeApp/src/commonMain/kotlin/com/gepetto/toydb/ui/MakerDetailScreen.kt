@@ -47,11 +47,18 @@ fun MakerDetailScreen(
     makerName: String,
     onNavigate: (Destination) -> Unit,
     onBack: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    backStack: List<Destination> = emptyList()
 ) {
     var makerState by remember(makerName) { mutableStateOf(repository.getMaker(makerName)) }
     val maker = makerState
-    val toysList = remember { repository.getToysByMaker(makerName) }
+    var toysState by remember(makerName) { mutableStateOf(repository.getToysByMaker(makerName)) }
+    val toysList = toysState
+
+    LaunchedEffect(makerName, backStack.lastOrNull()) {
+        makerState = repository.getMaker(makerName)
+        toysState = repository.getToysByMaker(makerName)
+    }
     val settingsList = remember { repository.getCategorySettings() }
 
     var selectedCategory by rememberSaveable(makerName) { mutableStateOf("all") }

@@ -182,7 +182,7 @@ fun ToyDbNavigation(
                             }
                             Button(
                                 onClick = {
-                                    val dir = com.gepetto.toydb.utils.selectDirectoryDialog("Select Data Folder")
+                                    val dir = com.gepetto.toydb.utils.selectDirectoryDialog("Data Directory")
                                     if (dir != null) {
                                         dataPath = dir
                                     }
@@ -310,12 +310,25 @@ fun ToyDbNavigation(
                                 MakerDirectoryScreen(repository, onNavigate = { backStack.add(it) })
                             }
                             entry<Destination.MakerDetail> { key ->
-                                MakerDetailScreen(repository, makerName = key.makerName, onNavigate = { backStack.add(it) }, onBack = { backStack.removeLastOrNull() })
+                                MakerDetailScreen(
+                                    repository = repository,
+                                    makerName = key.makerName,
+                                    onNavigate = { backStack.add(it) },
+                                    onBack = { backStack.removeLastOrNull() },
+                                    backStack = backStack
+                                )
                             }
                             entry<Destination.ToyDetail>(
                                 metadata = GcSceneStrategy.detailPane(resizeable = true)
                             ) { key ->
-                                ToyDetailScreen(repository, toyType = key.toyType, refNum = key.refNum, onNavigate = { backStack.add(it) }, onBack = { backStack.removeUpToInclusive(key) })
+                                ToyDetailScreen(
+                                    repository = repository,
+                                    toyType = key.toyType,
+                                    refNum = key.refNum,
+                                    onNavigate = { backStack.add(it) },
+                                    onBack = { backStack.removeUpToInclusive(key) },
+                                    backStack = backStack
+                                )
                             }
                             entry<Destination.EditToy>(
                                 metadata = GcSceneStrategy.bottomSheetPane()

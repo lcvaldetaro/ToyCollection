@@ -180,6 +180,8 @@ Tutti i diritti riservati.</string>
     <string name="sftp_status_calculating_upload">Calcolo delle modifiche di invio...</string>
     <string name="sftp_status_completed">Download Completato</string>
     <string name="sftp_status_download_completed_desc">I dati sono stati scaricati correttamente dal server SFTP.</string>
+    <string name="sftp_status_upload_completed">Invio Completato</string>
+    <string name="sftp_status_upload_completed_desc">I dati sono stati inviati correttamente al server SFTP.</string>
     <string name="sftp_status_download_failed">Download non riuscito: %1$s</string>
     <string name="sftp_status_download_success">Dati scaricati correttamente dal server!</string>
     <string name="sftp_status_downloading">Download dei dati dal server SFTP...</string>

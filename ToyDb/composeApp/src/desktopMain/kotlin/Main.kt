@@ -96,7 +96,11 @@ fun main(args: Array<String>) {
 
 fun runHeadlessImportExport(db: com.gepetto.toydb.database.ToyDatabase) {
     println("--- Headless Import & Export Mode ---")
-    val jsonDir = "/Users/luizvaldetaro/valdetaro/ToyCollection/ToyDb/json"
+    val repository = ToyRepository(db)
+    val dataPath = repository.getDataPathSetting()
+    val homeDir = System.getProperty("user.home")
+    val defaultJsonPath = if (homeDir != null) "$homeDir/valdetaro/ToyCollection/ToyDb/json" else "json"
+    val jsonDir = dataPath ?: defaultJsonPath
     
     fun readJson(fileName: String): String? {
         val path = "$jsonDir/$fileName".toPath()
@@ -113,7 +117,6 @@ fun runHeadlessImportExport(db: com.gepetto.toydb.database.ToyDatabase) {
 
     // 1. Import
     println("Importing settings and data...")
-    val repository = ToyRepository(db)
     
     // Clear toys & makers first for a clean import
     db.execute("DELETE FROM toys")
@@ -175,7 +178,9 @@ fun runHeadlessImportExport(db: com.gepetto.toydb.database.ToyDatabase) {
 fun runHeadlessExportHtml(db: com.gepetto.toydb.database.ToyDatabase) {
     println("--- Headless HTML Export Mode ---")
     val repository = ToyRepository(db)
-    val exportDir = repository.getDataPathSetting() ?: "/Users/luizvaldetaro/slots/slots"
+    val homeDir = System.getProperty("user.home")
+    val defaultExportDir = if (homeDir != null) "$homeDir/slots/slots" else "slots"
+    val exportDir = repository.getDataPathSetting() ?: defaultExportDir
     println("Exporting HTML pages to: $exportDir")
     val count = ImportExportService.exportHtml(db, exportDir)
     println("Headless HTML Export completed successfully. Generated $count files.")

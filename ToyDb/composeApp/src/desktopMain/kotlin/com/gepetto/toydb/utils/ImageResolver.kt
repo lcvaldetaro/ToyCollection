@@ -17,8 +17,11 @@ actual fun resolveImageUri(prefix: String, refNum: Int): String? {
         }
     }
     
+    val homeDir = System.getProperty("user.home")
+    if (homeDir != null) {
+        possibleDirs.add(File(homeDir, "valdetaro/ToyCollection/ToyDb/images"))
+    }
     possibleDirs.addAll(listOf(
-        File("/Users/luizvaldetaro/valdetaro/ToyCollection/ToyDb/images"),
         File("images"),
         File("../images"),
         File("ToyDb/images"),
@@ -46,8 +49,11 @@ actual fun resolveBitmapUri(filename: String): String? {
         }
     }
     
+    val homeDir = System.getProperty("user.home")
+    if (homeDir != null) {
+        possibleDirs.add(File(homeDir, "valdetaro/ToyCollection/ToyDb/images"))
+    }
     possibleDirs.addAll(listOf(
-        File("/Users/luizvaldetaro/valdetaro/ToyCollection/ToyDb/images"),
         File("images"),
         File("../images"),
         File("ToyDb/images"),

@@ -94,7 +94,7 @@ def verify_file(original_path, exported_path, list_key):
     return True
 
 def main():
-    toy_db_dir = "/Users/luizvaldetaro/valdetaro/ToyCollection/ToyDb"
+    toy_db_dir = os.path.dirname(os.path.abspath(__file__))
     original_dir = os.path.join(toy_db_dir, "json")
     exported_dir = os.path.join(toy_db_dir, "json") # Since app exports directly back to json directory
 

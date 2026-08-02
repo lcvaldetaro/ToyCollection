@@ -50,9 +50,14 @@ fun ToyDetailScreen(
     refNum: Int,
     onNavigate: (Destination) -> Unit,
     onBack: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    backStack: List<Destination> = emptyList()
 ) {
     var toyState by remember(toyType, refNum) { mutableStateOf(repository.getToy(toyType, refNum)) }
+
+    LaunchedEffect(toyType, refNum, backStack.lastOrNull()) {
+        toyState = repository.getToy(toyType, refNum)
+    }
     val toy = toyState
     val settingsList = remember { repository.getCategorySettings() }
     val prefix = remember { settingsList.find { it.category == toyType }?.imagePrefix ?: "car" }

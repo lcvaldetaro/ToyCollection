@@ -87,6 +87,7 @@ fun SettingsScreen(
     var isSftpSyncing by remember { mutableStateOf(false) }
     var showTestSuccessDialog by remember { mutableStateOf(false) }
     var showDownloadSuccessDialog by remember { mutableStateOf(false) }
+    var showUploadSuccessDialog by remember { mutableStateOf(false) }
     var showTestErrorDialog by remember { mutableStateOf(false) }
     var testErrorMsg by remember { mutableStateOf("") }
     var showSyncConfirmDialog by remember { mutableStateOf(false) }
@@ -168,11 +169,14 @@ fun SettingsScreen(
         val paths = if (dirPath != null) {
             listOf("$dirPath/$fileName".toPath())
         } else {
-            listOf(
-                "/Users/luizvaldetaro/valdetaro/ToyCollection/ToyDb/json/$fileName".toPath(),
+            val list = mutableListOf<okio.Path>()
+            dataPath?.let { list.add("$it/$fileName".toPath()) }
+            dataPath?.let { list.add("$it/json/$fileName".toPath()) }
+            list.addAll(listOf(
                 "ToyDb/json/$fileName".toPath(),
                 "json/$fileName".toPath()
-            )
+            ))
+            list
         }
         for (path in paths) {
             try {
@@ -190,11 +194,14 @@ fun SettingsScreen(
         val paths = if (dirPath != null) {
             listOf("$dirPath/$fileName".toPath())
         } else {
-            listOf(
-                "/Users/luizvaldetaro/valdetaro/ToyCollection/ToyDb/json/$fileName".toPath(),
+            val list = mutableListOf<okio.Path>()
+            dataPath?.let { list.add("$it/$fileName".toPath()) }
+            dataPath?.let { list.add("$it/json/$fileName".toPath()) }
+            list.addAll(listOf(
                 "ToyDb/json/$fileName".toPath(),
                 "json/$fileName".toPath()
-            )
+            ))
+            list
         }
         for (path in paths) {
             try {
@@ -606,6 +613,20 @@ fun SettingsScreen(
         )
     }
 
+    if (showUploadSuccessDialog) {
+        AlertDialog(
+            onDismissRequest = { showUploadSuccessDialog = false },
+            containerColor = sysBackgroundColor(),
+            title = { Text(stringResource(Res.string.sftp_status_upload_completed), color = sysTextColor(), fontWeight = FontWeight.Bold) },
+            text = { Text(stringResource(Res.string.sftp_status_upload_completed_desc), color = sysTextColor()) },
+            confirmButton = {
+                Button(onClick = { showUploadSuccessDialog = false }) {
+                    Text("OK")
+                }
+            }
+        )
+    }
+
     if (showTestErrorDialog) {
         AlertDialog(
             onDismissRequest = { showTestErrorDialog = false },
@@ -776,6 +797,7 @@ fun SettingsScreen(
                                 }
                                 if (result.isSuccess) {
                                     statusText = getString(Res.string.sftp_status_upload_success)
+                                    showUploadSuccessDialog = true
                                 } else {
                                     statusText = getString(Res.string.sftp_status_upload_failed, result.exceptionOrNull()?.message ?: "")
                                 }
