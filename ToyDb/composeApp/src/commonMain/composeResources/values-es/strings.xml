@@ -45,6 +45,7 @@
     <string name="copyright">Copyright © 2026 Valdetaro Consulting, LLC DBA Gepetto Club</string>
     <string name="country_label">País: %1$s</string>
     <string name="dashboard_title">Panel de Control de Base de Datos de Juguetes</string>
+    <string name="data_dir_title">Directorio de Datos</string>
     <string name="default_directory">Directorio predeterminado</string>
     <string name="delete">Eliminar</string>
     <string name="delete_category_confirm">¿Está seguro de que desea eliminar la categoría \'%1$s\'? Todos los juguetes de esta categoría serán eliminados.</string>

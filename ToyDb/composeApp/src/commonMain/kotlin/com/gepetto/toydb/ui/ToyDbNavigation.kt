@@ -111,16 +111,13 @@ fun ToyDbNavigation(
 
     var showSetupPrompt by remember {
         mutableStateOf(
-            isDesktopPlatform() && (
-                repository.getImagesPathSetting().isNullOrEmpty() ||
-                repository.getImportExportPathSetting().isNullOrEmpty()
-            )
+            isDesktopPlatform() && repository.getDataPathSetting().isNullOrEmpty()
         )
     }
 
     // Initialize the global images path resolver config on startup
     LaunchedEffect(repository) {
-        com.gepetto.toydb.utils.ImageResolverConfig.imagesPath = repository.getImagesPathSetting()
+        com.gepetto.toydb.utils.ImageResolverConfig.imagesPath = repository.getDataPathSetting()
     }
 
     val isDark = when (themeMode) {
@@ -135,8 +132,7 @@ fun ToyDbNavigation(
         var categoriesSettings by remember { mutableStateOf(repository.getCategorySettings()) }
 
         if (showSetupPrompt) {
-            var importExportPath by remember { mutableStateOf(repository.getImportExportPathSetting() ?: "") }
-            var imagesPath by remember { mutableStateOf(repository.getImagesPathSetting() ?: "") }
+            var dataPath by remember { mutableStateOf(repository.getDataPathSetting() ?: "") }
 
             AlertDialog(
                 onDismissRequest = {}, // Non-dismissible
@@ -159,9 +155,9 @@ fun ToyDbNavigation(
                         )
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Import/Export path
+                        // Data path
                         Text(
-                            text = stringResource(Res.string.import_export_dir_title),
+                            text = stringResource(Res.string.data_dir_title),
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
                             color = sysTextColor()
@@ -177,7 +173,7 @@ fun ToyDbNavigation(
                                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
                             ) {
                                 Text(
-                                    text = if (importExportPath.isEmpty()) stringResource(Res.string.not_configured) else importExportPath,
+                                    text = if (dataPath.isEmpty()) stringResource(Res.string.not_configured) else dataPath,
                                     modifier = Modifier.padding(8.dp),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = sysTextColor(),
@@ -186,52 +182,9 @@ fun ToyDbNavigation(
                             }
                             Button(
                                 onClick = {
-                                    val dir = com.gepetto.toydb.utils.selectDirectoryDialog("Select Import/Export Folder")
+                                    val dir = com.gepetto.toydb.utils.selectDirectoryDialog("Select Data Folder")
                                     if (dir != null) {
-                                        importExportPath = dir
-                                    }
-                                },
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.primary,
-                                    contentColor = MaterialTheme.colorScheme.onPrimary
-                                )
-                            ) {
-                                Text(stringResource(Res.string.choose))
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        // Images path
-                        Text(
-                            text = stringResource(Res.string.images_dir_title),
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = sysTextColor()
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Card(
-                                modifier = Modifier.weight(1f),
-                                colors = CardDefaults.cardColors(containerColor = sysBackgroundColor()),
-                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
-                            ) {
-                                Text(
-                                    text = if (imagesPath.isEmpty()) stringResource(Res.string.not_configured) else imagesPath,
-                                    modifier = Modifier.padding(8.dp),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = sysTextColor(),
-                                    maxLines = 2
-                                )
-                            }
-                            Button(
-                                onClick = {
-                                    val dir = com.gepetto.toydb.utils.selectDirectoryDialog("Select Images Folder")
-                                    if (dir != null) {
-                                        imagesPath = dir
+                                        dataPath = dir
                                     }
                                 },
                                 colors = ButtonDefaults.buttonColors(
@@ -247,7 +200,7 @@ fun ToyDbNavigation(
                 confirmButton = {
                     Button(
                         modifier = Modifier.fillMaxWidth(),
-                        enabled = importExportPath.isNotEmpty() && imagesPath.isNotEmpty(),
+                        enabled = dataPath.isNotEmpty(),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.primary,
                             contentColor = MaterialTheme.colorScheme.onPrimary,
@@ -255,12 +208,11 @@ fun ToyDbNavigation(
                             disabledContentColor = sysTextColor().copy(alpha = 0.4f)
                         ),
                         onClick = {
-                            repository.setImportExportPathSetting(importExportPath)
-                            repository.setImagesPathSetting(imagesPath)
-                            com.gepetto.toydb.utils.ImageResolverConfig.imagesPath = imagesPath
+                            repository.setDataPathSetting(dataPath)
+                            com.gepetto.toydb.utils.ImageResolverConfig.imagesPath = dataPath
                             
                             // Copy maker images
-                            copyMakerImages(repository, imagesPath)
+                            copyMakerImages(repository, dataPath)
                             
                             showSetupPrompt = false
                         }

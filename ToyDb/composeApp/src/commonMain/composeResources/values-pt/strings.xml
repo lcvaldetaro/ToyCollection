@@ -45,6 +45,7 @@
     <string name="copyright">Copyright © 2026 Valdetaro Consulting, LLC DBA Gepetto Club</string>
     <string name="country_label">País: %1$s</string>
     <string name="dashboard_title">Painel de Controle do Banco de Dados de Brinquedos</string>
+    <string name="data_dir_title">Diretório de Dados</string>
     <string name="default_directory">Diretório padrão</string>
     <string name="delete">Excluir</string>
     <string name="delete_category_confirm">Tem certeza de que deseja excluir a categoria \'%1$s\'? Todos os brinquedos nesta categoria serão excluídos.</string>

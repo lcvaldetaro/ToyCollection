@@ -45,6 +45,7 @@
     <string name="copyright">Copyright © 2026 Valdetaro Consulting, LLC DBA Gepetto Club</string>
     <string name="country_label">Land: %1$s</string>
     <string name="dashboard_title">Toy-Datenbank-Dashboard</string>
+    <string name="data_dir_title">Datenverzeichnis</string>
     <string name="default_directory">Standardverzeichnis</string>
     <string name="delete">Löschen</string>
     <string name="delete_category_confirm">Sind Sie sicher, dass Sie die Kategorie \'%1$s\' löschen möchten? Alle Spielzeuge in dieser Kategorie werden gelöscht.</string>

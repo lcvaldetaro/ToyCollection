@@ -175,7 +175,7 @@ fun runHeadlessImportExport(db: com.gepetto.toydb.database.ToyDatabase) {
 fun runHeadlessExportHtml(db: com.gepetto.toydb.database.ToyDatabase) {
     println("--- Headless HTML Export Mode ---")
     val repository = ToyRepository(db)
-    val exportDir = repository.getImportExportPathSetting() ?: "/Users/luizvaldetaro/slots/slots"
+    val exportDir = repository.getDataPathSetting() ?: "/Users/luizvaldetaro/slots/slots"
     println("Exporting HTML pages to: $exportDir")
     val count = ImportExportService.exportHtml(db, exportDir)
     println("Headless HTML Export completed successfully. Generated $count files.")

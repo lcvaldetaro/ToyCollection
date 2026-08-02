@@ -396,59 +396,36 @@ class ToyRepository(private val db: ToyDatabase) {
         }
     }
 
-    fun getImagesPathSetting(): String? {
-        var path: String? = null
-        try {
-            val cursor = db.query("SELECT value FROM app_settings WHERE key = 'images_path'")
-            if (cursor.next()) {
-                path = cursor.getString("value")
+    fun getDataPathSetting(): String? {
+        var path = getAppSetting("data_path")
+        if (path == null) {
+            // Migration logic
+            val imagesPath = getAppSetting("images_path")
+            val importExportPath = getAppSetting("import_export_path")
+            path = imagesPath ?: importExportPath
+            if (path != null) {
+                setDataPathSetting(path)
+                // We keep the old ones for now as backup or for other components still using them, 
+                // but eventually they should be removed.
             }
-            cursor.close()
-        } catch (e: Exception) {
-            GcLog.e("ToyRepository", "Error reading images_path setting: ${e.message}", e)
         }
         return path
     }
 
-    fun setImagesPathSetting(path: String?) {
-        try {
-            if (path == null) {
-                db.execute("DELETE FROM app_settings WHERE key = 'images_path'")
-            } else {
-                db.execute("INSERT OR REPLACE INTO app_settings (key, value) VALUES ('images_path', ?)", listOf(path))
-            }
-            GcLog.d("ToyRepository", "Saved images_path setting: $path")
-        } catch (e: Exception) {
-            GcLog.e("ToyRepository", "Error saving images_path setting: ${e.message}", e)
-        }
+    fun setDataPathSetting(path: String?) {
+        setAppSetting("data_path", path)
+        // Also sync to old keys to keep other parts of the app working during transition if needed
+        setAppSetting("images_path", path)
+        setAppSetting("import_export_path", path)
     }
 
-    fun getImportExportPathSetting(): String? {
-        var path: String? = null
-        try {
-            val cursor = db.query("SELECT value FROM app_settings WHERE key = 'import_export_path'")
-            if (cursor.next()) {
-                path = cursor.getString("value")
-            }
-            cursor.close()
-        } catch (e: Exception) {
-            GcLog.e("ToyRepository", "Error reading import_export_path setting: ${e.message}", e)
-        }
-        return path
-    }
+    fun getImagesPathSetting(): String? = getDataPathSetting()
 
-    fun setImportExportPathSetting(path: String?) {
-        try {
-            if (path == null) {
-                db.execute("DELETE FROM app_settings WHERE key = 'import_export_path'")
-            } else {
-                db.execute("INSERT OR REPLACE INTO app_settings (key, value) VALUES ('import_export_path', ?)", listOf(path))
-            }
-            GcLog.d("ToyRepository", "Saved import_export_path setting: $path")
-        } catch (e: Exception) {
-            GcLog.e("ToyRepository", "Error saving import_export_path setting: ${e.message}", e)
-        }
-    }
+    fun setImagesPathSetting(path: String?) = setDataPathSetting(path)
+
+    fun getImportExportPathSetting(): String? = getDataPathSetting()
+
+    fun setImportExportPathSetting(path: String?) = setDataPathSetting(path)
 
     private fun getAppSetting(key: String): String? {
         var value: String? = null

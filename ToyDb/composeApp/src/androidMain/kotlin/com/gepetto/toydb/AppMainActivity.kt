@@ -53,25 +53,18 @@ class AppMainActivity : ComponentActivity() {
             }
         }
 
-        // Ensure directories exist
-        val imagesDir = File(filesDir, "images")
-        if (!imagesDir.exists()) {
-            imagesDir.mkdirs()
-        }
-        val importExportDir = File(filesDir, "import_export")
-        if (!importExportDir.exists()) {
-            importExportDir.mkdirs()
+        // Ensure data directory exists
+        val dataDir = File(filesDir, "data")
+        if (!dataDir.exists()) {
+            dataDir.mkdirs()
         }
 
         // Initialize settings with fixed paths
         val repository = ToyRepository(database)
-        if (repository.getImagesPathSetting().isNullOrEmpty()) {
-            repository.setImagesPathSetting(imagesDir.absolutePath)
+        if (repository.getDataPathSetting().isNullOrEmpty()) {
+            repository.setDataPathSetting(dataDir.absolutePath)
         }
-        if (repository.getImportExportPathSetting().isNullOrEmpty()) {
-            repository.setImportExportPathSetting(importExportDir.absolutePath)
-        }
-        ImageResolverConfig.imagesPath = repository.getImagesPathSetting()
+        ImageResolverConfig.imagesPath = repository.getDataPathSetting()
 
         val sftpService = AndroidSftpService()
 

@@ -76,7 +76,7 @@ fun ToyDetailScreen(
         val srcPath = selectedPath.toPath()
         val filename = srcPath.name
         
-        val customPath = repository.getImagesPathSetting()
+        val customPath = repository.getDataPathSetting()
         val targetDir = if (!customPath.isNullOrEmpty()) {
             customPath.toPath()
         } else {

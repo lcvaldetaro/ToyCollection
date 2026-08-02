@@ -5,8 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
@@ -54,12 +52,12 @@ import com.gepetto.toydb.utils.KeepScreenOn
 fun SettingsScreen(
     db: ToyDatabase,
     sftpService: SftpService,
+    modifier: Modifier = Modifier,
     currentTheme: Int = 0,
     onThemeChanged: (Int) -> Unit = {},
     onCategoriesChanged: () -> Unit,
     onNavigate: (Destination) -> Unit = {},
     onAppTitleChanged: (String) -> Unit = {},
-    modifier: Modifier = Modifier
 ) {
     val repository = remember { ToyRepository(db) }
     val readyText = stringResource(Res.string.status_ready)
@@ -164,8 +162,7 @@ fun SettingsScreen(
     var htmlExportCount by remember { mutableStateOf(0) }
 
     // Paths state
-    var customImagesPath by remember { mutableStateOf(repository.getImagesPathSetting()) }
-    var customImportExportPath by remember { mutableStateOf(repository.getImportExportPathSetting()) }
+    var dataPath by remember { mutableStateOf(repository.getDataPathSetting()) }
 
     fun readJsonFile(fileName: String, dirPath: String? = null): String? {
         val paths = if (dirPath != null) {
@@ -464,7 +461,7 @@ fun SettingsScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            text = customImportExportPath ?: stringResource(Res.string.default_directory),
+                            text = dataPath ?: stringResource(Res.string.default_directory),
                             fontSize = 13.sp,
                             modifier = Modifier.padding(GcSpacing.Small),
                             color = sysTextColor()
@@ -856,33 +853,22 @@ fun SettingsScreen(
                             }
                         )
                         if (isDesktopPlatform()) {
-                            ImagesDirectorySettings(
-                                customImagesPath = customImagesPath,
+                            DataDirectorySettings(
+                                dataPath = dataPath,
                                 onSelectPath = { selectedDir ->
-                                    repository.setImagesPathSetting(selectedDir)
+                                    repository.setDataPathSetting(selectedDir)
                                     com.gepetto.toydb.utils.ImageResolverConfig.imagesPath = selectedDir
-                                    customImagesPath = selectedDir
+                                    dataPath = selectedDir
                                 },
                                 onClearPath = {
-                                    repository.setImagesPathSetting(null)
+                                    repository.setDataPathSetting(null)
                                     com.gepetto.toydb.utils.ImageResolverConfig.imagesPath = null
-                                    customImagesPath = null
-                                }
-                            )
-                            ImportExportDirectorySettings(
-                                customImportExportPath = customImportExportPath,
-                                onSelectPath = { selectedDir ->
-                                    repository.setImportExportPathSetting(selectedDir)
-                                    customImportExportPath = selectedDir
-                                },
-                                onClearPath = {
-                                    repository.setImportExportPathSetting(null)
-                                    customImportExportPath = null
+                                    dataPath = null
                                 }
                             )
                         }
                         ImportExportActions(
-                                customImportExportPath = customImportExportPath,
+                                customImportExportPath = dataPath,
                                 db = db,
                                 onImportComplete = { counts ->
                                     importCountsMap.clear()
@@ -1043,33 +1029,22 @@ fun SettingsScreen(
                         }
                     )
                     if (isDesktopPlatform()) {
-                        ImagesDirectorySettings(
-                            customImagesPath = customImagesPath,
+                        DataDirectorySettings(
+                            dataPath = dataPath,
                             onSelectPath = { selectedDir ->
-                                repository.setImagesPathSetting(selectedDir)
+                                repository.setDataPathSetting(selectedDir)
                                 com.gepetto.toydb.utils.ImageResolverConfig.imagesPath = selectedDir
-                                customImagesPath = selectedDir
+                                dataPath = selectedDir
                             },
                             onClearPath = {
-                                repository.setImagesPathSetting(null)
+                                repository.setDataPathSetting(null)
                                 com.gepetto.toydb.utils.ImageResolverConfig.imagesPath = null
-                                customImagesPath = null
-                            }
-                        )
-                        ImportExportDirectorySettings(
-                            customImportExportPath = customImportExportPath,
-                            onSelectPath = { selectedDir ->
-                                repository.setImportExportPathSetting(selectedDir)
-                                customImportExportPath = selectedDir
-                            },
-                            onClearPath = {
-                                repository.setImportExportPathSetting(null)
-                                customImportExportPath = null
+                                dataPath = null
                             }
                         )
                     }
                     ImportExportActions(
-                            customImportExportPath = customImportExportPath,
+                            customImportExportPath = dataPath,
                             db = db,
                             onImportComplete = { counts ->
                                 importCountsMap.clear()
@@ -1298,13 +1273,13 @@ fun ThemeSelector(currentTheme: Int, onThemeChanged: (Int) -> Unit) {
 }
 
 @Composable
-fun ImagesDirectorySettings(
-    customImagesPath: String?,
+fun DataDirectorySettings(
+    dataPath: String?,
     onSelectPath: (String) -> Unit,
     onClearPath: () -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        Text(stringResource(Res.string.images_dir_title), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = sysTextColor())
+        Text(stringResource(Res.string.data_dir_title), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = sysTextColor())
         Spacer(modifier = Modifier.height(GcSpacing.Small))
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -1313,10 +1288,10 @@ fun ImagesDirectorySettings(
         ) {
             Column(modifier = Modifier.padding(GcSpacing.Standard)) {
                 Text(
-                    text = if (customImagesPath.isNullOrEmpty()) {
+                    text = if (dataPath.isNullOrEmpty()) {
                         stringResource(Res.string.images_dir_default)
                     } else {
-                        stringResource(Res.string.images_dir_custom, customImagesPath ?: "")
+                        stringResource(Res.string.images_dir_custom, dataPath ?: "")
                     },
                     fontSize = 14.sp,
                     color = sysTextColor()
@@ -1327,7 +1302,7 @@ fun ImagesDirectorySettings(
                 ) {
                     Button(
                         onClick = {
-                            val selectedDir = selectDirectoryDialog("Select Images Directory")
+                            val selectedDir = selectDirectoryDialog("Data Directory")
                             if (selectedDir != null) {
                                 onSelectPath(selectedDir)
                             }
@@ -1335,56 +1310,7 @@ fun ImagesDirectorySettings(
                     ) {
                         Text("Select Directory")
                     }
-                    if (!customImagesPath.isNullOrEmpty()) {
-                        OutlinedButton(onClick = onClearPath) {
-                            Text(stringResource(Res.string.clear_custom_path))
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun ImportExportDirectorySettings(
-    customImportExportPath: String?,
-    onSelectPath: (String) -> Unit,
-    onClearPath: () -> Unit
-) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Text(stringResource(Res.string.import_export_dir_title), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = sysTextColor())
-        Spacer(modifier = Modifier.height(GcSpacing.Small))
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = sysBackgroundColor()),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
-        ) {
-            Column(modifier = Modifier.padding(GcSpacing.Standard)) {
-                Text(
-                    text = if (customImportExportPath.isNullOrEmpty()) {
-                        stringResource(Res.string.images_dir_default)
-                    } else {
-                        stringResource(Res.string.images_dir_custom, customImportExportPath ?: "")
-                    },
-                    fontSize = 14.sp,
-                    color = sysTextColor()
-                )
-                Spacer(modifier = Modifier.height(GcSpacing.Small))
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(GcSpacing.Small)
-                ) {
-                    Button(
-                        onClick = {
-                            val selectedDir = selectDirectoryDialog("Select Import/Export Directory")
-                            if (selectedDir != null) {
-                                onSelectPath(selectedDir)
-                            }
-                        }
-                    ) {
-                        Text("Select Directory")
-                    }
-                    if (!customImportExportPath.isNullOrEmpty()) {
+                    if (!dataPath.isNullOrEmpty()) {
                         OutlinedButton(onClick = onClearPath) {
                             Text(stringResource(Res.string.clear_custom_path))
                         }

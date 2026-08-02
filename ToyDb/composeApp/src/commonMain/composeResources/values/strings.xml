@@ -45,6 +45,7 @@
     <string name="copyright">Copyright © 2026 Valdetaro Consulting, LLC DBA Gepetto Club</string>
     <string name="country_label">Country: %1$s</string>
     <string name="dashboard_title">Toy Database Dashboard</string>
+    <string name="data_dir_title">Data Directory</string>
     <string name="default_directory">Default Directory</string>
     <string name="delete">Delete</string>
     <string name="delete_category_confirm">Are you sure you want to delete category \'%1$s\'? All toys in this category will be deleted.</string>

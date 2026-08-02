@@ -112,10 +112,8 @@ class DesktopSftpService : SftpService {
         try {
             val plan = mutableListOf<SyncAction>()
             val repository = ToyRepository(db)
-            val localImportExportDir = repository.getImportExportPathSetting()
-                ?: return@withContext Result.failure(Exception("Import/Export directory is not configured."))
-            val localImagesDir = repository.getImagesPathSetting()
-                ?: return@withContext Result.failure(Exception("Images directory is not configured."))
+            val localDataDir = repository.getDataPathSetting()
+                ?: return@withContext Result.failure(Exception("Data directory is not configured."))
 
             // JSON files to upload
             plan.add(SyncAction("carmaker.json", "Upload", "Overwrite (JSON)"))
@@ -130,20 +128,12 @@ class DesktopSftpService : SftpService {
                 val sftp = client.newSFTPClient()
                 try {
                     val allLocalFiles = mutableListOf<okio.Path>()
-                    val localImagesPath = localImagesDir.toPath()
-                    if (FileSystem.SYSTEM.exists(localImagesPath)) {
+                    val localDataPath = localDataDir.toPath()
+                    if (FileSystem.SYSTEM.exists(localDataPath)) {
                         allLocalFiles.addAll(
-                            FileSystem.SYSTEM.list(localImagesPath).filter { 
-                                FileSystem.SYSTEM.metadata(it).isRegularFile && isAllowedFile(it.name)
-                            }
-                        )
-                    }
-                    val localImportExportPath = localImportExportDir.toPath()
-                    if (FileSystem.SYSTEM.exists(localImportExportPath)) {
-                        allLocalFiles.addAll(
-                            FileSystem.SYSTEM.list(localImportExportPath).filter {
-                                val name = it.name.lowercase()
-                                FileSystem.SYSTEM.metadata(it).isRegularFile && name.endsWith(".html")
+                            FileSystem.SYSTEM.list(localDataPath).filter { 
+                                val isRegular = FileSystem.SYSTEM.metadata(it).isRegularFile
+                                isRegular && (isAllowedFile(it.name) || it.name.lowercase().endsWith(".html"))
                             }
                         )
                     }
@@ -155,9 +145,11 @@ class DesktopSftpService : SftpService {
                     }
                     val remoteFileMap = remoteFiles.associateBy { getFileNameFromPath(it.path) }
 
-                    allLocalFiles.forEach { localImgPath ->
-                        val fileName = localImgPath.name
-                        val localMeta = FileSystem.SYSTEM.metadata(localImgPath)
+                    allLocalFiles.forEach { localFilePath ->
+                        val fileName = localFilePath.name
+                        if (fileName.endsWith(".json", ignoreCase = true)) return@forEach // Skip JSON handled above
+                        
+                        val localMeta = FileSystem.SYSTEM.metadata(localFilePath)
                         val localSize = localMeta.size ?: 0L
                         val localMtimeSec = (localMeta.lastModifiedAtMillis ?: 0L) / 1000L
 
@@ -195,34 +187,31 @@ class DesktopSftpService : SftpService {
         try {
             val plan = mutableListOf<SyncAction>()
             val repository = ToyRepository(db)
-            val localImportExportDir = repository.getImportExportPathSetting()
-                ?: return@withContext Result.failure(Exception("Import/Export directory is not configured."))
-            val localImagesDir = repository.getImagesPathSetting()
-                ?: return@withContext Result.failure(Exception("Images directory is not configured."))
+            val localDataDir = repository.getDataPathSetting()
+                ?: return@withContext Result.failure(Exception("Data directory is not configured."))
 
             val client = connectClient(config, onHostKeyUnverified)
             try {
                 val sftp = client.newSFTPClient()
                 try {
                     val remoteFiles = sftp.ls(config.remoteDir)
-                    val jsonFiles = remoteFiles.filter { getFileNameFromPath(it.path).endsWith(".json", ignoreCase = true) }
+                    val localDataPath = localDataDir.toPath()
+                    
+                    remoteFiles.forEach { remoteFile ->
+                        if (!remoteFile.isRegularFile) return@forEach
+                        
+                        val fileName = getFileNameFromPath(remoteFile.path)
+                        val remoteSize = remoteFile.attributes.size
+                        val remoteMtimeSec = remoteFile.attributes.mtime
+                        val localFilePath = localDataPath.div(fileName)
 
-                    jsonFiles.forEach { rf ->
-                        plan.add(SyncAction(getFileNameFromPath(rf.path), "Download", "Overwrite (JSON)"))
-                    }
-
-                    val localImagesPath = localImagesDir.toPath()
-                    remoteFiles.forEach { remoteImg ->
-                        if (remoteImg.isRegularFile && isAllowedFile(getFileNameFromPath(remoteImg.path))) {
-                            val fileName = getFileNameFromPath(remoteImg.path)
-                            val remoteSize = remoteImg.attributes.size
-                            val remoteMtimeSec = remoteImg.attributes.mtime
-                            val localImgPath = localImagesPath.div(fileName)
-
-                            if (!FileSystem.SYSTEM.exists(localImgPath)) {
+                        if (fileName.endsWith(".json", ignoreCase = true)) {
+                            plan.add(SyncAction(fileName, "Download", "Overwrite (JSON)"))
+                        } else if (isAllowedFile(fileName) || fileName.lowercase().endsWith(".html")) {
+                            if (!FileSystem.SYSTEM.exists(localFilePath)) {
                                 plan.add(SyncAction(fileName, "Download", "New File"))
                             } else {
-                                val localMeta = FileSystem.SYSTEM.metadata(localImgPath)
+                                val localMeta = FileSystem.SYSTEM.metadata(localFilePath)
                                 val localSize = localMeta.size ?: 0L
                                 val localMtimeSec = (localMeta.lastModifiedAtMillis ?: 0L) / 1000L
                                 if (localSize != remoteSize) {
@@ -254,10 +243,8 @@ class DesktopSftpService : SftpService {
     ): Result<Unit> = withContext(Dispatchers.IO) {
         try {
             val repository = ToyRepository(db)
-            val localImportExportDir = repository.getImportExportPathSetting()
-                ?: return@withContext Result.failure(Exception("Import/Export directory is not configured."))
-            val localImagesDir = repository.getImagesPathSetting()
-                ?: return@withContext Result.failure(Exception("Images directory is not configured."))
+            val localDataDir = repository.getDataPathSetting()
+                ?: return@withContext Result.failure(Exception("Data directory is not configured."))
 
             onProgress("Exporting database to local files...", 0.1f)
             val filesToWrite = mutableListOf<Pair<String, String>>()
@@ -275,12 +262,12 @@ class DesktopSftpService : SftpService {
                 }
             }
 
-            val localPath = localImportExportDir.toPath()
-            if (!FileSystem.SYSTEM.exists(localPath)) {
-                FileSystem.SYSTEM.createDirectories(localPath)
+            val localDataPath = localDataDir.toPath()
+            if (!FileSystem.SYSTEM.exists(localDataPath)) {
+                FileSystem.SYSTEM.createDirectories(localDataPath)
             }
             for ((fileName, jsonContent) in filesToWrite) {
-                val path = localPath.div(fileName)
+                val path = localDataPath.div(fileName)
                 FileSystem.SYSTEM.write(path) { writeUtf8(jsonContent) }
             }
 
@@ -294,27 +281,19 @@ class DesktopSftpService : SftpService {
 
                     onProgress("Uploading JSON configuration files...", 0.5f)
                     for ((fileName, _) in filesToWrite) {
-                        val localFile = localPath.div(fileName).toNioPath().toFile()
+                        val localFile = localDataPath.div(fileName).toNioPath().toFile()
                         val remoteFile = if (config.remoteDir.endsWith("/")) "${config.remoteDir}$fileName" else "${config.remoteDir}/$fileName"
                         sftp.put(net.schmizz.sshj.xfer.FileSystemFile(localFile), remoteFile)
                     }
 
                     onProgress("Uploading media and HTML files...", 0.7f)
                     val allLocalFiles = mutableListOf<okio.Path>()
-                    val localImagesPath = localImagesDir.toPath()
-                    if (FileSystem.SYSTEM.exists(localImagesPath)) {
+                    if (FileSystem.SYSTEM.exists(localDataPath)) {
                         allLocalFiles.addAll(
-                            FileSystem.SYSTEM.list(localImagesPath).filter { 
-                                FileSystem.SYSTEM.metadata(it).isRegularFile && isAllowedFile(it.name)
-                            }
-                        )
-                    }
-                    val localImportExportPath = localImportExportDir.toPath()
-                    if (FileSystem.SYSTEM.exists(localImportExportPath)) {
-                        allLocalFiles.addAll(
-                            FileSystem.SYSTEM.list(localImportExportPath).filter {
-                                val name = it.name.lowercase()
-                                FileSystem.SYSTEM.metadata(it).isRegularFile && name.endsWith(".html")
+                            FileSystem.SYSTEM.list(localDataPath).filter { 
+                                val name = it.name
+                                val isRegular = FileSystem.SYSTEM.metadata(it).isRegularFile
+                                isRegular && !name.endsWith(".json", ignoreCase = true) && (isAllowedFile(name) || name.lowercase().endsWith(".html"))
                             }
                         )
                     }
@@ -326,11 +305,11 @@ class DesktopSftpService : SftpService {
                     }
                     val remoteFileMap = remoteFiles.associateBy { getFileNameFromPath(it.path) }
 
-                    allLocalFiles.forEachIndexed { index, localImgPath ->
-                        val fileName = localImgPath.name
+                    allLocalFiles.forEachIndexed { index, localFilePath ->
+                        val fileName = localFilePath.name
                         if (selectedFiles == null || selectedFiles.contains(fileName)) {
-                            val localFile = localImgPath.toNioPath().toFile()
-                            val localMeta = FileSystem.SYSTEM.metadata(localImgPath)
+                            val localFile = localFilePath.toNioPath().toFile()
+                            val localMeta = FileSystem.SYSTEM.metadata(localFilePath)
                             val localSize = localMeta.size ?: 0L
                             val localMtimeSec = (localMeta.lastModifiedAtMillis ?: 0L) / 1000L
 
@@ -381,14 +360,12 @@ class DesktopSftpService : SftpService {
     ): Result<Unit> = withContext(Dispatchers.IO) {
         try {
             val repository = ToyRepository(db)
-            val localImportExportDir = repository.getImportExportPathSetting()
-                ?: return@withContext Result.failure(Exception("Import/Export directory is not configured."))
-            val localImagesDir = repository.getImagesPathSetting()
-                ?: return@withContext Result.failure(Exception("Images directory is not configured."))
+            val localDataDir = repository.getDataPathSetting()
+                ?: return@withContext Result.failure(Exception("Data directory is not configured."))
 
-            val localPath = localImportExportDir.toPath()
-            if (!FileSystem.SYSTEM.exists(localPath)) {
-                FileSystem.SYSTEM.createDirectories(localPath)
+            val localDataPath = localDataDir.toPath()
+            if (!FileSystem.SYSTEM.exists(localDataPath)) {
+                FileSystem.SYSTEM.createDirectories(localDataPath)
             }
 
             onProgress("Connecting to SFTP server...", 0.1f)
@@ -404,18 +381,14 @@ class DesktopSftpService : SftpService {
                     jsonFiles.forEach { rf ->
                         val fileName = getFileNameFromPath(rf.path)
                         if (selectedFiles == null || selectedFiles.contains(fileName)) {
-                            val localFile = localPath.div(fileName).toNioPath().toFile()
+                            val localFile = localDataPath.div(fileName).toNioPath().toFile()
                             val remoteFile = if (config.remoteDir.endsWith("/")) "${config.remoteDir}$fileName" else "${config.remoteDir}/$fileName"
                             sftp.get(remoteFile, net.schmizz.sshj.xfer.FileSystemFile(localFile))
                         }
                     }
 
                     // 2. Download media files
-                    val allowedRemoteImages = remoteFiles.filter { it.isRegularFile && isAllowedFile(getFileNameFromPath(it.path)) }
-                    val localImagesPath = localImagesDir.toPath()
-                    if (!FileSystem.SYSTEM.exists(localImagesPath)) {
-                        FileSystem.SYSTEM.createDirectories(localImagesPath)
-                    }
+                    val allowedRemoteImages = remoteFiles.filter { it.isRegularFile && (isAllowedFile(getFileNameFromPath(it.path)) || getFileNameFromPath(it.path).lowercase().endsWith(".html")) }
 
                     allowedRemoteImages.forEachIndexed { index, remoteImg ->
                         val fileName = getFileNameFromPath(remoteImg.path)
@@ -423,13 +396,13 @@ class DesktopSftpService : SftpService {
                             val remoteSize = remoteImg.attributes.size
                             val remoteMtimeSec = remoteImg.attributes.mtime
                             val remoteFile = if (config.remoteDir.endsWith("/")) "${config.remoteDir}$fileName" else "${config.remoteDir}/$fileName"
-                            val localImgPath = localImagesPath.div(fileName)
-                            val localFile = localImgPath.toNioPath().toFile()
+                            val localFilePath = localDataPath.div(fileName)
+                            val localFile = localFilePath.toNioPath().toFile()
 
-                            val shouldDownload = if (!FileSystem.SYSTEM.exists(localImgPath)) {
+                            val shouldDownload = if (!FileSystem.SYSTEM.exists(localFilePath)) {
                                   true
                             } else {
-                                val localMeta = FileSystem.SYSTEM.metadata(localImgPath)
+                                val localMeta = FileSystem.SYSTEM.metadata(localFilePath)
                                 val localSize = localMeta.size ?: 0L
                                 val localMtimeSec = (localMeta.lastModifiedAtMillis ?: 0L) / 1000L
                                 if (localSize != remoteSize) {
@@ -451,7 +424,7 @@ class DesktopSftpService : SftpService {
                     onProgress("Importing downloaded data to database...", 0.8f)
                     
                     fun readLocalJson(fileName: String): String? {
-                        val file = localPath.div(fileName)
+                        val file = localDataPath.div(fileName)
                         return if (FileSystem.SYSTEM.exists(file)) {
                             FileSystem.SYSTEM.read(file) { readUtf8() }
                         } else null

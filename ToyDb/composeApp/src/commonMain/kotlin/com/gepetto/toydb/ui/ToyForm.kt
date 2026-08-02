@@ -98,7 +98,7 @@ fun ToyForm(
         val extension = srcPath.name.substringAfterLast('.', "jpg").lowercase()
         val destFilename = "$prefix${initialToy.refNum}.$extension"
         
-        val customPath = repository.getImagesPathSetting()
+        val customPath = repository.getDataPathSetting()
         val targetDir = if (!customPath.isNullOrEmpty()) {
             customPath.toPath()
         } else {
@@ -135,7 +135,7 @@ fun ToyForm(
         val extension = srcPath.name.substringAfterLast('.', "jpg").lowercase()
         val destFilename = "$prefix${initialToy.refNum}.$extension"
         
-        val customPath = repository.getImagesPathSetting()
+        val customPath = repository.getDataPathSetting()
         val targetDir = if (!customPath.isNullOrEmpty()) {
             customPath.toPath()
         } else {
