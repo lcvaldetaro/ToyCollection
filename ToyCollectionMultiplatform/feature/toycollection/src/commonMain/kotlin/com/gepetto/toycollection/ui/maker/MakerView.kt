@@ -44,7 +44,8 @@ fun MakerView(
             MakerContent(
                 modifier = modifier,
                 maker = maker,
-                collection = collectionIp.getCurrentCollectionData()!!,
+                collection = collectionIp.getCurrentCollectionData()
+                    ?: collectionIp.getCollectionDataForMaker(maker)!!,
                 currentSelectedToy = loadedState.toy,
                 goBack = { onEffect(GoBackEffect) },
                 onIntentCommand = { intent -> iproc.onIntentCommand(intent, state) }

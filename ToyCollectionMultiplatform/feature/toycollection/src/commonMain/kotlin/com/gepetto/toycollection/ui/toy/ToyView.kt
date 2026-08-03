@@ -35,7 +35,8 @@ fun ToyView(
             ToyDetailsBodyWrapper (
                 modifier = modifier,
                 toy = toy,
-                collection = collectionIp.getCurrentCollectionData()!!,
+                collection = collectionIp.getCurrentCollectionData()
+                    ?: collectionIp.getCollectionDataForToy(toy)!!,
             ) {
                 when (it.tapAction) {
                     is ListDetailsTapAction.TapBack -> onEffect(SystemBackEffect(adaptiveInfo))

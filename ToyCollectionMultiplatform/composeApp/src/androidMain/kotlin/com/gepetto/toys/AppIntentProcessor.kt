@@ -16,7 +16,9 @@ class AppIntentProcessor : CircumIntentProcessor<AppState, AppIntentCommand, App
 
     private fun installGameFiles() {
         CoroutineScope(Dispatchers.IO).launch {
-            Looper.prepare() // needed to issue toasts
+            if (Looper.myLooper() == null) {
+                Looper.prepare() // needed to issue toasts
+            }
             setState(AppState.Loaded)
         }
     }

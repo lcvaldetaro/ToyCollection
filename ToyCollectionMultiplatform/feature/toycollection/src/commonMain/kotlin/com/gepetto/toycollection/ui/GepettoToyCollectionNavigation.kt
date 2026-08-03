@@ -17,7 +17,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.savedstate.serialization.SavedStateConfiguration
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.polymorphic
+import kotlinx.serialization.modules.subclass
 import club.gepetto.circum.circumIntentProcessor
 import club.gepetto.composeutils.GcTheme
 import club.gepetto.composeutils.isLandscape
@@ -82,11 +86,32 @@ sealed interface Destination : NavKey {
     @Serializable data class WebSearchPortrait(val toy: Toy) : Destination
 }
 
+private val navConfig = SavedStateConfiguration {
+    serializersModule = SerializersModule {
+        polymorphic(NavKey::class) {
+            subclass(Destination.Home::class, Destination.Home.serializer())
+            subclass(Destination.CollectionScreen::class, Destination.CollectionScreen.serializer())
+            subclass(Destination.MakerScreen::class, Destination.MakerScreen.serializer())
+            subclass(Destination.Search::class, Destination.Search.serializer())
+            subclass(Destination.Info::class, Destination.Info.serializer())
+            subclass(Destination.Settings::class, Destination.Settings.serializer())
+            subclass(Destination.PrivacyPolicy::class, Destination.PrivacyPolicy.serializer())
+            subclass(Destination.ViewToy::class, Destination.ViewToy.serializer())
+            subclass(Destination.ViewToyFromSearch::class, Destination.ViewToyFromSearch.serializer())
+            subclass(Destination.EditToyLandscape::class, Destination.EditToyLandscape.serializer())
+            subclass(Destination.EditToyPortrait::class, Destination.EditToyPortrait.serializer())
+            subclass(Destination.AddToy::class, Destination.AddToy.serializer())
+            subclass(Destination.WebSearchLandscape::class, Destination.WebSearchLandscape.serializer())
+            subclass(Destination.WebSearchPortrait::class, Destination.WebSearchPortrait.serializer())
+        }
+    }
+}
+
 val collection : CollectionData? = null
 
 @Composable
 fun ToyCollectionNavigation(modifier: Modifier = Modifier) {
-    val backStack = remember { mutableStateListOf<Destination>(Home) }
+    val backStack = rememberNavBackStack(navConfig, Destination.Home)
     val gcSceneStrategy = rememberGcSceneStrategy<NavKey>()
     val collectionIp: CollectionIntentProcessor = circumIntentProcessor<CollectionIntentProcessor>()
 

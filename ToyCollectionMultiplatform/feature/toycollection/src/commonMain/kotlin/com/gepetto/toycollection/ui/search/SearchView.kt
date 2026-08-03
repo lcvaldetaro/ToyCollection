@@ -29,7 +29,8 @@ fun SearchView(
 
             SearchContent(
                 searchString = searchState.searchString,
-                collection = collectionIp.getCurrentCollectionData()!!,
+                collection = collectionIp.getCurrentCollectionData()
+                    ?: collectionIp.getActiveCollectionData()!!,
                 currentSelectedToy = searchState.toy,
                 modifier = modifier,
                 goBack = { onEffect(GoBackEffect) },

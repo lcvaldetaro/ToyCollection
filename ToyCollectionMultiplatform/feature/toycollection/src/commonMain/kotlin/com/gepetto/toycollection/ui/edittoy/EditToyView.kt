@@ -32,7 +32,10 @@ fun EditToyView(
         is ToyState.Loaded -> {
             EditToyBodyWrapper(
                 modifier = modifier,
-                maker = toy.getMaker(collectionIp.getCurrentCollectionData()!!)!!,
+                maker = toy.getMaker(
+                    collectionIp.getCurrentCollectionData()
+                        ?: collectionIp.getCollectionDataForToy(toy)!!
+                )!!,
                 toyInput = toy
             ) {
                 when (it.tapAction) {

@@ -198,6 +198,18 @@ class CollectionIntentProcessor(private val dbInjected: Database) : CircumIntent
         timeStamp = gcCurrentTimeMillis()
         GcLog.d("buildHeadings timestamp = $timeStamp, title=$title")
     }
+
+    fun getCollectionDataForMaker(maker: Maker): CollectionData? {
+        return dbInjected.getCollectionDataForMaker(maker)
+    }
+
+    fun getCollectionDataForToy(toy: Toy): CollectionData? {
+        return dbInjected.getCollectionDataForToy(toy)
+    }
+
+    fun getActiveCollectionData(): CollectionData? {
+        return dbInjected.getActiveCollectionData()
+    }
 }
 
 sealed interface CollectionState {
