@@ -185,6 +185,8 @@ Tous droits réservés.</string>
     <string name="sftp_status_download_failed">Échec du téléchargement: %1$s</string>
     <string name="sftp_status_download_success">Données téléchargées avec succès depuis le serveur !</string>
     <string name="sftp_status_downloading">Téléchargement des données depuis le serveur SFTP...</string>
+    <string name="sftp_status_downloading_files">Téléchargement des fichiers...</string>
+    <string name="sftp_status_downloading_files_progress">Téléchargement des fichiers (%1$d/%2$d)...</string>
     <string name="sftp_status_plan_failed">Échec du calcul du plan: %1$s</string>
     <string name="sftp_status_syncing">Synchronisation...</string>
     <string name="sftp_status_test_failed">Connexion SFTP Échouée : %1$s</string>
@@ -192,6 +194,8 @@ Tous droits réservés.</string>
     <string name="sftp_status_upload_failed">Échec du transfert: %1$s</string>
     <string name="sftp_status_upload_success">Données transférées avec succès sur le serveur !</string>
     <string name="sftp_status_uploading">Transfert des données vers le serveur SFTP...</string>
+    <string name="sftp_status_uploading_files">Envoi des fichiers...</string>
+    <string name="sftp_status_uploading_files_progress">Envoi des fichiers (%1$d/%2$d)...</string>
     <string name="sftp_sync_actions_needed">Les actions suivantes seront effectuées pour synchroniser avec le serveur :</string>
     <string name="sftp_sync_direction_label">Confirmer Sync (%1$s)</string>
     <string name="sftp_sync_new_file">Nouveau Fichier</string>

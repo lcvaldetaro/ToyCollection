@@ -13,6 +13,8 @@ import okio.FileSystem
 import okio.Path.Companion.toPath
 import java.io.File
 import java.security.PublicKey
+import toydb.composeapp.generated.resources.*
+import org.jetbrains.compose.resources.getString
 
 class AndroidSftpService(private val context: android.content.Context) : SftpService {
     override val isSupported: Boolean = true
@@ -296,7 +298,7 @@ class AndroidSftpService(private val context: android.content.Context) : SftpSer
                         sftp.put(net.schmizz.sshj.xfer.FileSystemFile(localFile), remoteFile)
                     }
 
-                    onProgress("Uploading media and HTML files...", 0.7f)
+                    onProgress(getString(Res.string.sftp_status_uploading_files), 0.7f)
                     val allLocalFiles = mutableListOf<okio.Path>()
                     if (FileSystem.SYSTEM.exists(localDataPath)) {
                         allLocalFiles.addAll(
@@ -348,7 +350,7 @@ class AndroidSftpService(private val context: android.content.Context) : SftpSer
                         }
                         
                         val progressVal = 0.7f + (0.3f * (index + 1) / filesToUpload.size.coerceAtLeast(1))
-                        onProgress("Uploading media and HTML files (${index + 1}/${filesToUpload.size})...", progressVal)
+                        onProgress(getString(Res.string.sftp_status_uploading_files_progress, index + 1, filesToUpload.size), progressVal)
                     }
 
                 } finally {
@@ -401,7 +403,7 @@ class AndroidSftpService(private val context: android.content.Context) : SftpSer
             try {
                 val sftp = client.newSFTPClient()
                 try {
-                    onProgress("Downloading configurations and media...", 0.3f)
+                    onProgress(getString(Res.string.sftp_status_downloading_files), 0.3f)
                     val remoteFiles = sftp.ls(config.remoteDir)
 
                     // 1. Download JSON configurations
@@ -450,7 +452,7 @@ class AndroidSftpService(private val context: android.content.Context) : SftpSer
                         }
                         
                         val progressVal = 0.5f + (0.3f * (index + 1) / imagesToDownload.size.coerceAtLeast(1))
-                        onProgress("Downloading media (${index + 1}/${imagesToDownload.size})...", progressVal)
+                        onProgress(getString(Res.string.sftp_status_downloading_files_progress, index + 1, imagesToDownload.size), progressVal)
                     }
 
                     onProgress("Importing downloaded data to database...", 0.8f)
