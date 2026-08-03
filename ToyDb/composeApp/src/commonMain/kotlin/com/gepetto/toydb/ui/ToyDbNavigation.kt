@@ -35,6 +35,8 @@ import okio.FileSystem
 import okio.Path.Companion.toPath
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import org.jetbrains.compose.resources.getString
+import kotlinx.coroutines.launch
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import club.gepetto.composeutils.GcE2eBox
@@ -132,6 +134,7 @@ fun ToyDbNavigation(
         var categoriesSettings by remember { mutableStateOf(repository.getCategorySettings()) }
 
         if (showSetupPrompt) {
+            val coroutineScope = rememberCoroutineScope()
             var dataPath by remember { mutableStateOf(repository.getDataPathSetting() ?: "") }
 
             AlertDialog(
@@ -182,9 +185,11 @@ fun ToyDbNavigation(
                             }
                             Button(
                                 onClick = {
-                                    val dir = com.gepetto.toydb.utils.selectDirectoryDialog("Data Directory")
-                                    if (dir != null) {
-                                        dataPath = dir
+                                    coroutineScope.launch {
+                                        val dir = com.gepetto.toydb.utils.selectDirectoryDialog(getString(Res.string.data_dir_title))
+                                        if (dir != null) {
+                                            dataPath = dir
+                                        }
                                     }
                                 },
                                 colors = ButtonDefaults.buttonColors(

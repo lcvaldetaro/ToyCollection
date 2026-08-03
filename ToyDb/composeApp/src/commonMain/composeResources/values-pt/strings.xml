@@ -158,6 +158,7 @@ Todos os direitos reservados.</string>
     <string name="search_placeholder_toy">Buscar por descrição, fabricante ou refNum...</string>
     <string name="secondary_images_title">Imagens Secundárias (%1$d)</string>
     <string name="select_all">Selecionar tudo</string>
+    <string name="select_directory">Selecionar Diretório</string>
     <string name="selected_count">Selecionado: %1$d</string>
     <string name="settings_title">Configurações de Banco de Dados e Sistema</string>
     <string name="sftp_auth_type">Tipo de Autenticação</string>

@@ -597,7 +597,7 @@ fun SettingsScreen(
             text = { Text(stringResource(Res.string.sftp_test_success_desc), color = sysTextColor()) },
             confirmButton = {
                 Button(onClick = { showTestSuccessDialog = false }) {
-                    Text("OK")
+                    Text(stringResource(Res.string.ok))
                 }
             }
         )
@@ -611,7 +611,7 @@ fun SettingsScreen(
             text = { Text(stringResource(Res.string.sftp_test_failed_desc, testErrorMsg), color = sysTextColor()) },
             confirmButton = {
                 Button(onClick = { showTestErrorDialog = false }) {
-                    Text("OK")
+                    Text(stringResource(Res.string.ok))
                 }
             }
         )
@@ -625,7 +625,7 @@ fun SettingsScreen(
             text = { Text(syncErrorMsg, color = sysTextColor()) },
             confirmButton = {
                 Button(onClick = { showSyncErrorDialog = false }) {
-                    Text("OK")
+                    Text(stringResource(Res.string.ok))
                 }
             }
         )
@@ -867,7 +867,7 @@ fun SettingsScreen(
                             }
                         }
                     ) {
-                        Text(if (syncDialogPhase == "Confirm") "Continue" else "OK")
+                        Text(if (syncDialogPhase == "Confirm") stringResource(Res.string.continue_btn) else stringResource(Res.string.ok))
                     }
                 }
             },
@@ -1386,6 +1386,7 @@ fun DataDirectorySettings(
     onSelectPath: (String) -> Unit,
     onClearPath: () -> Unit
 ) {
+    val coroutineScope = rememberCoroutineScope()
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(stringResource(Res.string.data_dir_title), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = sysTextColor())
         Spacer(modifier = Modifier.height(GcSpacing.Small))
@@ -1410,13 +1411,15 @@ fun DataDirectorySettings(
                 ) {
                     Button(
                         onClick = {
-                            val selectedDir = selectDirectoryDialog("Data Directory")
-                            if (selectedDir != null) {
-                                onSelectPath(selectedDir)
+                            coroutineScope.launch {
+                                val selectedDir = selectDirectoryDialog(getString(Res.string.data_dir_title))
+                                if (selectedDir != null) {
+                                    onSelectPath(selectedDir)
+                                }
                             }
                         }
                     ) {
-                        Text("Select Directory")
+                        Text(stringResource(Res.string.select_directory))
                     }
                     if (!dataPath.isNullOrEmpty()) {
                         OutlinedButton(onClick = onClearPath) {
