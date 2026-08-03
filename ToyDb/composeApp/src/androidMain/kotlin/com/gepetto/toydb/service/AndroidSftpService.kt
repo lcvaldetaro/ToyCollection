@@ -232,6 +232,7 @@ class AndroidSftpService(private val context: android.content.Context) : SftpSer
             }
             Result.success(plan)
         } catch (e: Exception) {
+            GcLog.e(e, "calculateDownloadPlan failed")
             Result.failure(e)
         }
     }

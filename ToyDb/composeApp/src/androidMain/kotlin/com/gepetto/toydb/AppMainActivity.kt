@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import club.gepetto.GcLog
 import com.gepetto.toydb.database.ToyRepository
 import com.gepetto.toydb.database.createDatabase
 import com.gepetto.toydb.service.AndroidSftpService
@@ -23,6 +24,7 @@ class AppMainActivity : ComponentActivity() {
         }
     }
     override fun onCreate(savedInstanceState: Bundle?) {
+        GcLog.plant(GcLog.DebugTree())
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 

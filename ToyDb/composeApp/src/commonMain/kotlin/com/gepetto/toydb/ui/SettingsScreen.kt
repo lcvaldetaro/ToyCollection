@@ -90,6 +90,8 @@ fun SettingsScreen(
     var showUploadSuccessDialog by remember { mutableStateOf(false) }
     var showTestErrorDialog by remember { mutableStateOf(false) }
     var testErrorMsg by remember { mutableStateOf("") }
+    var showSyncErrorDialog by remember { mutableStateOf(false) }
+    var syncErrorMsg by remember { mutableStateOf("") }
     var showSyncConfirmDialog by remember { mutableStateOf(false) }
     var syncDialogPhase by remember { mutableStateOf("Confirm") } // "Confirm", "Progress", "Success", "Error"
     var syncErrorMessage by remember { mutableStateOf("") }
@@ -615,6 +617,20 @@ fun SettingsScreen(
         )
     }
 
+    if (showSyncErrorDialog) {
+        AlertDialog(
+            onDismissRequest = { showSyncErrorDialog = false },
+            containerColor = sysBackgroundColor(),
+            title = { Text(stringResource(Res.string.sftp_status_plan_failed, "").trim().removeSuffix(":").removeSuffix("："), color = sysTextColor(), fontWeight = FontWeight.Bold) },
+            text = { Text(syncErrorMsg, color = sysTextColor()) },
+            confirmButton = {
+                Button(onClick = { showSyncErrorDialog = false }) {
+                    Text("OK")
+                }
+            }
+        )
+    }
+
     if (showSyncConfirmDialog) {
         AlertDialog(
             onDismissRequest = {
@@ -968,6 +984,11 @@ fun SettingsScreen(
                                 },
                                 onTestConnection = {
                                     coroutineScope.launch {
+                                        if (sftpHost.trim().isEmpty() || sftpUsername.trim().isEmpty()) {
+                                            testErrorMsg = getString(Res.string.all_fields_required)
+                                            showTestErrorDialog = true
+                                            return@launch
+                                        }
                                         isTestingSftp = true
                                         statusText = getString(Res.string.sftp_testing_connection)
                                         val result = sftpService.testConnection(buildSftpConfig(), onHostKeyUnverified)
@@ -987,6 +1008,11 @@ fun SettingsScreen(
                             SftpSyncActions(
                                 onUploadClick = {
                                     coroutineScope.launch {
+                                        if (sftpHost.trim().isEmpty() || sftpUsername.trim().isEmpty()) {
+                                            syncErrorMsg = getString(Res.string.all_fields_required)
+                                            showSyncErrorDialog = true
+                                            return@launch
+                                        }
                                         statusText = getString(Res.string.sftp_status_calculating_upload)
                                         isSftpSyncing = true
                                         val result = sftpService.calculateUploadPlan(buildSftpConfig(), db, onHostKeyUnverified)
@@ -1001,12 +1027,19 @@ fun SettingsScreen(
                                             syncDialogPhase = "Confirm"
                                             showSyncConfirmDialog = true
                                         } else {
+                                            syncErrorMsg = result.exceptionOrNull()?.message ?: ""
+                                            showSyncErrorDialog = true
                                             statusText = getString(Res.string.sftp_status_plan_failed, result.exceptionOrNull()?.message ?: "")
                                         }
                                     }
                                 },
                                 onDownloadClick = {
                                     coroutineScope.launch {
+                                        if (sftpHost.trim().isEmpty() || sftpUsername.trim().isEmpty()) {
+                                            syncErrorMsg = getString(Res.string.all_fields_required)
+                                            showSyncErrorDialog = true
+                                            return@launch
+                                        }
                                         statusText = getString(Res.string.sftp_status_calculating_download)
                                         isSftpSyncing = true
                                         val result = sftpService.calculateDownloadPlan(buildSftpConfig(), db, onHostKeyUnverified)
@@ -1021,6 +1054,8 @@ fun SettingsScreen(
                                             syncDialogPhase = "Confirm"
                                             showSyncConfirmDialog = true
                                         } else {
+                                            syncErrorMsg = result.exceptionOrNull()?.message ?: ""
+                                            showSyncErrorDialog = true
                                             statusText = getString(Res.string.sftp_status_plan_failed, result.exceptionOrNull()?.message ?: "")
                                         }
                                     }
@@ -1143,6 +1178,11 @@ fun SettingsScreen(
                             },
                             onTestConnection = {
                                 coroutineScope.launch {
+                                    if (sftpHost.trim().isEmpty() || sftpUsername.trim().isEmpty()) {
+                                        testErrorMsg = getString(Res.string.all_fields_required)
+                                        showTestErrorDialog = true
+                                        return@launch
+                                    }
                                     isTestingSftp = true
                                     statusText = getString(Res.string.sftp_testing_connection)
                                     val result = sftpService.testConnection(buildSftpConfig(), onHostKeyUnverified)
@@ -1162,6 +1202,11 @@ fun SettingsScreen(
                         SftpSyncActions(
                             onUploadClick = {
                                 coroutineScope.launch {
+                                    if (sftpHost.trim().isEmpty() || sftpUsername.trim().isEmpty()) {
+                                        syncErrorMsg = getString(Res.string.all_fields_required)
+                                        showSyncErrorDialog = true
+                                        return@launch
+                                    }
                                     statusText = getString(Res.string.sftp_status_calculating_upload)
                                     isSftpSyncing = true
                                     val result = sftpService.calculateUploadPlan(buildSftpConfig(), db, onHostKeyUnverified)
@@ -1176,12 +1221,19 @@ fun SettingsScreen(
                                         syncDialogPhase = "Confirm"
                                         showSyncConfirmDialog = true
                                     } else {
+                                        syncErrorMsg = result.exceptionOrNull()?.message ?: ""
+                                        showSyncErrorDialog = true
                                         statusText = getString(Res.string.sftp_status_plan_failed, result.exceptionOrNull()?.message ?: "")
                                     }
                                 }
                             },
                             onDownloadClick = {
                                 coroutineScope.launch {
+                                    if (sftpHost.trim().isEmpty() || sftpUsername.trim().isEmpty()) {
+                                        syncErrorMsg = getString(Res.string.all_fields_required)
+                                        showSyncErrorDialog = true
+                                        return@launch
+                                    }
                                     statusText = getString(Res.string.sftp_status_calculating_download)
                                     isSftpSyncing = true
                                     val result = sftpService.calculateDownloadPlan(buildSftpConfig(), db, onHostKeyUnverified)
@@ -1196,6 +1248,8 @@ fun SettingsScreen(
                                         syncDialogPhase = "Confirm"
                                         showSyncConfirmDialog = true
                                     } else {
+                                        syncErrorMsg = result.exceptionOrNull()?.message ?: ""
+                                        showSyncErrorDialog = true
                                         statusText = getString(Res.string.sftp_status_plan_failed, result.exceptionOrNull()?.message ?: "")
                                     }
                                 }
@@ -1685,7 +1739,7 @@ fun SftpSettingsCard(
             OutlinedTextField(
                 value = host,
                 onValueChange = onHostChange,
-                label = { Text(stringResource(Res.string.sftp_host)) },
+                label = { Text(stringResource(Res.string.sftp_host) + "*") },
                 placeholder = { Text(stringResource(Res.string.sftp_host_placeholder)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
@@ -1712,7 +1766,7 @@ fun SftpSettingsCard(
                 OutlinedTextField(
                     value = username,
                     onValueChange = onUsernameChange,
-                    label = { Text(stringResource(Res.string.sftp_username)) },
+                    label = { Text(stringResource(Res.string.sftp_username) + "*") },
                     placeholder = { Text(stringResource(Res.string.sftp_username_placeholder)) },
                     modifier = Modifier.weight(1f),
                     singleLine = true,
