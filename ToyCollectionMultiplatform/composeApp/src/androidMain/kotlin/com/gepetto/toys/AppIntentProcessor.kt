@@ -1,6 +1,5 @@
 package com.gepetto.toys
 
-import android.os.Looper
 import club.gepetto.circum.CircumIntentProcessor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -16,9 +15,6 @@ class AppIntentProcessor : CircumIntentProcessor<AppState, AppIntentCommand, App
 
     private fun installGameFiles() {
         CoroutineScope(Dispatchers.IO).launch {
-            if (Looper.myLooper() == null) {
-                Looper.prepare() // needed to issue toasts
-            }
             setState(AppState.Loaded)
         }
     }

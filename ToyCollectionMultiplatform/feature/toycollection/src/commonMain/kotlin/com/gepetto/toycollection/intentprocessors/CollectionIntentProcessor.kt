@@ -15,7 +15,6 @@ import club.gepetto.utils.ioCoroutine
 import com.gepetto.common.TOYS_QUERY_STRING
 import com.gepetto.common.Common
 import com.gepetto.toycollection.dataproviders.updateLoadedStatus
-import com.gepetto.toycollection.utils.toast
 import kotlinx.coroutines.CoroutineScope
 import club.gepetto.utils.ioDispatcher
 import club.gepetto.composeutils.gcCurrentTimeMillis
@@ -81,10 +80,10 @@ class CollectionIntentProcessor(private val dbInjected: Database) : CircumIntent
 
             is CollectionTapAction.TapClearCache -> {
                 CoroutineScope(ioDispatcher).launch {
-                    toast("Pictures of $title being deleted...")
+                    GcLog.d("Pictures of $title being deleted...")
                     Common.clearGcImageCache()
                     currentCollectionData!!.makers.forEach { it.clearCache() }
-                    toast("Cache cleared")
+                    GcLog.d("Cache cleared")
                 }
             }
 

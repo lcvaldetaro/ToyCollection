@@ -1,9 +1,5 @@
 package com.gepetto.toycollection.utils
 
-fun toast (msg: String) {
-    println("TOAST: $msg")
-}
-
 fun String.toTimeStamp () : Long {
     return this.toSize()
 }
