@@ -11,6 +11,11 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
@@ -218,25 +223,43 @@ fun ExplorerContent(
                     Text(stringResource(Res.string.no_toys_matching), color = MaterialTheme.colorScheme.outline)
                 }
             } else {
-                Row(modifier = Modifier.weight(1f)) {
-                    val gridState = androidx.compose.foundation.lazy.grid.rememberLazyGridState()
-                    LazyVerticalGrid(
-                        state = gridState,
-                        columns = GridCells.Adaptive(minSize = 350.dp),
-                        modifier = Modifier.weight(1f).padding(end = 4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(GcSpacing.Standard),
-                        verticalArrangement = Arrangement.spacedBy(GcSpacing.Standard)
-                    ) {
-                        items(toysList) { toy ->
-                            ToyItemCard(toy, prefix) {
-                                onNavigate(Destination.ToyDetail(category, toy.refNum))
+                BoxWithConstraints(modifier = Modifier.weight(1f)) {
+                    val columnsCount = (maxWidth / 160.dp).toInt().coerceIn(2, 5)
+                    val rows = remember(toysList, columnsCount) { toysList.chunked(columnsCount) }
+                    val listState = rememberLazyListState()
+                    Row(modifier = Modifier.fillMaxSize()) {
+                        LazyColumn(
+                            state = listState,
+                            modifier = Modifier.weight(1f).padding(end = 4.dp),
+                            verticalArrangement = Arrangement.spacedBy(GcSpacing.Standard)
+                        ) {
+                            items(rows) { rowToys ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
+                                    horizontalArrangement = Arrangement.spacedBy(GcSpacing.Standard)
+                                ) {
+                                    for (i in 0 until columnsCount) {
+                                        val toy = rowToys.getOrNull(i)
+                                        if (toy != null) {
+                                            ToyItemCard(
+                                                toy = toy,
+                                                prefix = prefix,
+                                                modifier = Modifier.weight(1f).fillMaxHeight()
+                                            ) {
+                                                onNavigate(Destination.ToyDetail(category, toy.refNum))
+                                            }
+                                        } else {
+                                            Spacer(modifier = Modifier.weight(1f))
+                                        }
+                                    }
+                                }
                             }
                         }
+                        PlatformScrollbar(
+                            state = listState,
+                            modifier = Modifier.fillMaxHeight().width(8.dp)
+                        )
                     }
-                    PlatformGridScrollbar(
-                        state = gridState,
-                        modifier = Modifier.fillMaxHeight().width(8.dp)
-                    )
                 }
             }
         }

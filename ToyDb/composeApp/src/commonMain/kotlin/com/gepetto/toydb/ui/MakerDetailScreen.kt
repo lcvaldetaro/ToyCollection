@@ -9,6 +9,12 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
@@ -234,35 +240,39 @@ fun MakerDetailContent(
         )
     }
 
-    Scaffold(
-        containerColor = Color.Transparent,
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(Res.string.manufacturer_details_title)) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(Res.string.back))
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        val columnsCount = (maxWidth / 160.dp).toInt().coerceIn(2, 5)
+        val rows = remember(filteredToys, columnsCount) { filteredToys.chunked(columnsCount) }
+
+        Scaffold(
+            containerColor = Color.Transparent,
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(Res.string.manufacturer_details_title)) },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = stringResource(Res.string.back))
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = onEditClick) {
+                            Icon(Icons.Default.Edit, contentDescription = stringResource(Res.string.edit))
+                        }
+                        IconButton(onClick = { showDeleteConfirmation = true }) {
+                            Icon(Icons.Default.Delete, contentDescription = stringResource(Res.string.delete))
+                        }
                     }
-                },
-                actions = {
-                    IconButton(onClick = onEditClick) {
-                        Icon(Icons.Default.Edit, contentDescription = stringResource(Res.string.edit))
-                    }
-                    IconButton(onClick = { showDeleteConfirmation = true }) {
-                        Icon(Icons.Default.Delete, contentDescription = stringResource(Res.string.delete))
-                    }
-                }
-            )
-        }
-    ) { innerPadding ->
-        LazyVerticalGrid(
-            columns = GridCells.Adaptive(minSize = 350.dp),
-            modifier = modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = GcSpacing.Standard),
-            horizontalArrangement = Arrangement.spacedBy(GcSpacing.Standard),
-            verticalArrangement = Arrangement.spacedBy(GcSpacing.Standard)
+                )
+            }
+        ) { innerPadding ->
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(columnsCount),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(horizontal = GcSpacing.Standard),
+                horizontalArrangement = Arrangement.spacedBy(GcSpacing.Standard),
+                verticalArrangement = Arrangement.spacedBy(GcSpacing.Standard)
         ) {
             item(span = { GridItemSpan(maxLineSpan) }) {
                 Spacer(modifier = Modifier.height(GcSpacing.Small))
@@ -411,10 +421,26 @@ fun MakerDetailContent(
                     }
                 }
             } else {
-                items(filteredToys) { toy ->
-                    val prefix = settingsList.find { it.category == toy.toyType }?.imagePrefix ?: "car"
-                    ToyItemCard(toy, prefix) {
-                        onNavigate(Destination.ToyDetail(toy.toyType, toy.refNum))
+                items(rows, span = { GridItemSpan(maxLineSpan) }) { rowToys ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
+                        horizontalArrangement = Arrangement.spacedBy(GcSpacing.Standard)
+                    ) {
+                        for (i in 0 until columnsCount) {
+                            val toy = rowToys.getOrNull(i)
+                            if (toy != null) {
+                                val prefix = settingsList.find { it.category == toy.toyType }?.imagePrefix ?: "car"
+                                ToyItemCard(
+                                    toy = toy,
+                                    prefix = prefix,
+                                    modifier = Modifier.weight(1f).fillMaxHeight()
+                                ) {
+                                    onNavigate(Destination.ToyDetail(toy.toyType, toy.refNum))
+                                }
+                            } else {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
+                        }
                     }
                 }
             }
@@ -424,6 +450,7 @@ fun MakerDetailContent(
             }
         }
     }
+}
 }
 
 @PreviewLightDark
