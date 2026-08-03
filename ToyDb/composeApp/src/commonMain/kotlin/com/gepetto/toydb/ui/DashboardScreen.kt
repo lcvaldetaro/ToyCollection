@@ -1,5 +1,5 @@
 package com.gepetto.toydb.ui
-
+ 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -11,22 +11,24 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import club.gepetto.composeutils.GcCard
 import club.gepetto.composeutils.GcSpacing
 import club.gepetto.composeutils.sysBackgroundColor
-import club.gepetto.composeutils.sysForegroundColor
 import club.gepetto.composeutils.sysTextColor
 import com.gepetto.toydb.database.ToyRepository
+import com.gepetto.toydb.database.DashboardStats
+import com.gepetto.toydb.database.CategoryStat
+import com.gepetto.toydb.database.CategorySetting
 import androidx.compose.ui.graphics.Color
 import org.jetbrains.compose.resources.stringResource
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
+import club.gepetto.composeutils.GcTheme
 import toydb.composeapp.generated.resources.*
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
     repository: ToyRepository,
@@ -36,6 +38,21 @@ fun DashboardScreen(
     val stats = remember { repository.getDashboardStats() }
     val categoriesSettings = remember { repository.getCategorySettings() }
     
+    DashboardContent(
+        stats = stats,
+        categoriesSettings = categoriesSettings,
+        onNavigate = onNavigate,
+        modifier = modifier
+    )
+}
+
+@Composable
+fun DashboardContent(
+    stats: DashboardStats,
+    categoriesSettings: List<CategorySetting>,
+    onNavigate: (Destination) -> Unit,
+    modifier: Modifier = Modifier
+) {
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -156,6 +173,7 @@ fun DashboardScreen(
         }
     }
 }
+
 // Custom format fallback helper to prevent multi-platform string formatting compilation issues
 private fun String.Companion.format(format: String, value: Double): String {
     val rounded = (value * 100 + 0.5).toLong() / 100.0
@@ -165,3 +183,32 @@ private fun String.Companion.format(format: String, value: Double): String {
     val paddedDecimal = decimalPart.padEnd(2, '0').take(2)
     return "$integerPart.$paddedDecimal"
 }
+
+@PreviewLightDark
+@Preview(name = "Landscape", widthDp = 800, heightDp = 480)
+@Composable
+fun DashboardContentPreview() {
+    GcTheme {
+        val mockStats = DashboardStats(
+            totalToys = 10,
+            totalValue = 250.0,
+            totalSpent = 150.0,
+            categories = listOf(
+                CategoryStat("slots", 3, 75.0, 50.0),
+                CategoryStat("trains", 5, 125.0, 75.0),
+                CategoryStat("static", 2, 50.0, 25.0)
+            )
+        )
+        val mockCategoriesSettings = listOf(
+            CategorySetting("slots", "slots_", "Slot Cars"),
+            CategorySetting("trains", "trains_", "Trains"),
+            CategorySetting("static", "static_", "Static Models")
+        )
+        DashboardContent(
+            stats = mockStats,
+            categoriesSettings = mockCategoriesSettings,
+            onNavigate = {}
+        )
+    }
+}
+

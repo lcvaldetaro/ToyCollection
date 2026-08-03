@@ -29,6 +29,9 @@ import club.gepetto.composeutils.sysBackgroundColor
 import club.gepetto.composeutils.sysTextColor
 import androidx.compose.ui.graphics.Color
 import club.gepetto.composeutils.image.GcImage
+import com.gepetto.toydb.database.Maker
+import com.gepetto.toydb.database.Toy
+import com.gepetto.toydb.database.CategorySetting
 import com.gepetto.toydb.database.ToyRepository
 import com.gepetto.toydb.utils.resolveBitmapUri
 import com.gepetto.toydb.utils.scrollHorizontallyWithMouseWheel
@@ -38,9 +41,13 @@ import okio.FileSystem
 import okio.Path.Companion.toPath
 import club.gepetto.GcLog
 import org.jetbrains.compose.resources.stringResource
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
+import club.gepetto.composeutils.GcTheme
 import toydb.composeapp.generated.resources.*
 
-@OptIn(ExperimentalMaterial3Api::class)
+data class CategoryFilter(val key: String, val label: String, val count: Int)
+
 @Composable
 fun MakerDetailScreen(
     repository: ToyRepository,
@@ -85,10 +92,6 @@ fun MakerDetailScreen(
     val showFilters = remember(categories) {
         categories.count { it.key != "all" && it.count > 0 } > 1
     }
-
-    var showDeleteConfirmation by remember { mutableStateOf(false) }
-    val bitmapsScrollState = rememberLazyListState()
-    val coroutineScope = rememberCoroutineScope()
 
     val makerImages = remember(maker) {
         maker?.bitmaps?.split(" ")?.filter { it.trim().isNotEmpty() } ?: emptyList()
@@ -154,6 +157,51 @@ fun MakerDetailScreen(
         return
     }
 
+    MakerDetailContent(
+        maker = maker,
+        settingsList = settingsList,
+        categories = categories,
+        filteredToys = filteredToys,
+        showFilters = showFilters,
+        selectedCategory = selectedCategory,
+        onCategorySelect = { selectedCategory = it },
+        allImagePaths = allImagePaths,
+        makerImages = makerImages,
+        onAddImageClick = { imagePicker() },
+        onDeleteConfirm = {
+            repository.deleteMaker(makerName)
+            onBack()
+        },
+        onEditClick = { onNavigate(Destination.EditMaker(makerName)) },
+        onBack = onBack,
+        onNavigate = onNavigate,
+        modifier = modifier
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MakerDetailContent(
+    maker: Maker,
+    settingsList: List<CategorySetting>,
+    categories: List<CategoryFilter>,
+    filteredToys: List<Toy>,
+    showFilters: Boolean,
+    selectedCategory: String,
+    onCategorySelect: (String) -> Unit,
+    allImagePaths: Array<String>,
+    makerImages: List<String>,
+    onAddImageClick: () -> Unit,
+    onDeleteConfirm: () -> Unit,
+    onEditClick: () -> Unit,
+    onBack: () -> Unit,
+    onNavigate: (Destination) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
+    val bitmapsScrollState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
+
     if (showDeleteConfirmation) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirmation = false },
@@ -162,9 +210,8 @@ fun MakerDetailScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        repository.deleteMaker(makerName)
                         showDeleteConfirmation = false
-                        onBack()
+                        onDeleteConfirm()
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.error,
@@ -198,7 +245,7 @@ fun MakerDetailScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { onNavigate(Destination.EditMaker(makerName)) }) {
+                    IconButton(onClick = onEditClick) {
                         Icon(Icons.Default.Edit, contentDescription = stringResource(Res.string.edit))
                     }
                     IconButton(onClick = { showDeleteConfirmation = true }) {
@@ -267,7 +314,7 @@ fun MakerDetailScreen(
                         color = sysTextColor()
                     )
                     IconButton(
-                        onClick = { imagePicker() }
+                        onClick = onAddImageClick
                     ) {
                         Icon(
                             imageVector = Icons.Default.Add,
@@ -345,7 +392,7 @@ fun MakerDetailScreen(
                                     label = labelText,
                                     selection = selectedLabel
                                 ) {
-                                    selectedCategory = cat.key
+                                    onCategorySelect(cat.key)
                                 }
                             }
                         }
@@ -379,4 +426,42 @@ fun MakerDetailScreen(
     }
 }
 
-private data class CategoryFilter(val key: String, val label: String, val count: Int)
+@PreviewLightDark
+@Preview(name = "Landscape", widthDp = 800, heightDp = 480)
+@Composable
+fun MakerDetailContentPreview() {
+    GcTheme {
+        val mockMaker = Maker(
+            name = "Scalextric",
+            country = "United Kingdom",
+            comments = "Famous slot car brand established in 1957."
+        )
+        val mockToys = listOf(
+            Toy(refNum = 1, toyType = "slots", description = "Porsche 917", scale = "1:32", makerCombo = "Scalextric"),
+            Toy(refNum = 2, toyType = "slots", description = "Ferrari 512", scale = "1:32", makerCombo = "Scalextric")
+        )
+        val mockCategories = listOf(
+            CategoryFilter("all", "All", 2),
+            CategoryFilter("slots", "Slot Cars", 2)
+        )
+        val mockSettingsList = listOf(
+            CategorySetting("slots", "slots_", "Slot Cars")
+        )
+        MakerDetailContent(
+            maker = mockMaker,
+            settingsList = mockSettingsList,
+            categories = mockCategories,
+            filteredToys = mockToys,
+            showFilters = false,
+            selectedCategory = "all",
+            onCategorySelect = {},
+            allImagePaths = emptyArray(),
+            makerImages = emptyList(),
+            onAddImageClick = {},
+            onDeleteConfirm = {},
+            onEditClick = {},
+            onBack = {},
+            onNavigate = {}
+        )
+    }
+}

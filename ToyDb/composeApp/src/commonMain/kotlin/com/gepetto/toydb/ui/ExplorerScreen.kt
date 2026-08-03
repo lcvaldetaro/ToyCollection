@@ -36,9 +36,11 @@ import com.gepetto.toydb.database.ToyRepository
 import com.gepetto.toydb.utils.resolveImageUri
 import com.gepetto.toydb.utils.scrollHorizontallyWithMouseWheel
 import org.jetbrains.compose.resources.stringResource
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
+import club.gepetto.composeutils.GcTheme
 import toydb.composeapp.generated.resources.*
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExplorerScreen(
     repository: ToyRepository,
@@ -50,10 +52,6 @@ fun ExplorerScreen(
     var selectedScale by rememberSaveable(category) { mutableStateOf("") }
     val selectedCondition = ""
     var selectedMaker by rememberSaveable(category) { mutableStateOf("") }
-
-    val makersScrollState = rememberLazyListState()
-    val scalesScrollState = rememberLazyListState()
-    val coroutineScope = rememberCoroutineScope()
 
     val distinctScales = remember { repository.getDistinctScales(category) }
     val distinctMakers = remember { repository.getDistinctMakers(category) }
@@ -76,6 +74,46 @@ fun ExplorerScreen(
     val categoryLabel = remember(categorySetting) {
         categorySetting?.label ?: category.replaceFirstChar { it.uppercase() }
     }
+
+    ExplorerContent(
+        category = category,
+        categoryLabel = categoryLabel,
+        prefix = prefix,
+        distinctScales = distinctScales,
+        distinctMakers = distinctMakers,
+        toysList = toysList,
+        searchQuery = searchQuery,
+        onSearchQueryChange = { searchQuery = it },
+        selectedScale = selectedScale,
+        onScaleChange = { selectedScale = it },
+        selectedMaker = selectedMaker,
+        onMakerChange = { selectedMaker = it },
+        onNavigate = onNavigate,
+        modifier = modifier
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ExplorerContent(
+    category: String,
+    categoryLabel: String,
+    prefix: String,
+    distinctScales: List<String>,
+    distinctMakers: List<String>,
+    toysList: List<Toy>,
+    searchQuery: String,
+    onSearchQueryChange: (String) -> Unit,
+    selectedScale: String,
+    onScaleChange: (String) -> Unit,
+    selectedMaker: String,
+    onMakerChange: (String) -> Unit,
+    onNavigate: (Destination) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val makersScrollState = rememberLazyListState()
+    val scalesScrollState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
 
     Scaffold(
         containerColor = Color.Transparent,
@@ -105,13 +143,13 @@ fun ExplorerScreen(
             // Search Bar
             OutlinedTextField(
                 value = searchQuery,
-                onValueChange = { searchQuery = it },
+                onValueChange = onSearchQueryChange,
                 modifier = Modifier.fillMaxWidth().padding(vertical = GcSpacing.Small),
                 placeholder = { Text(stringResource(Res.string.search_placeholder_toy)) },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(Res.string.search)) },
                 trailingIcon = {
                     if (searchQuery.isNotEmpty()) {
-                        IconButton(onClick = { searchQuery = "" }) {
+                        IconButton(onClick = { onSearchQueryChange("") }) {
                             Icon(Icons.Default.Clear, contentDescription = stringResource(Res.string.clear))
                         }
                     }
@@ -136,12 +174,12 @@ fun ExplorerScreen(
                 ) {
                     item {
                         GcFilterButton(label = stringResource(Res.string.all_makers), selection = if (selectedMaker.isEmpty()) stringResource(Res.string.all_makers) else "") {
-                            selectedMaker = ""
+                            onMakerChange("")
                         }
                     }
                     lazyItems(distinctMakers) { maker ->
                         GcFilterButton(label = maker, selection = selectedMaker) {
-                            selectedMaker = if (selectedMaker == maker) "" else maker
+                            onMakerChange(if (selectedMaker == maker) "" else maker)
                         }
                     }
                 }
@@ -160,12 +198,12 @@ fun ExplorerScreen(
                     ) {
                         item {
                              GcFilterButton(label = stringResource(Res.string.all_scales), selection = if (selectedScale.isEmpty()) stringResource(Res.string.all_scales) else "") {
-                                selectedScale = ""
+                                onScaleChange("")
                             }
                         }
                         lazyItems(distinctScales) { scale ->
                             GcFilterButton(label = scale, selection = selectedScale) {
-                                selectedScale = if (selectedScale == scale) "" else scale
+                                onScaleChange(if (selectedScale == scale) "" else scale)
                             }
                         }
                     }
@@ -283,5 +321,32 @@ fun ToyItemCard(
                 }
             }
         }
+    }
+}
+
+@PreviewLightDark
+@Preview(name = "Landscape", widthDp = 800, heightDp = 480)
+@Composable
+fun ExplorerContentPreview() {
+    GcTheme {
+        val mockToys = listOf(
+            Toy(refNum = 1, toyType = "slots", description = "Porsche 917", scale = "1:32", makerCombo = "Scalextric"),
+            Toy(refNum = 2, toyType = "slots", description = "Ferrari 512", scale = "1:32", makerCombo = "Fly", traded = "Traded")
+        )
+        ExplorerContent(
+            category = "slots",
+            categoryLabel = "Slot Cars",
+            prefix = "slots_",
+            distinctScales = listOf("1:32", "1:24"),
+            distinctMakers = listOf("Scalextric", "Fly", "Carrera"),
+            toysList = mockToys,
+            searchQuery = "",
+            onSearchQueryChange = {},
+            selectedScale = "1:32",
+            onScaleChange = {},
+            selectedMaker = "Scalextric",
+            onMakerChange = {},
+            onNavigate = {}
+        )
     }
 }

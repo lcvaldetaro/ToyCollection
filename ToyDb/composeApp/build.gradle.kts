@@ -88,6 +88,8 @@ kotlin {
             implementation(compose.materialIconsExtended)
             implementation(compose.ui)
             implementation(compose.components.resources)
+            implementation(compose.components.uiToolingPreview)
+            implementation(libs.androidx.ui.tooling.preview)
 
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.coil3.coil.compose)
@@ -121,6 +123,8 @@ kotlin {
             implementation(libs.kotlinx.coroutines.android)
             implementation(libs.sshj)
             implementation("org.bouncycastle:bcprov-jdk18on:1.78.1")
+            implementation(libs.androidx.ui.tooling)
+            implementation(libs.androidx.ui.tooling.preview)
         }
     }
 }

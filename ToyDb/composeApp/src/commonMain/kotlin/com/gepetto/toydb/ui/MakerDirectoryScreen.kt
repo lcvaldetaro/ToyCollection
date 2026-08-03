@@ -31,9 +31,11 @@ import club.gepetto.composeutils.sysTextColor
 import com.gepetto.toydb.database.Maker
 import com.gepetto.toydb.database.ToyRepository
 import org.jetbrains.compose.resources.stringResource
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
+import club.gepetto.composeutils.GcTheme
 import toydb.composeapp.generated.resources.*
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MakerDirectoryScreen(
     repository: ToyRepository,
@@ -41,14 +43,35 @@ fun MakerDirectoryScreen(
     modifier: Modifier = Modifier
 ) {
     var searchQuery by rememberSaveable { mutableStateOf("") }
-    // Fetch manufacturers dynamically to reflect additions/deletions immediately
     val makersList = repository.getMakers()
 
-    val filteredMakers = makersList.filter {
-        it.name.contains(searchQuery, ignoreCase = true) ||
-                it.country.contains(searchQuery, ignoreCase = true)
+    val filteredMakers = remember(makersList, searchQuery) {
+        makersList.filter {
+            it.name.contains(searchQuery, ignoreCase = true) ||
+                    it.country.contains(searchQuery, ignoreCase = true)
+        }.map { maker ->
+            maker to repository.getToysByMaker(maker.name).size
+        }
     }
 
+    MakerDirectoryContent(
+        filteredMakers = filteredMakers,
+        searchQuery = searchQuery,
+        onSearchQueryChange = { searchQuery = it },
+        onNavigate = onNavigate,
+        modifier = modifier
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MakerDirectoryContent(
+    filteredMakers: List<Pair<Maker, Int>>,
+    searchQuery: String,
+    onSearchQueryChange: (String) -> Unit,
+    onNavigate: (Destination) -> Unit,
+    modifier: Modifier = Modifier
+) {
     Scaffold(
         containerColor = Color.Transparent,
         floatingActionButton = {
@@ -77,13 +100,13 @@ fun MakerDirectoryScreen(
             // Search Bar
             OutlinedTextField(
                 value = searchQuery,
-                onValueChange = { searchQuery = it },
+                onValueChange = onSearchQueryChange,
                 modifier = Modifier.fillMaxWidth().padding(bottom = GcSpacing.Standard),
                 placeholder = { Text(stringResource(Res.string.search_placeholder_maker)) },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(Res.string.search)) },
                 trailingIcon = {
                     if (searchQuery.isNotEmpty()) {
-                        IconButton(onClick = { searchQuery = "" }) {
+                        IconButton(onClick = { onSearchQueryChange("") }) {
                             Icon(Icons.Default.Clear, contentDescription = stringResource(Res.string.clear))
                         }
                     }
@@ -114,8 +137,7 @@ fun MakerDirectoryScreen(
                             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)
                         ) {
                             items(filteredMakers.size) { index ->
-                                val maker = filteredMakers[index]
-                                val toyCount = remember(maker.name) { repository.getToysByMaker(maker.name).size }
+                                val (maker, toyCount) = filteredMakers[index]
                                 val localModifier =
                                     if (columnHeight > 0) Modifier.height(columnHeightDp) else Modifier
 
@@ -138,6 +160,26 @@ fun MakerDirectoryScreen(
                 }
             }
         }
+    }
+}
+
+@PreviewLightDark
+@Preview(name = "Landscape", widthDp = 800, heightDp = 480)
+@Composable
+fun MakerDirectoryContentPreview() {
+    GcTheme {
+        val mockMakers = listOf(
+            Maker(name = "Scalextric", country = "UK"),
+            Maker(name = "Slot.it", country = "Italy"),
+            Maker(name = "Fly", country = "Spain")
+        )
+        val mockData = mockMakers.mapIndexed { index, maker -> maker to (index * 2 + 1) }
+        MakerDirectoryContent(
+            filteredMakers = mockData,
+            searchQuery = "",
+            onSearchQueryChange = {},
+            onNavigate = {}
+        )
     }
 }
 

@@ -30,6 +30,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.lazy.rememberLazyListState
 import club.gepetto.composeutils.image.GcImage
 import com.gepetto.toydb.database.Toy
+import com.gepetto.toydb.database.ToyImage
 import com.gepetto.toydb.database.ToyRepository
 import com.gepetto.toydb.utils.resolveBitmapUri
 import com.gepetto.toydb.utils.resolveImageUri
@@ -40,9 +41,11 @@ import okio.FileSystem
 import okio.Path.Companion.toPath
 import club.gepetto.GcLog
 import org.jetbrains.compose.resources.stringResource
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
+import club.gepetto.composeutils.GcTheme
 import toydb.composeapp.generated.resources.*
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ToyDetailScreen(
     repository: ToyRepository,
@@ -72,10 +75,6 @@ fun ToyDetailScreen(
         list.toTypedArray()
     }
     
-    var showDeleteConfirmation by remember { mutableStateOf(false) }
-    val bitmapsScrollState = rememberLazyListState()
-    val coroutineScope = rememberCoroutineScope()
-
     val imagePicker = rememberImagePicker { selectedPath ->
         val currentToy = toyState ?: return@rememberImagePicker
         val srcPath = selectedPath.toPath()
@@ -128,20 +127,51 @@ fun ToyDetailScreen(
         return
     }
 
+    val secondaryImages = remember(toy) { toy.getSecondaryImages() }
+
+    ToyDetailContent(
+        toy = toy,
+        prefix = prefix,
+        allImagePaths = allImagePaths,
+        secondaryImages = secondaryImages,
+        onAddSecondaryImage = { imagePicker() },
+        onDeleteConfirm = {
+            repository.deleteToy(toyType, refNum)
+            onBack()
+        },
+        onEditClick = { onNavigate(Destination.EditToy(toyType, refNum)) },
+        onBack = onBack,
+        modifier = modifier
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ToyDetailContent(
+    toy: Toy,
+    prefix: String,
+    allImagePaths: Array<String>,
+    secondaryImages: List<ToyImage>,
+    onAddSecondaryImage: () -> Unit,
+    onDeleteConfirm: () -> Unit,
+    onEditClick: () -> Unit,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
+    val bitmapsScrollState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
+
     if (showDeleteConfirmation) {
         GcGenericDialog(
             title = stringResource(Res.string.delete_toy_title),
             message = stringResource(Res.string.delete_toy_confirm, toy.refNum),
             buttonText = stringResource(Res.string.delete),
             onClick = {
-                repository.deleteToy(toyType, refNum)
                 showDeleteConfirmation = false
-                onBack()
+                onDeleteConfirm()
             }
         )
-        // Note: The gepetto-utils GcGenericDialog does not have a dismiss/cancel button natively in some versions.
-        // But we can let clicking on it trigger confirmation, or we can use a standard AlertDialog with cancel option.
-        // Let's use a standard AlertDialog to have a clean cancel option for a premium UI experience!
     }
 
     Scaffold(
@@ -155,7 +185,7 @@ fun ToyDetailScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { onNavigate(Destination.EditToy(toyType, refNum)) }) {
+                    IconButton(onClick = onEditClick) {
                         Icon(Icons.Default.Edit, contentDescription = stringResource(Res.string.edit))
                     }
                     IconButton(onClick = { showDeleteConfirmation = true }) {
@@ -249,8 +279,6 @@ fun ToyDetailScreen(
             DetailField(stringResource(Res.string.comments), toy.comments)
 
             // Secondary Images Gallery
-            val secondaryImages = remember(toy) { toy.getSecondaryImages() }
-            
             Row(
                 modifier = Modifier.fillMaxWidth().padding(vertical = GcSpacing.Small),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -263,7 +291,7 @@ fun ToyDetailScreen(
                     color = sysTextColor()
                 )
                 IconButton(
-                    onClick = { imagePicker() }
+                    onClick = onAddSecondaryImage
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
@@ -340,5 +368,40 @@ fun DetailField(label: String, value: String) {
         Text(label, fontSize = 12.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
         Text(value, fontSize = 15.sp, color = sysTextColor())
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(top = 4.dp))
+    }
+}
+
+@PreviewLightDark
+@Preview(name = "Landscape", widthDp = 800, heightDp = 480)
+@Composable
+fun ToyDetailContentPreview() {
+    GcTheme {
+        val mockToy = Toy(
+            refNum = 42,
+            toyType = "slots",
+            description = "Slot.it Porsche 956 LH",
+            scale = "1:32",
+            condition = "Mint",
+            value = 65.0,
+            makerCombo = "Slot.it",
+            bodyMaker = "Slot.it",
+            chassisMaker = "Slot.it",
+            chassisType = "Inline",
+            motorMaker = "V12/3",
+            motorDetails = "21500 rpm",
+            color = "Blue/White",
+            catalogNumber = "CA02a",
+            comments = "Rothmans livery, very detailed replica."
+        )
+        ToyDetailContent(
+            toy = mockToy,
+            prefix = "slots_",
+            allImagePaths = emptyArray(),
+            secondaryImages = emptyList(),
+            onAddSecondaryImage = {},
+            onDeleteConfirm = {},
+            onEditClick = {},
+            onBack = {}
+        )
     }
 }

@@ -25,6 +25,9 @@ import club.gepetto.GcLog
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.getString
 import toydb.composeapp.generated.resources.*
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
+import club.gepetto.composeutils.GcTheme
 import club.gepetto.composeutils.GcSpacing
 import club.gepetto.composeutils.sysBackgroundColor
 import club.gepetto.composeutils.sysTextColor
@@ -2019,3 +2022,56 @@ fun AppTitleSettings(
         }
     }
 }
+
+@PreviewLightDark
+@Preview(name = "Landscape", widthDp = 800, heightDp = 480)
+@Composable
+fun AppTitleSettingsPreview() {
+    GcTheme {
+        AppTitleSettings(
+            title = "My Awesome Toy Collection",
+            onTitleChange = {}
+        )
+    }
+}
+
+@PreviewLightDark
+@Preview(name = "Landscape", widthDp = 800, heightDp = 480)
+@Composable
+fun SftpSettingsCardPreview() {
+    GcTheme {
+        SftpSettingsCard(
+            host = "sftp.example.com", onHostChange = {},
+            port = "22", onPortChange = {},
+            username = "toy_user", onUsernameChange = {},
+            authType = "password", onAuthTypeChange = {},
+            password = "supersecretpassword", onPasswordChange = {},
+            keyPath = "/path/to/id_rsa", onKeyPathChange = {},
+            keyPassphrase = "passphrase", onKeyPassphraseChange = {},
+            remoteDir = "/home/toy_user/backup", onRemoteDirChange = {},
+            onSave = {},
+            onTestConnection = {},
+            isTesting = false
+        )
+    }
+}
+
+@PreviewLightDark
+@Preview(name = "Landscape", widthDp = 800, heightDp = 480)
+@Composable
+fun CategoriesManagerPreview() {
+    GcTheme {
+        val mockCategories = listOf(
+            CategorySetting("slots", "slots_", "Slot Cars"),
+            CategorySetting("trains", "trains_", "Trains"),
+            CategorySetting("static", "static_", "Static Models")
+        )
+        CategoriesManager(
+            categoriesList = mockCategories,
+            onAddCategory = {},
+            onEditCategory = {},
+            onDeleteCategory = {}
+        )
+    }
+}
+
