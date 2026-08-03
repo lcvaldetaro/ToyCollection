@@ -23,3 +23,8 @@ Thumbs.db
 
 # Log files
 *.log
+
+# Temporary databases
+toydb_temp.db
+toy_db_temp.db
+
