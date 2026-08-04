@@ -261,4 +261,11 @@ Tutti i diritti riservati.</string>
     <string name="overwrite">Sovrascrivi</string>
     <string name="current_image_label">Corrente</string>
     <string name="new_image_label">Nuova</string>
+    <string name="edit_image_filenames_title">Modifica nomi dei file immagine</string>
+    <string name="filename_label">Nome del file</string>
+    <string name="file_size_label">Dimensione</string>
+    <string name="file_date_label">Modificato</string>
+    <string name="file_status_missing">File non trovato</string>
+    <string name="save_changes_btn">Salva</string>
+    <string name="invalid_filename_error">Nome file non valido (senza spazi o \\/:*?\"&lt;&gt;|)</string>
 </resources>

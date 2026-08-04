@@ -45,6 +45,7 @@ fun EditMakerScreen(
         }
     ) { innerPadding ->
         MakerForm(
+            repository = repository,
             initialMaker = maker,
             isEditMode = true,
             onSave = { updatedMaker ->

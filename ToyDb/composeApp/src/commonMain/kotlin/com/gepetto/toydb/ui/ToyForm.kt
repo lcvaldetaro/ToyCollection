@@ -24,6 +24,8 @@ import com.gepetto.toydb.database.ToyRepository
 import com.gepetto.toydb.utils.rememberImagePicker
 import okio.FileSystem
 import okio.Path.Companion.toPath
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 
 @Composable
 fun ToyForm(
@@ -83,6 +85,7 @@ fun ToyForm(
     var bitmaps by remember { mutableStateOf(initialToy.bitmaps) }
     var bitmapsSize by remember { mutableStateOf(initialToy.bitmapsSize) }
     var bitmapsTimeStamp by remember { mutableStateOf(initialToy.bitmapsTimeStamp) }
+    var showRenameDialog by remember { mutableStateOf(false) }
 
     val categorySettings = remember { repository.getCategorySettings() }
     val prefix = remember(initialToy.toyType, categorySettings) {
@@ -232,7 +235,43 @@ fun ToyForm(
                         Text(stringResource(Res.string.form_field_has_picture), color = sysTextColor())
                     }
                     
-                    FormField(label = stringResource(Res.string.form_field_secondary_bitmaps), value = bitmaps, onValueChange = { bitmaps = it })
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(modifier = Modifier.weight(1f)) {
+                            FormField(label = stringResource(Res.string.form_field_secondary_bitmaps), value = bitmaps, onValueChange = { bitmaps = it })
+                        }
+                        Spacer(modifier = Modifier.width(GcSpacing.Small))
+                        IconButton(onClick = { showRenameDialog = true }) {
+                            Icon(Icons.Default.Edit, contentDescription = "Edit Filenames")
+                        }
+                    }
+
+                    if (showRenameDialog) {
+                        ImageRenameDialog(
+                            bitmapsStr = bitmaps,
+                            bitmapsSizeStr = bitmapsSize,
+                            bitmapsTimeStampStr = bitmapsTimeStamp,
+                            repository = repository,
+                            onDismiss = { showRenameDialog = false },
+                            onSave = { newBitmaps, newSizes, newTimestamps ->
+                                bitmaps = newBitmaps
+                                bitmapsSize = newSizes
+                                bitmapsTimeStamp = newTimestamps
+                                
+                                if (initialToy.refNum > 0) {
+                                    val updatedToy = initialToy.copy(
+                                        bitmaps = newBitmaps,
+                                        bitmapsSize = newSizes,
+                                        bitmapsTimeStamp = newTimestamps
+                                    )
+                                    repository.saveToy(updatedToy)
+                                }
+                                showRenameDialog = false
+                            }
+                        )
+                    }
                 }
             }
         }

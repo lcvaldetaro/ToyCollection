@@ -131,3 +131,10 @@ actual fun rememberImagePicker(onImagePicked: (String) -> Unit): () -> Unit {
         }
     }
 }
+
+actual fun formatTimestamp(timestamp: Long): String {
+    val date = java.util.Date(timestamp)
+    val formatter = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
+    return formatter.format(date)
+}
+

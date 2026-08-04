@@ -13,11 +13,15 @@ import androidx.compose.ui.unit.sp
 import club.gepetto.composeutils.GcSpacing
 import club.gepetto.composeutils.sysTextColor
 import com.gepetto.toydb.database.Maker
+import com.gepetto.toydb.database.ToyRepository
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import org.jetbrains.compose.resources.stringResource
 import toydb.composeapp.generated.resources.*
 
 @Composable
 fun MakerForm(
+    repository: ToyRepository,
     initialMaker: Maker,
     isEditMode: Boolean,
     onSave: (Maker) -> Unit,
@@ -27,7 +31,10 @@ fun MakerForm(
     var name by remember { mutableStateOf(initialMaker.name) }
     var country by remember { mutableStateOf(initialMaker.country) }
     var bitmaps by remember { mutableStateOf(initialMaker.bitmaps) }
+    var bitmapsSize by remember { mutableStateOf(initialMaker.bitmapsSize) }
+    var bitmapsTimeStamp by remember { mutableStateOf(initialMaker.bitmapsTimeStamp) }
     var comments by remember { mutableStateOf(initialMaker.comments) }
+    var showRenameDialog by remember { mutableStateOf(false) }
 
     Column(
         modifier = modifier
@@ -62,14 +69,53 @@ fun MakerForm(
             singleLine = true
         )
 
-        OutlinedTextField(
-            value = bitmaps,
-            onValueChange = { bitmaps = it },
-            label = { Text(stringResource(Res.string.manufacturer_bitmaps)) },
-            placeholder = { Text(stringResource(Res.string.manufacturer_bitmaps_placeholder)) },
+        Row(
             modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-            singleLine = true
-        )
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(modifier = Modifier.weight(1f)) {
+                OutlinedTextField(
+                    value = bitmaps,
+                    onValueChange = { bitmaps = it },
+                    label = { Text(stringResource(Res.string.manufacturer_bitmaps)) },
+                    placeholder = { Text(stringResource(Res.string.manufacturer_bitmaps_placeholder)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+            }
+            Spacer(modifier = Modifier.width(GcSpacing.Small))
+            IconButton(onClick = { showRenameDialog = true }) {
+                Icon(Icons.Default.Edit, contentDescription = "Edit Filenames")
+            }
+        }
+
+        if (showRenameDialog) {
+            ImageRenameDialog(
+                bitmapsStr = bitmaps,
+                bitmapsSizeStr = bitmapsSize,
+                bitmapsTimeStampStr = bitmapsTimeStamp,
+                repository = repository,
+                onDismiss = { showRenameDialog = false },
+                onSave = { newBitmaps, newSizes, newTimestamps ->
+                    bitmaps = newBitmaps
+                    bitmapsSize = newSizes
+                    bitmapsTimeStamp = newTimestamps
+                    
+                    if (isEditMode) {
+                        val updatedMaker = initialMaker.copy(
+                            name = name.trim(),
+                            country = country.trim(),
+                            bitmaps = newBitmaps,
+                            bitmapsSize = newSizes,
+                            bitmapsTimeStamp = newTimestamps,
+                            comments = comments.trim()
+                        )
+                        repository.saveMaker(updatedMaker)
+                    }
+                    showRenameDialog = false
+                }
+            )
+        }
 
         OutlinedTextField(
             value = comments,
@@ -104,8 +150,8 @@ fun MakerForm(
                         name = name.trim(),
                         country = country.trim(),
                         bitmaps = bitmaps.trim(),
-                        bitmapsSize = initialMaker.bitmapsSize,
-                        bitmapsTimeStamp = initialMaker.bitmapsTimeStamp,
+                        bitmapsSize = bitmapsSize,
+                        bitmapsTimeStamp = bitmapsTimeStamp,
                         comments = comments.trim()
                     )
                     onSave(maker)

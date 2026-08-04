@@ -17,3 +17,4 @@ expect fun isDesktopPlatform(): Boolean
 @androidx.compose.runtime.Composable
 expect fun rememberImagePicker(onImagePicked: (String) -> Unit): () -> Unit
 
+expect fun formatTimestamp(timestamp: Long): String
