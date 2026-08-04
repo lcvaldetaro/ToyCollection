@@ -106,7 +106,7 @@
     <string name="form_field_motor_maker">Fabricante de Motor</string>
     <string name="form_field_repro_details">Detalles de Repro (y/r)</string>
     <string name="form_field_scale">Escala</string>
-    <string name="form_field_secondary_bitmaps">Imágenes secundarias (separadas por espacio)</string>
+    <string name="form_field_secondary_bitmaps">Imágenes secundarias (separadas por espacios)</string>
     <string name="form_field_to_build_info">Información para Construir</string>
     <string name="form_field_traded_info">Información de Canje</string>
     <string name="html_export_complete">¡Exportación HTML Completada!</string>
@@ -129,7 +129,7 @@
     <string name="maker_filter">Filtro de Fabricante:</string>
     <string name="makers_directory_title">Directorio de Fabricantes</string>
     <string name="manufacturer">Fabricante</string>
-    <string name="manufacturer_bitmaps">Imágenes (Nombres de archivo separados por espacio)</string>
+    <string name="manufacturer_bitmaps">Imágenes (nombres de archivo separados por espacios)</string>
     <string name="manufacturer_bitmaps_placeholder">ej. monogram.jpg monogram-logo.png</string>
     <string name="manufacturer_comments">Comentarios / Notas</string>
     <string name="manufacturer_country">País</string>
@@ -246,7 +246,7 @@ Todos los derechos reservados.</string>
     <string name="toy_details_title">Detalles del Juguete #%1$d</string>
     <string name="toy_not_found">Juguete no encontrado.</string>
     <string name="toy_scale_ref_format">%1$s (%2$s)</string>
-    <string name="traded_gone_label">* ido *</string>
+    <string name="traded_gone_label">* fuera *</string>
     <string name="unknown">Desconocido</string>
     <string name="upload">Subir</string>
     <string name="value">Valor</string>

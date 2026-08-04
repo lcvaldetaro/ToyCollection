@@ -193,11 +193,17 @@ val resolvedJavaHome: String? = run {
     if (found == null) {
         try {
             val process = ProcessBuilder("/usr/libexec/java_home").start()
-            val path = process.inputStream.bufferedReader().readText().trim()
+            val path = process.inputStream.bufferedReader().use { it.readText().trim() }
             if (path.isNotEmpty() && File(File(path), "bin/jpackage").exists()) {
                 found = path
             }
         } catch (e: Exception) {}
+    }
+    if (found == null) {
+        val brewJavaHome = "/opt/homebrew/opt/openjdk/libexec/openjdk.jdk/Contents/Home"
+        if (File(brewJavaHome, "bin/jpackage").exists()) {
+            found = brewJavaHome
+        }
     }
     found
 }

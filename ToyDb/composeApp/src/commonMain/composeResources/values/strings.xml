@@ -106,7 +106,7 @@
     <string name="form_field_motor_maker">Motor Maker</string>
     <string name="form_field_repro_details">Repro Details (y/r)</string>
     <string name="form_field_scale">Scale</string>
-    <string name="form_field_secondary_bitmaps">Secondary Bitmaps (space separated)</string>
+    <string name="form_field_secondary_bitmaps">Secondary Images (space separated)</string>
     <string name="form_field_to_build_info">To Build Info</string>
     <string name="form_field_traded_info">Traded Info</string>
     <string name="html_export_complete">HTML Export Complete!</string>
@@ -129,7 +129,7 @@
     <string name="maker_filter">Maker Filter:</string>
     <string name="makers_directory_title">Makers Directory</string>
     <string name="manufacturer">Manufacturer</string>
-    <string name="manufacturer_bitmaps">Bitmaps (Space-separated image filenames)</string>
+    <string name="manufacturer_bitmaps">Images (Space-separated image filenames)</string>
     <string name="manufacturer_bitmaps_placeholder">e.g. monogram.jpg monogram-logo.png</string>
     <string name="manufacturer_comments">Comments / Notes</string>
     <string name="manufacturer_country">Country</string>

@@ -106,7 +106,7 @@
     <string name="form_field_motor_maker">Motorhersteller</string>
     <string name="form_field_repro_details">Repro-Details (y/r)</string>
     <string name="form_field_scale">Maßstab</string>
-    <string name="form_field_secondary_bitmaps">Sekundärbilder (Leerschritt getrennt)</string>
+    <string name="form_field_secondary_bitmaps">Sekundäre Bilder (durch Leerzeichen getrennt)</string>
     <string name="form_field_to_build_info">Bauanleitungsinfos</string>
     <string name="form_field_traded_info">Tauschinhalte</string>
     <string name="html_export_complete">HTML-Export abgeschlossen!</string>
@@ -129,7 +129,7 @@
     <string name="maker_filter">Hersteller-Filter:</string>
     <string name="makers_directory_title">Herstellerverzeichnis</string>
     <string name="manufacturer">Hersteller</string>
-    <string name="manufacturer_bitmaps">Bitmaps (Leerschritt-getrennte Bilddateinamen)</string>
+    <string name="manufacturer_bitmaps">Bilder (durch Leerzeichen getrennte Dateinamen)</string>
     <string name="manufacturer_bitmaps_placeholder">z.B. monogram.jpg monogram-logo.png</string>
     <string name="manufacturer_comments">Kommentare / Notizen</string>
     <string name="manufacturer_country">Land</string>

@@ -241,7 +241,7 @@ fun MakerDetailContent(
     }
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
-        val columnsCount = (maxWidth / 160.dp).toInt().coerceIn(2, 5)
+        val columnsCount = (maxWidth / 160.dp).toInt().coerceIn(2, 4)
         val rows = remember(filteredToys, columnsCount) { filteredToys.chunked(columnsCount) }
 
         Scaffold(
@@ -270,9 +270,9 @@ fun MakerDetailContent(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
-                    .padding(horizontal = GcSpacing.Standard),
-                horizontalArrangement = Arrangement.spacedBy(GcSpacing.Standard),
-                verticalArrangement = Arrangement.spacedBy(GcSpacing.Standard)
+                    .padding(horizontal = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             item(span = { GridItemSpan(maxLineSpan) }) {
                 Spacer(modifier = Modifier.height(GcSpacing.Small))
@@ -424,7 +424,7 @@ fun MakerDetailContent(
                 items(rows, span = { GridItemSpan(maxLineSpan) }) { rowToys ->
                     Row(
                         modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
-                        horizontalArrangement = Arrangement.spacedBy(GcSpacing.Standard)
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         for (i in 0 until columnsCount) {
                             val toy = rowToys.getOrNull(i)

@@ -135,7 +135,7 @@ fun ExplorerContent(
             modifier = modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = GcSpacing.Standard)
+                .padding(horizontal = 4.dp)
         ) {
             Text(
                 text = stringResource(Res.string.explorer_title, categoryLabel),
@@ -224,19 +224,19 @@ fun ExplorerContent(
                 }
             } else {
                 BoxWithConstraints(modifier = Modifier.weight(1f)) {
-                    val columnsCount = (maxWidth / 160.dp).toInt().coerceIn(2, 5)
+                    val columnsCount = (maxWidth / 160.dp).toInt().coerceIn(2, 4)
                     val rows = remember(toysList, columnsCount) { toysList.chunked(columnsCount) }
                     val listState = rememberLazyListState()
                     Row(modifier = Modifier.fillMaxSize()) {
                         LazyColumn(
                             state = listState,
                             modifier = Modifier.weight(1f).padding(end = 4.dp),
-                            verticalArrangement = Arrangement.spacedBy(GcSpacing.Standard)
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             items(rows) { rowToys ->
                                 Row(
                                     modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
-                                    horizontalArrangement = Arrangement.spacedBy(GcSpacing.Standard)
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
                                     for (i in 0 until columnsCount) {
                                         val toy = rowToys.getOrNull(i)
@@ -288,7 +288,7 @@ fun ToyItemCard(
             modifier = Modifier
                 .clickable { onClick() }
                 .fillMaxWidth()
-                .padding(8.dp)
+                .padding(4.dp)
         ) {
             if (imgUri == null) {
                 val textBitmap = remember(toy.refNum, textColor) {
@@ -319,7 +319,7 @@ fun ToyItemCard(
 
             Column(
                 modifier = Modifier
-                    .padding(8.dp)
+                    .padding(start = 4.dp)
                     .fillMaxWidth()
                     .align(Alignment.CenterVertically)
             ) {
