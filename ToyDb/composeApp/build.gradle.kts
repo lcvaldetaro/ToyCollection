@@ -20,6 +20,8 @@ val desktopPackageVersion = "${desktopMajor}.${desktopMinor}.${desktopBuildNum}"
 val generateCommonConfig = tasks.register("generateCommonConfig") {
     val vName = libs.versions.versionName.get()
     val vCode = libs.versions.versionCode.get().toLong()
+    val isWindows = System.getProperty("os.name").lowercase().contains("win")
+    val desktopCode = if (isWindows) vCode * 10 + 5 else vCode * 10 + 4
     val outputDir = layout.buildDirectory.dir("generated/commonConfig/kotlin").get().asFile
     val outputFile = File(outputDir, "com/gepetto/toydb/CommonConfig.kt")
     
@@ -34,7 +36,7 @@ val generateCommonConfig = tasks.register("generateCommonConfig") {
 
             object CommonConfig {
                 const val versionName = "$vName"
-                const val versionCode = ${vCode}L
+                const val desktopVersionCode = ${desktopCode}L
                 const val versionCodeString = "$vCode"
             }
         """.trimIndent())
