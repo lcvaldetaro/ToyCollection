@@ -36,6 +36,7 @@ val generateCommonConfig = tasks.register("generateCommonConfig") {
 
             object CommonConfig {
                 const val versionName = "$vName"
+                const val versionCode = ${vCode}L
                 const val desktopVersionCode = ${desktopCode}L
                 const val versionCodeString = "$vCode"
             }
@@ -242,6 +243,10 @@ compose.desktop {
     application {
         mainClass = "MainKt"
         javaHome = resolvedJavaHome ?: System.getProperty("java.home")
+
+        buildTypes.release.proguard {
+            configurationFiles.from(project.file("compose-proguard-rules.pro"))
+        }
 
         nativeDistributions {
             targetFormats(
