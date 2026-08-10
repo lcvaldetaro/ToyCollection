@@ -12,6 +12,10 @@ base {
     archivesName.set("GepettoToyDatabaseManager-v$vName-($vCode)")
 }
 
+val macArch = (project.findProperty("macArch") as String? ?: System.getProperty("os.arch")).lowercase()
+val isArm64 = macArch.contains("aarch64") || macArch.contains("arm64") || macArch == "m1" || macArch == "arm"
+val suffix = if (isArm64) "m1" else "intel"
+
 val desktopMajor = libs.versions.versionName.get().split(".").getOrElse(0) { "1" }
 val desktopMinor = libs.versions.versionName.get().split(".").getOrElse(1) { "0" }
 val desktopBuildNum = libs.versions.versionCode.get()
@@ -111,7 +115,17 @@ kotlin {
 
         val desktopMain = sourceSets.getByName("desktopMain")
         desktopMain.dependencies {
-            implementation(compose.desktop.currentOs)
+            val macArchProp = project.findProperty("macArch") as String?
+            if (macArchProp != null) {
+                val arch = macArchProp.lowercase()
+                if (arch.contains("aarch64") || arch.contains("arm64") || arch == "m1" || arch == "arm") {
+                    implementation(compose.desktop.macos_arm64)
+                } else {
+                    implementation(compose.desktop.macos_x64)
+                }
+            } else {
+                implementation(compose.desktop.currentOs)
+            }
             implementation(libs.kotlinx.coroutines.swing)
             // SQLite JDBC driver for desktop SQLite support
             implementation("org.xerial:sqlite-jdbc:3.45.1.0")
@@ -319,15 +333,17 @@ tasks.matching { it.name == "packageDmg" }.configureEach {
         }
         val dmgDir = File(layout.buildDirectory.get().asFile, "compose/binaries/main/dmg")
         val generatedFile = File(dmgDir, "Gepetto Toy Database Manager-${desktopPackageVersion}.dmg")
-        val targetFile = File(dmgDir, "toydatabasemanager.dmg")
         if (generatedFile.exists()) {
+            val outputsDmgDir = File(layout.buildDirectory.get().asFile, "outputs/dmg")
+            outputsDmgDir.mkdirs()
+            val targetFile = File(outputsDmgDir, "toydatabasemanager-$suffix.dmg")
             if (targetFile.exists()) {
                 targetFile.delete()
             }
             if (generatedFile.renameTo(targetFile)) {
-                println("Renamed DMG to ${targetFile.name}")
+                println("Moved and renamed DMG to ${targetFile.absolutePath}")
             } else {
-                println("Failed to rename DMG")
+                println("Failed to move/rename DMG")
             }
         } else {
             println("Generated DMG file not found at ${generatedFile.absolutePath}")
@@ -339,15 +355,17 @@ tasks.matching { it.name == "packageMsi" }.configureEach {
     doLast {
         val msiDir = File(layout.buildDirectory.get().asFile, "compose/binaries/main/msi")
         val generatedFile = File(msiDir, "Gepetto Toy Database Manager-${desktopPackageVersion}.msi")
-        val targetFile = File(msiDir, "toydatabasemanager.msi")
         if (generatedFile.exists()) {
+            val outputsMsiDir = File(layout.buildDirectory.get().asFile, "outputs/msi")
+            outputsMsiDir.mkdirs()
+            val targetFile = File(outputsMsiDir, "toydatabasemanager.msi")
             if (targetFile.exists()) {
                 targetFile.delete()
             }
             if (generatedFile.renameTo(targetFile)) {
-                println("Renamed MSI to ${targetFile.name}")
+                println("Moved and renamed MSI to ${targetFile.absolutePath}")
             } else {
-                println("Failed to rename MSI")
+                println("Failed to move/rename MSI")
             }
         } else {
             println("Generated MSI file not found at ${generatedFile.absolutePath}")
