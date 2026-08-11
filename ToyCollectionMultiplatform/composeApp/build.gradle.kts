@@ -370,6 +370,12 @@ tasks.withType<org.jetbrains.compose.desktop.application.tasks.AbstractJPackageT
     }
 }
 
+tasks.configureEach {
+    if (name.contains("package") || name.contains("createDistributable") || name.contains("createRuntimeImage")) {
+        inputs.property("macArch", macArch)
+    }
+}
+
 
 
 

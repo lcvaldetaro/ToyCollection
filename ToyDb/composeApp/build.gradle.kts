@@ -379,3 +379,9 @@ tasks.withType<org.jetbrains.compose.desktop.application.tasks.AbstractJPackageT
         freeArgs.add(project.file("wix").absolutePath)
     }
 }
+
+tasks.configureEach {
+    if (name.contains("package") || name.contains("createDistributable") || name.contains("createRuntimeImage")) {
+        inputs.property("macArch", macArch)
+    }
+}
