@@ -2,8 +2,18 @@
 # Find the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+is_intel_jdk() {
+    local home_path="$1"
+    if [ -f "$home_path/bin/java" ]; then
+        if file "$home_path/bin/java" | grep -q "x86_64"; then
+            return 0
+        fi
+    fi
+    return 1
+}
+
 is_valid_jdk() {
-    [ -n "$1" ] && [ -d "$1" ] && [ -f "$1/bin/jpackage" ]
+    [ -n "$1" ] && [ -d "$1" ] && [ -f "$1/bin/jpackage" ] && is_intel_jdk "$1"
 }
 
 FOUND_JAVA_HOME=""
@@ -17,6 +27,19 @@ for version in 21 17; do
             break
         fi
     fi
+
+    # Check Gradle provisioned JDKs, SDKMAN, and standard Homebrew directories
+    for search_dir in "/Library/Java/JavaVirtualMachines" "$HOME/Library/Java/JavaVirtualMachines" "$HOME/.gradle/jdks" "$HOME/.sdkman/candidates/java" "/usr/local/opt"; do
+        if [ -d "$search_dir" ]; then
+            MATCHING_DIRS=$(find "$search_dir" -type d \( -path "*-$version-*/*/Contents/Home" -o -path "*-$version-*/*/Home" -o -path "*$version*/*/Contents/Home" -o -path "*$version*/*/Home" -o -path "*openjdk@$version*/*/Contents/Home" \) 2>/dev/null)
+            for d in $MATCHING_DIRS; do
+                if is_valid_jdk "$d"; then
+                    FOUND_JAVA_HOME="$d"
+                    break 2
+                fi
+            done
+        fi
+    done
 done
 
 # Fallback to any Intel JDK with jpackage if no Java 21/17 was specifically matched
@@ -27,6 +50,20 @@ if [ -z "$FOUND_JAVA_HOME" ]; then
             FOUND_JAVA_HOME="$DETECTED_JAVA_HOME"
         fi
     fi
+fi
+
+if [ -z "$FOUND_JAVA_HOME" ]; then
+    for search_dir in "/Library/Java/JavaVirtualMachines" "$HOME/Library/Java/JavaVirtualMachines" "$HOME/.gradle/jdks" "$HOME/.sdkman/candidates/java" "/usr/local/opt"; do
+        if [ -d "$search_dir" ]; then
+            MATCHING_DIRS=$(find "$search_dir" -type d \( -path "*/Contents/Home" -o "*/Home" \) 2>/dev/null)
+            for d in $MATCHING_DIRS; do
+                if is_valid_jdk "$d"; then
+                    FOUND_JAVA_HOME="$d"
+                    break 2
+                fi
+            done
+        fi
+    done
 fi
 
 if [ -n "$FOUND_JAVA_HOME" ]; then
