@@ -12,9 +12,19 @@ base {
     archivesName.set("GepettoToyDatabaseManager-v$vName-($vCode)")
 }
 
-val macArch = (project.findProperty("macArch") as String? ?: System.getProperty("os.arch")).lowercase()
+val macArch = (project.findProperty("macArch") as String?)?.lowercase() ?: run {
+    val isAppleSilicon = try {
+        val process = ProcessBuilder("sysctl", "-n", "hw.optional.arm64").start()
+        val output = process.inputStream.bufferedReader().readText().trim()
+        output == "1"
+    } catch (e: Exception) {
+        System.getProperty("os.arch").lowercase().contains("aarch64") || System.getProperty("os.arch").lowercase().contains("arm64")
+    }
+    if (isAppleSilicon) "m1" else "intel"
+}
 val isArm64 = macArch.contains("aarch64") || macArch.contains("arm64") || macArch == "m1" || macArch == "arm"
 val suffix = if (isArm64) "m1" else "intel"
+
 
 val desktopMajor = libs.versions.versionName.get().split(".").getOrElse(0) { "1" }
 val desktopMinor = libs.versions.versionName.get().split(".").getOrElse(1) { "0" }
@@ -115,10 +125,9 @@ kotlin {
 
         val desktopMain = sourceSets.getByName("desktopMain")
         desktopMain.dependencies {
-            val macArchProp = project.findProperty("macArch") as String?
-            if (macArchProp != null) {
-                val arch = macArchProp.lowercase()
-                if (arch.contains("aarch64") || arch.contains("arm64") || arch == "m1" || arch == "arm") {
+            val osName = System.getProperty("os.name").lowercase()
+            if (osName.contains("mac")) {
+                if (suffix == "m1") {
                     implementation(compose.desktop.macos_arm64)
                 } else {
                     implementation(compose.desktop.macos_x64)

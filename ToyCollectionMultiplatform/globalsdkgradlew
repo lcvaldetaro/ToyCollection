@@ -55,6 +55,18 @@ fi
 # 2. Search for a suitable JDK with jpackage (Java 21 or 17)
 if [ -z "$FOUND_JAVA_HOME" ]; then
     for version in 21 17; do
+        # First check Gradle provisioned JDKs to find and prioritize JetBrains SDK if available
+        search_dir="$HOME/.gradle/jdks"
+        if [ -d "$search_dir" ]; then
+            MATCHING_DIRS=$(find "$search_dir" -type d \( -path "*-$version-*/*/Contents/Home" -o -path "*-$version-*/*/Home" -o -path "*$version*/*/Contents/Home" -o -path "*$version*/*/Home" -o -path "*openjdk@$version*/*/Contents/Home" \) 2>/dev/null)
+            for d in $MATCHING_DIRS; do
+                if is_valid_jdk "$d"; then
+                    FOUND_JAVA_HOME="$d"
+                    break 2
+                fi
+            done
+        fi
+
         if [ -x /usr/libexec/java_home ]; then
             DETECTED_JAVA_HOME=$(/usr/libexec/java_home -a "$ARCH_FLAG" --failfast -v "$version" 2>/dev/null)
             if is_valid_jdk "$DETECTED_JAVA_HOME"; then
@@ -63,8 +75,8 @@ if [ -z "$FOUND_JAVA_HOME" ]; then
             fi
         fi
 
-        # Check Gradle provisioned JDKs, SDKMAN, and standard Homebrew directories
-        for search_dir in "/Library/Java/JavaVirtualMachines" "$HOME/Library/Java/JavaVirtualMachines" "$HOME/.gradle/jdks" "$HOME/.sdkman/candidates/java" "/opt/homebrew/opt" "/usr/local/opt"; do
+        # Check other search directories
+        for search_dir in "/Library/Java/JavaVirtualMachines" "$HOME/Library/Java/JavaVirtualMachines" "$HOME/.sdkman/candidates/java" "/opt/homebrew/opt" "/usr/local/opt"; do
             if [ -d "$search_dir" ]; then
                 MATCHING_DIRS=$(find "$search_dir" -type d \( -path "*-$version-*/*/Contents/Home" -o -path "*-$version-*/*/Home" -o -path "*$version*/*/Contents/Home" -o -path "*$version*/*/Home" -o -path "*openjdk@$version*/*/Contents/Home" \) 2>/dev/null)
                 for d in $MATCHING_DIRS; do
@@ -91,7 +103,7 @@ fi
 if [ -z "$FOUND_JAVA_HOME" ]; then
     for search_dir in "/Library/Java/JavaVirtualMachines" "$HOME/Library/Java/JavaVirtualMachines" "$HOME/.gradle/jdks" "$HOME/.sdkman/candidates/java" "/opt/homebrew/opt" "/usr/local/opt"; do
         if [ -d "$search_dir" ]; then
-            MATCHING_DIRS=$(find "$search_dir" -type d \( -path "*/Contents/Home" -o "*/Home" \) 2>/dev/null)
+            MATCHING_DIRS=$(find "$search_dir" -type d \( -path "*/Contents/Home" -o -path "*/Home" \) 2>/dev/null)
             for d in $MATCHING_DIRS; do
                 if is_valid_jdk "$d"; then
                     FOUND_JAVA_HOME="$d"
@@ -114,6 +126,24 @@ else
         echo "Please download and install an Intel (x86_64) JDK 17 or 21."
     fi
 fi
+
+# Auto-stop Gradle daemon if switching target architecture to prevent daemon JVM reuse/conflicts
+LAST_ARCH_FILE="$SCRIPT_DIR/.gradle/last_arch"
+if $IS_APPLE_SILICON; then
+    CURRENT_ARCH="m1"
+else
+    CURRENT_ARCH="intel"
+fi
+
+if [ -f "$LAST_ARCH_FILE" ]; then
+    LAST_ARCH=$(cat "$LAST_ARCH_FILE")
+    if [ "$LAST_ARCH" != "$CURRENT_ARCH" ]; then
+        echo "Switching build target from $LAST_ARCH to $CURRENT_ARCH. Stopping Gradle Daemons..."
+        "$SCRIPT_DIR/gradlew" --stop
+    fi
+fi
+mkdir -p "$(dirname "$LAST_ARCH_FILE")"
+echo "$CURRENT_ARCH" > "$LAST_ARCH_FILE"
 
 if $IS_APPLE_SILICON; then
     exec "$SCRIPT_DIR/gradlew" -PmacArch=arm64 "$@"
