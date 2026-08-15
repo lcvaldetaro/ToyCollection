@@ -2,8 +2,8 @@
 compileSdk = "37"
 targetSdk = "37"
 minSdk = "24"
-versionCode = "19"
-versionName = "1.0.19"
+versionCode = "20"
+versionName = "1.0.20"
 
 accompanistPager = "0.36.0"
 agp = "9.3.1"
@@ -34,13 +34,13 @@ coreKtx = "1.19.0"
 junit = "4.13.2"
 junitVersion = "1.3.0"
 espressoCore = "3.7.0"
-appcompat = "1.7.1"
-gepettoUtilsVersion = "2.0.11"
+appcompat = "1.8.0"
+gepettoUtilsVersion = "2.0.12"
 circumVersion = "2.0.1"
 gcLogVersion = "0.0.1"
 googleServices = "4.5.0"
 activityCompose = "1.13.0"
-composeBom = "2026.06.01"
+composeBom = "2026.08.00"
 lifecycleViewmodelKtx = "2.11.0"
 okhttpBom = "5.4.0"
 timber = "5.0.1"
@@ -48,18 +48,19 @@ retrofitConverter = "1.0.0"
 retrofit2 = "3.0.0"
 retrofitDeserializerVersion = "1.0.0"
 navVersion="2.9.8"
-ui = "1.11.4"
-uiToolingPreview = "1.11.4"
-uiToolingVersion = "1.11.4"
+ui = "1.12.0"
+uiToolingPreview = "1.12.0"
+uiToolingVersion = "1.12.0"
 zxingAndroidEmbedded = "4.3.0"
 zxingCore = "3.5.4"
 lifecycleRuntimeKtx = "2.11.0"
-androidxNavigation3 = "1.1.5"
+androidxNavigation3 = "1.1.6"
 jetbrainsNavigation3 = "1.1.1"
-androidxAdaptiveNavigation3 = "1.3.0-rc01"
+androidxAdaptiveNavigation3 = "1.3.0"
 androidxLifeCycleNavigation3 = "2.11.0"
 sshj = "0.40.0"
 slf4jSimple = "2.0.18"
+jetbrainsCompose = "1.11.1"
 
 [libraries]
 accompanist-pager = { module = "com.google.accompanist:accompanist-pager", version.ref = "accompanistPager" }
@@ -139,4 +140,6 @@ android-feature = { id = "nowinandroid.android.feature"}
 android-library = { id = "com.android.library", version.ref = "agp" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin"}
+kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+jetbrains-compose = { id = "org.jetbrains.compose", version.ref = "jetbrainsCompose" }
 

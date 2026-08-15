@@ -44,6 +44,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.gepetto.toydb.service.SftpService
 import com.gepetto.toydb.service.SftpConfig
+import com.gepetto.toydb.service.HtmlSyncService
 import com.gepetto.toydb.service.SyncAction
 import androidx.compose.foundation.border
 import kotlinx.coroutines.CompletableDeferred
@@ -71,6 +72,11 @@ fun SettingsScreen(
     val exportCompleteText = stringResource(Res.string.export_complete)
     val htmlExportCompleteText = stringResource(Res.string.html_export_complete)
     val sftpConfigSavedText = stringResource(Res.string.sftp_config_saved)
+    val baseUrlSavedText = stringResource(Res.string.base_url_saved)
+    val webSyncRunningText = stringResource(Res.string.web_sync_running)
+    val webSyncSuccessText = stringResource(Res.string.web_sync_success)
+    val webSyncErrorText = stringResource(Res.string.web_sync_error)
+    val webSyncNoUpdatesText = stringResource(Res.string.web_sync_no_updates)
     val coroutineScope = rememberCoroutineScope()
     var appTitle by remember { mutableStateOf(repository.getAppTitleSetting()) }
 
@@ -84,6 +90,7 @@ fun SettingsScreen(
     var sftpKeyPassphrase by remember { mutableStateOf(repository.getSftpKeyPassphraseSetting() ?: "") }
     var sftpRemoteDir by remember { mutableStateOf(repository.getSftpRemoteDirSetting() ?: "") }
     var sftpApprovedFingerprints by remember { mutableStateOf(repository.getSftpApprovedFingerprintsSetting() ?: "") }
+    var htmlBaseUrl by remember { mutableStateOf(repository.getBaseUrlSetting() ?: "") }
 
     var isTestingSftp by remember { mutableStateOf(false) }
     var sftpSyncProgress by remember { mutableStateOf(0.0f) }
@@ -102,6 +109,8 @@ fun SettingsScreen(
     val selectedSftpActions = remember { mutableStateMapOf<String, Boolean>() }
     var syncDirection by remember { mutableStateOf("Upload") }
     var excludeHtmlFiles by remember { mutableStateOf(false) }
+    var showWebSyncDialog by remember { mutableStateOf(false) }
+    var webSyncDialogPhase by remember { mutableStateOf("Progress") }
 
     // Host Fingerprint verification state
     class HostKeyVerification(
@@ -934,6 +943,53 @@ fun SettingsScreen(
         )
     }
 
+    if (showWebSyncDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                if (webSyncDialogPhase != "Progress") {
+                    showWebSyncDialog = false
+                }
+            },
+            containerColor = sysBackgroundColor(),
+            title = {
+                val titleText = when (webSyncDialogPhase) {
+                    "Progress" -> stringResource(Res.string.html_sync_title)
+                    "Success" -> stringResource(Res.string.web_sync_success)
+                    "NoUpdates" -> stringResource(Res.string.web_sync_no_updates)
+                    else -> stringResource(Res.string.web_sync_error)
+                }
+                Text(titleText, color = sysTextColor(), fontWeight = FontWeight.Bold)
+            },
+            text = {
+                val descText = when (webSyncDialogPhase) {
+                    "Progress" -> stringResource(Res.string.web_sync_running)
+                    "Success" -> stringResource(Res.string.web_sync_success)
+                    "NoUpdates" -> stringResource(Res.string.web_sync_no_updates)
+                    else -> stringResource(Res.string.web_sync_error)
+                }
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    if (webSyncDialogPhase == "Progress") {
+                        CircularProgressIndicator(
+                            modifier = Modifier.padding(bottom = 16.dp),
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    Text(descText, color = sysTextColor())
+                }
+            },
+            confirmButton = {
+                if (webSyncDialogPhase != "Progress") {
+                    Button(onClick = { showWebSyncDialog = false }) {
+                        Text(stringResource(Res.string.ok))
+                    }
+                }
+            }
+        )
+    }
+
     KeepScreenOn(enabled = isSftpSyncing && syncDirection == "Download")
 
     val lazyListState = rememberLazyListState()
@@ -1013,6 +1069,33 @@ fun SettingsScreen(
                                 readJsonFile = { name, dir -> readJsonFile(name, dir) },
                                 writeJsonFile = { name, content, dir -> writeJsonFile(name, content, dir) }
                             )
+                            BaseUrlSettingsCard(
+                                baseUrl = htmlBaseUrl,
+                                onBaseUrlChange = { htmlBaseUrl = it },
+                                onSave = {
+                                    repository.setBaseUrlSetting(htmlBaseUrl)
+                                    statusText = webSyncRunningText
+                                    webSyncDialogPhase = "Progress"
+                                    showWebSyncDialog = true
+                                    coroutineScope.launch {
+                                        try {
+                                            val syncSuccess = HtmlSyncService.syncIfNewer(db, repository)
+                                            if (syncSuccess) {
+                                                onCategoriesChanged()
+                                                statusText = webSyncSuccessText
+                                                webSyncDialogPhase = "Success"
+                                            } else {
+                                                statusText = webSyncNoUpdatesText
+                                                webSyncDialogPhase = "NoUpdates"
+                                            }
+                                        } catch (e: Exception) {
+                                            statusText = webSyncErrorText
+                                            webSyncDialogPhase = "Error"
+                                        }
+                                    }
+                                }
+                            )
+                            Spacer(modifier = Modifier.height(GcSpacing.Standard))
                             SftpSettingsCard(
                                 host = sftpHost, onHostChange = { sftpHost = it },
                                 port = sftpPort, onPortChange = { sftpPort = it },
@@ -1209,6 +1292,33 @@ fun SettingsScreen(
                             readJsonFile = { name, dir -> readJsonFile(name, dir) },
                             writeJsonFile = { name, content, dir -> writeJsonFile(name, content, dir) }
                         )
+                        BaseUrlSettingsCard(
+                            baseUrl = htmlBaseUrl,
+                            onBaseUrlChange = { htmlBaseUrl = it },
+                            onSave = {
+                                repository.setBaseUrlSetting(htmlBaseUrl)
+                                statusText = webSyncRunningText
+                                webSyncDialogPhase = "Progress"
+                                showWebSyncDialog = true
+                                coroutineScope.launch {
+                                    try {
+                                        val syncSuccess = HtmlSyncService.syncIfNewer(db, repository)
+                                        if (syncSuccess) {
+                                            onCategoriesChanged()
+                                            statusText = webSyncSuccessText
+                                            webSyncDialogPhase = "Success"
+                                        } else {
+                                            statusText = webSyncNoUpdatesText
+                                            webSyncDialogPhase = "NoUpdates"
+                                        }
+                                    } catch (e: Exception) {
+                                        statusText = webSyncErrorText
+                                        webSyncDialogPhase = "Error"
+                                    }
+                                }
+                            }
+                        )
+                        Spacer(modifier = Modifier.height(GcSpacing.Standard))
                         SftpSettingsCard(
                             host = sftpHost, onHostChange = { sftpHost = it },
                             port = sftpPort, onPortChange = { sftpPort = it },
@@ -2084,6 +2194,51 @@ fun AppTitleSettingsPreview() {
             title = "My Awesome Toy Collection",
             onTitleChange = {}
         )
+    }
+}
+
+@Composable
+fun BaseUrlSettingsCard(
+    baseUrl: String,
+    onBaseUrlChange: (String) -> Unit,
+    onSave: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = sysBackgroundColor()),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+    ) {
+        Column(modifier = Modifier.padding(GcSpacing.Standard)) {
+            Text(
+                text = stringResource(Res.string.html_sync_title),
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = sysTextColor()
+            )
+            Spacer(modifier = Modifier.height(GcSpacing.Small))
+
+            OutlinedTextField(
+                value = baseUrl,
+                onValueChange = onBaseUrlChange,
+                label = { Text(stringResource(Res.string.base_url_label)) },
+                placeholder = { Text(stringResource(Res.string.base_url_placeholder)) },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = sysTextColor(),
+                    unfocusedTextColor = sysTextColor()
+                )
+            )
+            Spacer(modifier = Modifier.height(GcSpacing.Standard))
+
+            Button(
+                onClick = onSave,
+                modifier = Modifier.align(Alignment.End)
+            ) {
+                Text(stringResource(Res.string.save_changes_btn))
+            }
+        }
     }
 }
 

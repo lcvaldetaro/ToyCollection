@@ -2,7 +2,7 @@ package com.gepetto.toydb.database
 
 import club.gepetto.GcLog
 
-class ToyRepository(private val db: ToyDatabase) {
+class ToyRepository(val db: ToyDatabase) {
 
     fun getDashboardStats(): DashboardStats {
         var totalToys = 0
@@ -483,6 +483,9 @@ class ToyRepository(private val db: ToyDatabase) {
 
     fun getSftpApprovedFingerprintsSetting(): String? = getAppSetting("sftp_approved_fingerprints")
     fun setSftpApprovedFingerprintsSetting(fingerprints: String?) = setAppSetting("sftp_approved_fingerprints", fingerprints)
+
+    fun getBaseUrlSetting(): String? = getAppSetting("base_url")
+    fun setBaseUrlSetting(url: String?) = setAppSetting("base_url", url)
 
     fun addSftpApprovedFingerprint(fingerprint: String) {
         val current = getSftpApprovedFingerprintsSetting()

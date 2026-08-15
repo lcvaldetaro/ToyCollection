@@ -111,6 +111,10 @@ kotlin {
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.coil3.coil.compose)
             implementation(libs.okio)
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.okhttp)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.serialization.kotlinx.json)
 
             // Navigation3
             implementation(libs.androidx.navigation3.runtime)

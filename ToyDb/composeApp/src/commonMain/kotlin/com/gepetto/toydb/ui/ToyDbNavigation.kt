@@ -110,6 +110,8 @@ fun ToyDbNavigation(
 ) {
     val repository = remember { ToyRepository(db) }
     var themeMode by remember { mutableStateOf(repository.getThemeSetting()) }
+    var categoriesSettings by remember { mutableStateOf(repository.getCategorySettings()) }
+    var syncTrigger by remember { mutableStateOf(0) }
 
     var showSetupPrompt by remember {
         mutableStateOf(
@@ -120,6 +122,16 @@ fun ToyDbNavigation(
     // Initialize the global images path resolver config on startup
     LaunchedEffect(repository) {
         com.gepetto.toydb.utils.ImageResolverConfig.imagesPath = repository.getDataPathSetting()
+        
+        launch(club.gepetto.utils.ioDispatcher) {
+            val syncCompleted = com.gepetto.toydb.service.HtmlSyncService.syncIfNewer(db, repository)
+            if (syncCompleted) {
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                    categoriesSettings = repository.getCategorySettings()
+                    syncTrigger++
+                }
+            }
+        }
     }
 
     val isDark = when (themeMode) {
@@ -131,7 +143,6 @@ fun ToyDbNavigation(
     GcTheme(darkTheme = isDark) {
         val backStack = remember { mutableStateListOf<Destination>(Destination.Dashboard) }
         val gcSceneStrategy = rememberGcSceneStrategy<NavKey>()
-        var categoriesSettings by remember { mutableStateOf(repository.getCategorySettings()) }
 
         if (showSetupPrompt) {
             val coroutineScope = rememberCoroutineScope()
@@ -306,34 +317,44 @@ fun ToyDbNavigation(
                         onBack = { backStack.removeLastOrNull() },
                         entryProvider = entryProvider {
                             entry<Destination.Dashboard> {
-                                DashboardScreen(repository, onNavigate = { backStack.add(it) })
+                                key(syncTrigger) {
+                                    DashboardScreen(repository, onNavigate = { backStack.add(it) })
+                                }
                             }
                             entry<Destination.CategoryExplorer> { key ->
-                                ExplorerScreen(repository, category = key.category, onNavigate = { backStack.add(it) })
+                                key(syncTrigger) {
+                                    ExplorerScreen(repository, category = key.category, onNavigate = { backStack.add(it) })
+                                }
                             }
                             entry<Destination.MakerDirectory> {
-                                MakerDirectoryScreen(repository, onNavigate = { backStack.add(it) })
+                                key(syncTrigger) {
+                                    MakerDirectoryScreen(repository, onNavigate = { backStack.add(it) })
+                                }
                             }
                             entry<Destination.MakerDetail> { key ->
-                                MakerDetailScreen(
-                                    repository = repository,
-                                    makerName = key.makerName,
-                                    onNavigate = { backStack.add(it) },
-                                    onBack = { backStack.removeLastOrNull() },
-                                    backStackLastItem = backStack.lastOrNull()
-                                )
+                                key(syncTrigger) {
+                                    MakerDetailScreen(
+                                        repository = repository,
+                                        makerName = key.makerName,
+                                        onNavigate = { backStack.add(it) },
+                                        onBack = { backStack.removeLastOrNull() },
+                                        backStackLastItem = backStack.lastOrNull()
+                                    )
+                                }
                             }
                             entry<Destination.ToyDetail>(
                                 metadata = GcSceneStrategy.detailPane(resizeable = true)
                             ) { key ->
-                                ToyDetailScreen(
-                                    repository = repository,
-                                    toyType = key.toyType,
-                                    refNum = key.refNum,
-                                    onNavigate = { backStack.add(it) },
-                                    onBack = { backStack.removeUpToInclusive(key) },
-                                    backStackLastItem = backStack.lastOrNull()
-                                )
+                                key(syncTrigger) {
+                                    ToyDetailScreen(
+                                        repository = repository,
+                                        toyType = key.toyType,
+                                        refNum = key.refNum,
+                                        onNavigate = { backStack.add(it) },
+                                        onBack = { backStack.removeUpToInclusive(key) },
+                                        backStackLastItem = backStack.lastOrNull()
+                                    )
+                                }
                             }
                             entry<Destination.EditToy>(
                                 metadata = GcSceneStrategy.bottomSheetPane()

@@ -269,4 +269,12 @@ Tutti i diritti riservati.</string>
     <string name="save_changes_btn">Salva</string>
     <string name="invalid_filename_error">Nome file non valido (senza spazi o \\/:*?\"&lt;&gt;|)</string>
     <string name="sftp_sync_exclude_html_files">Escludi file HTML</string>
+    <string name="html_sync_title">Sincronizzazione Web</string>
+    <string name="base_url_label">URL di base</string>
+    <string name="base_url_placeholder">http://example.com/toydb</string>
+    <string name="base_url_saved">URL di base salvato con successo</string>
+    <string name="web_sync_running">Sincronizzazione Web in corso...</string>
+    <string name="web_sync_success">Sincronizzazione Web completata</string>
+    <string name="web_sync_error">Sincronizzazione Web non riuscita</string>
+    <string name="web_sync_no_updates">Sincronizzazione Web completata (già aggiornato)</string>
 </resources>

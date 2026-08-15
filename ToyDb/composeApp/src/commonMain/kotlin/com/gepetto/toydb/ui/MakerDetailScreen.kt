@@ -37,6 +37,7 @@ import androidx.compose.ui.graphics.Color
 import club.gepetto.composeutils.image.GcImage
 import com.gepetto.toydb.database.Maker
 import com.gepetto.toydb.database.Toy
+import com.gepetto.toydb.ui.SyncImage
 import com.gepetto.toydb.database.CategorySetting
 import com.gepetto.toydb.database.ToyRepository
 import com.gepetto.toydb.utils.resolveBitmapUri
@@ -103,7 +104,8 @@ fun MakerDetailScreen(
         maker?.bitmaps?.split(" ")?.filter { it.trim().isNotEmpty() } ?: emptyList()
     }
 
-    val allImagePaths = remember(makerImages) {
+    var refreshTrigger by remember { mutableStateOf(0) }
+    val allImagePaths = remember(makerImages, refreshTrigger) {
         val list = mutableListOf<String>()
         makerImages.forEach { filename ->
             resolveBitmapUri(filename)?.let { list.add(it) }
@@ -181,6 +183,8 @@ fun MakerDetailScreen(
         onEditClick = { onNavigate(Destination.EditMaker(makerName)) },
         onBack = onBack,
         onNavigate = onNavigate,
+        repository = repository,
+        onRefreshImages = { refreshTrigger++ },
         modifier = modifier
     )
 }
@@ -202,6 +206,8 @@ fun MakerDetailContent(
     onEditClick: () -> Unit,
     onBack: () -> Unit,
     onNavigate: (Destination) -> Unit,
+    repository: ToyRepository? = null,
+    onRefreshImages: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var showDeleteConfirmation by remember { mutableStateOf(false) }
@@ -347,16 +353,19 @@ fun MakerDetailContent(
                         horizontalArrangement = Arrangement.spacedBy(GcSpacing.Small)
                     ) {
                         lazyItems(makerImages) { filename ->
+                            val baseUrl = remember { repository?.getBaseUrlSetting() }
                             val bitmapUri = remember(filename) { resolveBitmapUri(filename) }
-                            if (bitmapUri != null) {
-                                GcImage(
-                                    imageFile = bitmapUri,
+                            if (bitmapUri != null || !baseUrl.isNullOrBlank()) {
+                                SyncImage(
+                                    repository = repository,
+                                    isMainImage = false,
+                                    filename = filename,
                                     files = allImagePaths,
-                                    contentDescription = filename,
                                     size = 100.dp,
                                     cornerSize = 16.dp,
                                     contentScale = ContentScale.Fit,
-                                    fullImageOnClick = true
+                                    fullImageOnClick = true,
+                                    onDownloaded = onRefreshImages
                                 )
                             } else {
                                 Box(
@@ -433,6 +442,7 @@ fun MakerDetailContent(
                                 ToyItemCard(
                                     toy = toy,
                                     prefix = prefix,
+                                    repository = repository,
                                     modifier = Modifier.weight(1f).fillMaxHeight()
                                 ) {
                                     onNavigate(Destination.ToyDetail(toy.toyType, toy.refNum))

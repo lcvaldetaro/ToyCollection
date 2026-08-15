@@ -37,6 +37,7 @@ import androidx.compose.ui.graphics.Color
 import club.gepetto.composeutils.sysTextColor
 import club.gepetto.composeutils.image.GcImage
 import com.gepetto.toydb.database.Toy
+import com.gepetto.toydb.ui.SyncImage
 import com.gepetto.toydb.database.ToyRepository
 import com.gepetto.toydb.utils.resolveImageUri
 import com.gepetto.toydb.utils.scrollHorizontallyWithMouseWheel
@@ -81,6 +82,7 @@ fun ExplorerScreen(
     }
 
     ExplorerContent(
+        repository = repository,
         category = category,
         categoryLabel = categoryLabel,
         prefix = prefix,
@@ -101,6 +103,7 @@ fun ExplorerScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExplorerContent(
+    repository: ToyRepository? = null,
     category: String,
     categoryLabel: String,
     prefix: String,
@@ -244,6 +247,7 @@ fun ExplorerContent(
                                             ToyItemCard(
                                                 toy = toy,
                                                 prefix = prefix,
+                                                repository = repository,
                                                 modifier = Modifier.weight(1f).fillMaxHeight()
                                             ) {
                                                 onNavigate(Destination.ToyDetail(category, toy.refNum))
@@ -270,11 +274,14 @@ fun ExplorerContent(
 fun ToyItemCard(
     toy: Toy,
     prefix: String,
+    repository: ToyRepository? = null,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
     val textColor = sysTextColor()
-    val imgUri = remember(toy.refNum) { resolveImageUri(prefix, toy.refNum) }
+    val textBitmap = remember(toy.refNum, textColor) {
+        textAsBitmap(text = toy.refNum.toString(), textColor = textColor.toArgb())
+    }
 
     Card(
         modifier = modifier
@@ -290,32 +297,17 @@ fun ToyItemCard(
                 .fillMaxWidth()
                 .padding(4.dp)
         ) {
-            if (imgUri == null) {
-                val textBitmap = remember(toy.refNum, textColor) {
-                    textAsBitmap(text = toy.refNum.toString(), textColor = textColor.toArgb())
-                }
-                GcImage(
-                    modifier = Modifier.align(Alignment.Top),
-                    imageBitmap = textBitmap,
-                    contentDescription = toy.description,
-                    fullImageOnClick = false,
-                    size = 48.dp,
-                    cornerSize = 16.dp,
-                    paddingSize = 4.dp,
-                    onClick = onClick
-                )
-            } else {
-                GcImage(
-                    modifier = Modifier.align(Alignment.Top),
-                    imageFile = imgUri,
-                    contentDescription = toy.description,
-                    fullImageOnClick = false,
-                    size = 48.dp,
-                    cornerSize = 16.dp,
-                    paddingSize = 4.dp,
-                    onClick = onClick
-                )
-            }
+            SyncImage(
+                toy = toy,
+                repository = repository,
+                prefix = prefix,
+                fallbackBitmap = textBitmap,
+                modifier = Modifier.align(Alignment.Top),
+                size = 48.dp,
+                cornerSize = 16.dp,
+                paddingSize = 4.dp,
+                onClick = onClick
+            )
 
             Column(
                 modifier = Modifier

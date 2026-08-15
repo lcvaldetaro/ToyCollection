@@ -30,6 +30,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.lazy.rememberLazyListState
 import club.gepetto.composeutils.image.GcImage
 import com.gepetto.toydb.database.Toy
+import com.gepetto.toydb.ui.SyncImage
 import com.gepetto.toydb.database.ToyImage
 import com.gepetto.toydb.database.ToyRepository
 import com.gepetto.toydb.utils.resolveBitmapUri
@@ -64,7 +65,8 @@ fun ToyDetailScreen(
     val toy = toyState
     val settingsList = remember { repository.getCategorySettings() }
     val prefix = remember { settingsList.find { it.category == toyType }?.imagePrefix ?: "car" }
-    val allImagePaths = remember(toy) {
+    var refreshTrigger by remember { mutableStateOf(0) }
+    val allImagePaths = remember(toy, refreshTrigger) {
         val list = mutableListOf<String>()
         if (toy != null) {
             resolveImageUri(prefix, toy.refNum)?.let { list.add(it) }
@@ -132,6 +134,7 @@ fun ToyDetailScreen(
     ToyDetailContent(
         toy = toy,
         prefix = prefix,
+        repository = repository,
         allImagePaths = allImagePaths,
         secondaryImages = secondaryImages,
         onAddSecondaryImage = { imagePicker() },
@@ -141,6 +144,7 @@ fun ToyDetailScreen(
         },
         onEditClick = { onNavigate(Destination.EditToy(toyType, refNum)) },
         onBack = onBack,
+        onRefreshImages = { refreshTrigger++ },
         modifier = modifier
     )
 }
@@ -150,12 +154,14 @@ fun ToyDetailScreen(
 fun ToyDetailContent(
     toy: Toy,
     prefix: String,
+    repository: ToyRepository? = null,
     allImagePaths: Array<String>,
     secondaryImages: List<ToyImage>,
     onAddSecondaryImage: () -> Unit,
     onDeleteConfirm: () -> Unit,
     onEditClick: () -> Unit,
     onBack: () -> Unit,
+    onRefreshImages: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var showDeleteConfirmation by remember { mutableStateOf(false) }
@@ -203,23 +209,26 @@ fun ToyDetailContent(
                 .verticalScroll(rememberScrollState())
         ) {
             // Main Image
-            val mainImg = remember(toy.refNum) { resolveImageUri(prefix, toy.refNum) }
-            if (mainImg != null) {
+            val hasPic = toy?.picture?.trim()?.isNotEmpty() ?: false
+            if (hasPic && toy != null) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = GcSpacing.Small),
                     contentAlignment = Alignment.Center
                 ) {
-                    GcImage(
-                        imageFile = mainImg,
+                    SyncImage(
+                        toy = toy,
+                        repository = repository,
+                        prefix = prefix,
+                        isMainImage = true,
                         files = allImagePaths,
-                        contentDescription = toy.description,
                         modifier = Modifier
                             .height(250.dp)
                             .clip(RoundedCornerShape(8.dp)),
                         contentScale = ContentScale.Fit,
-                        fullImageOnClick = true
+                        fullImageOnClick = true,
+                        onDownloaded = onRefreshImages
                     )
                 }
             } else {
@@ -311,18 +320,22 @@ fun ToyDetailContent(
                         .scrollHorizontallyWithMouseWheel(bitmapsScrollState, coroutineScope),
                     horizontalArrangement = Arrangement.spacedBy(GcSpacing.Small)
                 ) {
-                    items(secondaryImages) { img ->
+                    items(secondaryImages) { img: ToyImage ->
+                        val baseUrl = remember { repository?.getBaseUrlSetting() }
                         val bitmapUri = remember(img.filename) { resolveBitmapUri(img.filename) }
-                        if (bitmapUri != null) {
-                            GcImage(
-                                imageFile = bitmapUri,
+                        if (toy != null && (bitmapUri != null || !baseUrl.isNullOrBlank())) {
+                            SyncImage(
+                                toy = toy,
+                                repository = repository,
+                                isMainImage = false,
+                                filename = img.filename,
                                 files = allImagePaths,
-                                contentDescription = img.filename,
                                 modifier = Modifier
                                     .size(100.dp)
                                     .clip(RoundedCornerShape(8.dp)),
                                 contentScale = ContentScale.Crop,
-                                fullImageOnClick = true
+                                fullImageOnClick = true,
+                                onDownloaded = onRefreshImages
                             )
                         } else {
                             Box(
