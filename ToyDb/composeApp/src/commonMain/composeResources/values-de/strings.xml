@@ -268,4 +268,5 @@ Alle Rechte vorbehalten.</string>
     <string name="file_status_missing">Datei nicht gefunden</string>
     <string name="save_changes_btn">Speichern</string>
     <string name="invalid_filename_error">Ungültiger Dateiname (keine Leerzeichen oder \\/:*?\"&lt;&gt;|)</string>
+    <string name="sftp_sync_exclude_html_files">HTML-Dateien ausschließen</string>
 </resources>

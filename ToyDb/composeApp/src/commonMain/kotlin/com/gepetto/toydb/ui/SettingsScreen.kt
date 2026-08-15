@@ -101,6 +101,7 @@ fun SettingsScreen(
     val proposedSftpActions = remember { mutableStateListOf<SyncAction>() }
     val selectedSftpActions = remember { mutableStateMapOf<String, Boolean>() }
     var syncDirection by remember { mutableStateOf("Upload") }
+    var excludeHtmlFiles by remember { mutableStateOf(false) }
 
     // Host Fingerprint verification state
     class HostKeyVerification(
@@ -677,18 +678,56 @@ fun SettingsScreen(
                             
                             if (proposedSftpActions.isNotEmpty()) {
                                 Spacer(modifier = Modifier.height(8.dp))
+                                if (syncDirection == "Download") {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(start = 13.dp, end = 13.dp, top = 2.dp, bottom = 2.dp)
+                                    ) {
+                                        Checkbox(
+                                            checked = excludeHtmlFiles,
+                                            onCheckedChange = { isChecked ->
+                                                excludeHtmlFiles = isChecked
+                                                if (isChecked) {
+                                                    proposedSftpActions.forEach { action ->
+                                                        val isHtml = action.filename.endsWith(".html", ignoreCase = true) || action.filename.endsWith(".htm", ignoreCase = true)
+                                                        if (isHtml) {
+                                                            selectedSftpActions[action.filename] = false
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            modifier = Modifier.padding(end = 8.dp)
+                                        )
+                                        Text(
+                                            text = stringResource(Res.string.sftp_sync_exclude_html_files),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = sysTextColor()
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                }
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(start = 13.dp, end = 13.dp, top = 2.dp, bottom = 2.dp)
                                 ) {
-                                    val allSelected = proposedSftpActions.all { selectedSftpActions[it.filename] == true }
+                                    val allSelected = proposedSftpActions
+                                        .filter { !excludeHtmlFiles || !(it.filename.endsWith(".html", ignoreCase = true) || it.filename.endsWith(".htm", ignoreCase = true)) }
+                                        .all { selectedSftpActions[it.filename] == true }
                                     Checkbox(
                                         checked = allSelected,
                                         onCheckedChange = { isChecked ->
                                             proposedSftpActions.forEach { action ->
-                                                selectedSftpActions[action.filename] = isChecked
+                                                val isHtml = action.filename.endsWith(".html", ignoreCase = true) || action.filename.endsWith(".htm", ignoreCase = true)
+                                                if (excludeHtmlFiles && isHtml) {
+                                                    selectedSftpActions[action.filename] = false
+                                                } else {
+                                                    selectedSftpActions[action.filename] = isChecked
+                                                }
                                             }
                                         },
                                         modifier = Modifier.padding(end = 8.dp)
@@ -715,6 +754,8 @@ fun SettingsScreen(
                                     ) {
                                         items(proposedSftpActions.size) { index ->
                                             val action = proposedSftpActions[index]
+                                            val isHtml = action.filename.endsWith(".html", ignoreCase = true) || action.filename.endsWith(".htm", ignoreCase = true)
+                                            val isItemChecked = if (excludeHtmlFiles && isHtml) false else (selectedSftpActions[action.filename] ?: true)
                                             Row(
                                                 modifier = Modifier
                                                     .fillMaxWidth()
@@ -723,7 +764,8 @@ fun SettingsScreen(
                                                 verticalAlignment = Alignment.CenterVertically
                                             ) {
                                                 Checkbox(
-                                                    checked = selectedSftpActions[action.filename] ?: true,
+                                                    checked = isItemChecked,
+                                                    enabled = !(excludeHtmlFiles && isHtml),
                                                     onCheckedChange = { isChecked ->
                                                         selectedSftpActions[action.filename] = isChecked
                                                     },
@@ -759,7 +801,10 @@ fun SettingsScreen(
                                 }
                                 Spacer(modifier = Modifier.height(8.dp))
                                 val totalCount = proposedSftpActions.size
-                                val selectedCount = proposedSftpActions.count { selectedSftpActions[it.filename] == true }
+                                val selectedCount = proposedSftpActions.count { action ->
+                                    val isHtml = action.filename.endsWith(".html", ignoreCase = true) || action.filename.endsWith(".htm", ignoreCase = true)
+                                    if (excludeHtmlFiles && isHtml) false else selectedSftpActions[action.filename] == true
+                                }
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -830,7 +875,10 @@ fun SettingsScreen(
                                 syncDialogPhase = "Progress"
                                 coroutineScope.launch {
                                     isSftpSyncing = true
-                                    val selectedSet = selectedSftpActions.filterValues { it }.keys
+                                    val selectedSet = selectedSftpActions.filterValues { it }.keys.filter { filename ->
+                                        val isHtml = filename.endsWith(".html", ignoreCase = true) || filename.endsWith(".htm", ignoreCase = true)
+                                        !(excludeHtmlFiles && isHtml)
+                                    }.toSet()
                                     if (syncDirection == "Upload") {
                                         statusText = getString(Res.string.sftp_status_uploading)
                                         sftpSyncProgress = 0.0f
@@ -1021,6 +1069,7 @@ fun SettingsScreen(
                                         val result = sftpService.calculateUploadPlan(buildSftpConfig(), db, onHostKeyUnverified)
                                         isSftpSyncing = false
                                         if (result.isSuccess) {
+                                            excludeHtmlFiles = false
                                             val actions = result.getOrThrow()
                                             proposedSftpActions.clear()
                                             proposedSftpActions.addAll(actions)
@@ -1048,6 +1097,7 @@ fun SettingsScreen(
                                         val result = sftpService.calculateDownloadPlan(buildSftpConfig(), db, onHostKeyUnverified)
                                         isSftpSyncing = false
                                         if (result.isSuccess) {
+                                            excludeHtmlFiles = false
                                             val actions = result.getOrThrow()
                                             proposedSftpActions.clear()
                                             proposedSftpActions.addAll(actions)
@@ -1215,6 +1265,7 @@ fun SettingsScreen(
                                     val result = sftpService.calculateUploadPlan(buildSftpConfig(), db, onHostKeyUnverified)
                                     isSftpSyncing = false
                                     if (result.isSuccess) {
+                                        excludeHtmlFiles = false
                                         val actions = result.getOrThrow()
                                         proposedSftpActions.clear()
                                         proposedSftpActions.addAll(actions)
@@ -1242,6 +1293,7 @@ fun SettingsScreen(
                                     val result = sftpService.calculateDownloadPlan(buildSftpConfig(), db, onHostKeyUnverified)
                                     isSftpSyncing = false
                                     if (result.isSuccess) {
+                                        excludeHtmlFiles = false
                                         val actions = result.getOrThrow()
                                         proposedSftpActions.clear()
                                         proposedSftpActions.addAll(actions)

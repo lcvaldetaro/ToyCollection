@@ -268,4 +268,5 @@ Todos los derechos reservados.</string>
     <string name="file_status_missing">Archivo no encontrado</string>
     <string name="save_changes_btn">Guardar</string>
     <string name="invalid_filename_error">Nombre no válido (sin espacios ni \\/:*?\"&lt;&gt;|)</string>
+    <string name="sftp_sync_exclude_html_files">Excluir archivos HTML</string>
 </resources>
