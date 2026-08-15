@@ -119,7 +119,7 @@
     <string name="images_dir_default">Usando locais padrão (relativos ao diretório de trabalho)</string>
     <string name="images_dir_title">Diretório de Imagens</string>
     <string name="import_complete">Importação Concluída!</string>
-    <string name="import_export_actions_title">Ações de Importação / Exportação</string>
+    <string name="import_export_actions_title">Geração HTML</string>
     <string name="import_export_dir_title">Diretório de Importação / Exportação</string>
     <string name="import_json_btn">Importar Dados JSON</string>
     <string name="import_success_desc">Os registros do banco de dados foram importados com sucesso a partir do seguinte diretório:</string>

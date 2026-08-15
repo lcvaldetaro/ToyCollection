@@ -119,7 +119,7 @@
     <string name="images_dir_default">Using default locations (relative to working directory)</string>
     <string name="images_dir_title">Images Directory</string>
     <string name="import_complete">Import Complete!</string>
-    <string name="import_export_actions_title">Import / Export Actions</string>
+    <string name="import_export_actions_title">HTML Generation</string>
     <string name="import_export_dir_title">Import / Export Directory</string>
     <string name="import_json_btn">Import JSON Data</string>
     <string name="import_success_desc">The database records were imported successfully from the following directory:</string>

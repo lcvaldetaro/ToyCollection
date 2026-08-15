@@ -119,7 +119,7 @@
     <string name="images_dir_default">Standardpfade verwenden (relativ zum Arbeitsverzeichnis)</string>
     <string name="images_dir_title">Bilder-Verzeichnis</string>
     <string name="import_complete">Import abgeschlossen!</string>
-    <string name="import_export_actions_title">Import- / Export-Aktionen</string>
+    <string name="import_export_actions_title">HTML-Generierung</string>
     <string name="import_export_dir_title">Import- / Exportverzeichnis</string>
     <string name="import_json_btn">JSON-Daten importieren</string>
     <string name="import_success_desc">Die Datenbankeinträge wurden erfolgreich aus dem folgenden Verzeichnis importiert:</string>

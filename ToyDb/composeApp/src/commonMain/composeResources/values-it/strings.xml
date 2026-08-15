@@ -119,7 +119,7 @@
     <string name="images_dir_default">Utilizzo delle posizioni predefinite (relative alla directory di lavoro)</string>
     <string name="images_dir_title">Directory delle Immagini</string>
     <string name="import_complete">Importazione Completata!</string>
-    <string name="import_export_actions_title">Azioni di Importazione / Esportazione</string>
+    <string name="import_export_actions_title">Generazione HTML</string>
     <string name="import_export_dir_title">Directory di Importazione / Esportazione</string>
     <string name="import_json_btn">Importa Dati JSON</string>
     <string name="import_success_desc">I record del database sono stati importati correttamente dalla seguente directory:</string>

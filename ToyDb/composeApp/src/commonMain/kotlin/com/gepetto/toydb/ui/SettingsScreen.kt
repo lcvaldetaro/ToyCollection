@@ -1043,32 +1043,6 @@ fun SettingsScreen(
                                 }
                             )
                         }
-                        ImportExportActions(
-                                customImportExportPath = dataPath,
-                                db = db,
-                                onImportComplete = { counts ->
-                                    importCountsMap.clear()
-                                    importCountsMap.putAll(counts)
-                                    showImportDialog = true
-                                    statusText = importCompleteText
-                                },
-                                onExportComplete = { path, files ->
-                                    exportDirectoryPath = path
-                                    exportedFiles.clear()
-                                    exportedFiles.addAll(files)
-                                    showExportDialog = true
-                                    statusText = exportCompleteText
-                                },
-                                onHtmlExportComplete = { path, count ->
-                                    htmlExportPath = path
-                                    htmlExportCount = count
-                                    showHtmlExportDialog = true
-                                    statusText = htmlExportCompleteText
-                                },
-                                onSetStatus = { statusText = it },
-                                readJsonFile = { name, dir -> readJsonFile(name, dir) },
-                                writeJsonFile = { name, content, dir -> writeJsonFile(name, content, dir) }
-                            )
                             BaseUrlSettingsCard(
                                 baseUrl = htmlBaseUrl,
                                 onBaseUrlChange = { htmlBaseUrl = it },
@@ -1199,6 +1173,18 @@ fun SettingsScreen(
                                 isSyncing = isSftpSyncing || isTestingSftp,
                                 syncProgress = sftpSyncProgress
                             )
+                            Spacer(modifier = Modifier.height(GcSpacing.Standard))
+                            ImportExportActions(
+                                customImportExportPath = dataPath,
+                                db = db,
+                                onHtmlExportComplete = { path, count ->
+                                    htmlExportPath = path
+                                    htmlExportCount = count
+                                    showHtmlExportDialog = true
+                                    statusText = htmlExportCompleteText
+                                },
+                                onSetStatus = { statusText = it }
+                            )
                         }
 
                     // Right Column: Categories Manager
@@ -1266,32 +1252,6 @@ fun SettingsScreen(
                             }
                         )
                     }
-                    ImportExportActions(
-                            customImportExportPath = dataPath,
-                            db = db,
-                            onImportComplete = { counts ->
-                                importCountsMap.clear()
-                                importCountsMap.putAll(counts)
-                                showImportDialog = true
-                                statusText = importCompleteText
-                            },
-                            onExportComplete = { path, files ->
-                                exportDirectoryPath = path
-                                exportedFiles.clear()
-                                exportedFiles.addAll(files)
-                                showExportDialog = true
-                                statusText = exportCompleteText
-                            },
-                            onHtmlExportComplete = { path, count ->
-                                htmlExportPath = path
-                                htmlExportCount = count
-                                showHtmlExportDialog = true
-                                statusText = htmlExportCompleteText
-                            },
-                            onSetStatus = { statusText = it },
-                            readJsonFile = { name, dir -> readJsonFile(name, dir) },
-                            writeJsonFile = { name, content, dir -> writeJsonFile(name, content, dir) }
-                        )
                         BaseUrlSettingsCard(
                             baseUrl = htmlBaseUrl,
                             onBaseUrlChange = { htmlBaseUrl = it },
@@ -1422,6 +1382,19 @@ fun SettingsScreen(
                             isSyncing = isSftpSyncing || isTestingSftp,
                             syncProgress = sftpSyncProgress
                         )
+                        Spacer(modifier = Modifier.height(GcSpacing.Standard))
+                        ImportExportActions(
+                            customImportExportPath = dataPath,
+                            db = db,
+                            onHtmlExportComplete = { path, count ->
+                                htmlExportPath = path
+                                htmlExportCount = count
+                                showHtmlExportDialog = true
+                                statusText = htmlExportCompleteText
+                            },
+                            onSetStatus = { statusText = it }
+                        )
+                        Spacer(modifier = Modifier.height(GcSpacing.Standard))
                         CategoriesManager(
                         categoriesList = categoriesList,
                         onAddCategory = {
@@ -1601,220 +1574,58 @@ fun DataDirectorySettings(
 fun ImportExportActions(
     customImportExportPath: String?,
     db: ToyDatabase,
-    onImportComplete: (counts: Map<String, Int>) -> Unit,
-    onExportComplete: (path: String, files: List<String>) -> Unit,
     onHtmlExportComplete: (path: String, count: Int) -> Unit,
-    onSetStatus: (String) -> Unit,
-    readJsonFile: (fileName: String, dirPath: String?) -> String?,
-    writeJsonFile: (fileName: String, content: String, dirPath: String?) -> String?
+    onSetStatus: (String) -> Unit
 ) {
-    val repository = remember(db) { ToyRepository(db) }
     val coroutineScope = rememberCoroutineScope()
-    val errorImportNoDirText = stringResource(Res.string.error_import_no_dir)
-    val errorExportNoDirText = stringResource(Res.string.error_export_no_dir)
     val errorHtmlNoDirText = stringResource(Res.string.error_html_no_dir)
-    var isImporting by remember { mutableStateOf(false) }
-    var isExporting by remember { mutableStateOf(false) }
     var isExportingHtml by remember { mutableStateOf(false) }
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(stringResource(Res.string.import_export_actions_title), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = sysTextColor())
         Spacer(modifier = Modifier.height(GcSpacing.Small))
-        Row(
+        
+        Button(
+            enabled = !isExportingHtml,
+            onClick = {
+                val selectedDir = customImportExportPath
+                if (selectedDir != null) {
+                    coroutineScope.launch {
+                        isExportingHtml = true
+                        onSetStatus("Generating HTML pages to $selectedDir...")
+                        try {
+                            val generatedCount = withContext(Dispatchers.IO) {
+                                ImportExportService.exportHtml(db, selectedDir)
+                            }
+                            isExportingHtml = false
+                            onHtmlExportComplete(selectedDir, generatedCount)
+                            onSetStatus("HTML generation completed! Generated $generatedCount files in $selectedDir.")
+                        } catch (e: Exception) {
+                            isExportingHtml = false
+                            onSetStatus(getString(Res.string.error_html, e.message ?: ""))
+                            GcLog.e("SettingsScreen", "HTML export error", e)
+                        }
+                    }
+                } else {
+                    onSetStatus(errorHtmlNoDirText)
+                }
+            },
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(GcSpacing.Standard)
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.tertiary,
+                contentColor = MaterialTheme.colorScheme.onTertiary
+            )
         ) {
-            Button(
-                enabled = !isImporting && !isExporting && !isExportingHtml,
-                onClick = {
-                    val selectedDir = customImportExportPath
-                    if (selectedDir != null) {
-                        coroutineScope.launch {
-                            isImporting = true
-                            onSetStatus("Importing JSON files from $selectedDir...")
-                            try {
-                                val importedCounts = mutableMapOf<String, Int>()
-
-                                // Execute SQLite insertions on IO dispatcher
-                                withContext(Dispatchers.IO) {
-                                    // 1. Import Category Settings
-                                    val catSettingsContent = readJsonFile("category_settings.json", selectedDir)
-                                    val catSettingsCount = catSettingsContent?.let { ImportExportService.importCategorySettings(db, it) } ?: 0
-                                    if (catSettingsCount > 0) {
-                                        importedCounts["Category Settings"] = catSettingsCount
-                                    }
-
-                                    // 2. Import Makers
-                                    var makerCount = 0
-                                    val makersContent = readJsonFile("carmaker.json", selectedDir) ?: readJsonFile("makers.json", selectedDir)
-                                    makersContent?.let { makerCount = ImportExportService.importMakers(db, it) }
-                                    if (makerCount > 0) {
-                                        importedCounts["Makers"] = makerCount
-                                    }
-
-                                    // 4. Import Toys for all active categories
-                                    val activeCategories = repository.getCategorySettings()
-                                    activeCategories.forEach { cat ->
-                                        val content = readJsonFile("${cat.imagePrefix}list.json", selectedDir)
-                                            ?: readJsonFile("${cat.category}s.json", selectedDir)
-                                            ?: readJsonFile("${cat.category}list.json", selectedDir)
-                                            ?: readJsonFile("${cat.category}.json", selectedDir)
-                                        if (content != null) {
-                                            val count = ImportExportService.importToys(db, cat.category, content)
-                                            importedCounts[cat.label] = count
-                                        }
-                                    }
-                                }
-
-                                isImporting = false
-                                onImportComplete(importedCounts)
-                            } catch (e: Exception) {
-                                isImporting = false
-                                onSetStatus(getString(Res.string.error_import, e.message ?: ""))
-                                GcLog.e("SettingsScreen", "Import error", e)
-                            }
-                        }
-                    } else {
-                        onSetStatus(errorImportNoDirText)
-                    }
-                },
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
+            if (isExportingHtml) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    color = MaterialTheme.colorScheme.onTertiary,
+                    strokeWidth = 2.dp
                 )
-            ) {
-                if (isImporting) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        strokeWidth = 2.dp
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(Res.string.status_importing))
-                } else {
-                    Text(stringResource(Res.string.import_json_btn))
-                }
-            }
-
-            Button(
-                enabled = !isImporting && !isExporting && !isExportingHtml,
-                onClick = {
-                    val selectedDir = customImportExportPath
-                    if (selectedDir != null) {
-                        coroutineScope.launch {
-                            isExporting = true
-                            onSetStatus("Exporting JSON files to $selectedDir...")
-                            try {
-                                val filesToWrite = mutableListOf<Pair<String, String>>()
-                                var successCount = 0
-                                var lastWrittenPath: String? = null
-                                val exported = mutableListOf<String>()
-
-                                withContext(Dispatchers.IO) {
-                                    // 1. Export Makers
-                                    val makersJson = ImportExportService.exportMakers(db)
-                                    filesToWrite.add("carmaker.json" to makersJson)
-
-                                    // 2. Export Category Settings
-                                    val categorySettingsJson = ImportExportService.exportCategorySettings(db)
-                                    filesToWrite.add("category_settings.json" to categorySettingsJson)
-
-                                    // 4. Export Toys
-                                    val activeCategories = repository.getCategorySettings()
-                                    activeCategories.forEach { cat ->
-                                        val toysJson = ImportExportService.exportToys(db, cat.category)
-                                        filesToWrite.add("${cat.imagePrefix}list.json" to toysJson)
-                                    }
-
-                                    for ((fileName, jsonContent) in filesToWrite) {
-                                        val pathStr = writeJsonFile(fileName, jsonContent, selectedDir)
-                                        if (pathStr != null) {
-                                            successCount++
-                                            exported.add(fileName)
-                                            lastWrittenPath = pathStr
-                                        }
-                                    }
-                                }
-
-                                isExporting = false
-                                if (successCount == filesToWrite.size && lastWrittenPath != null) {
-                                    val dirPath = lastWrittenPath.substringBeforeLast("/")
-                                    onExportComplete(dirPath, exported)
-                                } else {
-                                    onSetStatus(getString(Res.string.error_export, "$successCount/${filesToWrite.size}"))
-                                }
-                            } catch (e: Exception) {
-                                isExporting = false
-                                onSetStatus(getString(Res.string.error_export, e.message ?: ""))
-                                GcLog.e("SettingsScreen", "Export error", e)
-                            }
-                        }
-                    } else {
-                        onSetStatus(errorExportNoDirText)
-                    }
-                },
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.secondary,
-                    contentColor = MaterialTheme.colorScheme.onSecondary
-                )
-            ) {
-                if (isExporting) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        color = MaterialTheme.colorScheme.onSecondary,
-                        strokeWidth = 2.dp
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(Res.string.status_exporting))
-                } else {
-                    Text(stringResource(Res.string.export_json_btn))
-                }
-            }
-
-            Button(
-                enabled = !isImporting && !isExporting && !isExportingHtml,
-                onClick = {
-                    val selectedDir = customImportExportPath
-                    if (selectedDir != null) {
-                        coroutineScope.launch {
-                            isExportingHtml = true
-                            onSetStatus("Generating HTML pages to $selectedDir...")
-                            try {
-                                val generatedCount = withContext(Dispatchers.IO) {
-                                    ImportExportService.exportHtml(db, selectedDir)
-                                }
-                                isExportingHtml = false
-                                onHtmlExportComplete(selectedDir, generatedCount)
-                                onSetStatus("HTML generation completed! Generated $generatedCount files in $selectedDir.")
-                            } catch (e: Exception) {
-                                isExportingHtml = false
-                                onSetStatus(getString(Res.string.error_html, e.message ?: ""))
-                                GcLog.e("SettingsScreen", "HTML export error", e)
-                            }
-                        }
-                    } else {
-                        onSetStatus(errorHtmlNoDirText)
-                    }
-                },
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.tertiary,
-                    contentColor = MaterialTheme.colorScheme.onTertiary
-                )
-            ) {
-                if (isExportingHtml) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        color = MaterialTheme.colorScheme.onTertiary,
-                        strokeWidth = 2.dp
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(Res.string.status_exporting_html))
-                } else {
-                    Text(stringResource(Res.string.export_html_btn))
-                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(stringResource(Res.string.status_exporting_html))
+            } else {
+                Text(stringResource(Res.string.export_html_btn))
             }
         }
     }
