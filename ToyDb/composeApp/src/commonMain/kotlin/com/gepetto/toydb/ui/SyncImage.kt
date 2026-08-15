@@ -66,6 +66,7 @@ fun SyncImage(
     fullImageOnClick: Boolean = false,
     files: Array<String>? = null,
     fallbackBitmap: PlatformBitmap? = null,
+    timestamp: Long? = null,
     onClick: () -> Unit = {},
     onDownloaded: () -> Unit = {}
 ) {
@@ -81,7 +82,35 @@ fun SyncImage(
         }
     }
     
-    var localFileExists by remember(refNum, localPath) { mutableStateOf(localPath != null) }
+    val expectedDbTimestamp = remember(toy, isMainImage, filename, timestamp) {
+        if (timestamp != null) {
+            timestamp
+        } else if (isMainImage && toy != null) {
+            toy.pictureTimeStamp
+        } else if (!isMainImage && toy != null && filename != null) {
+            toy.getSecondaryImages().find { it.filename == filename }?.timestamp ?: 0L
+        } else {
+            0L
+        }
+    }
+
+    val localFileTime = remember(localPath) {
+        if (localPath != null) {
+            try {
+                val metadata = FileSystem.SYSTEM.metadataOrNull(localPath.toPath())
+                metadata?.lastModifiedAtMillis ?: 0L
+            } catch (e: Exception) {
+                0L
+            }
+        } else {
+            0L
+        }
+    }
+
+    val isOutdated = expectedDbTimestamp > 0L && localFileTime > 0L && expectedDbTimestamp > localFileTime
+    var localFileExists by remember(refNum, localPath, isOutdated) { 
+        mutableStateOf(localPath != null && !isOutdated) 
+    }
     
     if (localFileExists && localPath != null) {
         GcImage(
@@ -103,7 +132,7 @@ fun SyncImage(
         if (baseUrl.isNullOrBlank() || dlFilename.isEmpty() || repository == null) {
             GcImage(
                 modifier = modifier,
-                imageFile = null,
+                imageFile = localPath, // fallback to local image if exists even if we can't download
                 imageBitmap = fallbackBitmap,
                 contentDescription = toyDescription,
                 fullImageOnClick = fullImageOnClick,
@@ -147,7 +176,7 @@ fun SyncImage(
             if (downloadFailed) {
                 GcImage(
                     modifier = modifier,
-                    imageFile = null,
+                    imageFile = localPath, // fallback to local image if exists
                     imageBitmap = fallbackBitmap,
                     contentDescription = toyDescription,
                     fullImageOnClick = fullImageOnClick,

@@ -355,6 +355,20 @@ fun MakerDetailContent(
                         lazyItems(makerImages) { filename ->
                             val baseUrl = remember { repository?.getBaseUrlSetting() }
                             val bitmapUri = remember(filename) { resolveBitmapUri(filename) }
+                            val imageTimestamp = remember(maker, filename) {
+                                if (maker != null) {
+                                    val names = maker.bitmaps.split(" ").filter { it.trim().isNotEmpty() }
+                                    val times = maker.bitmapsTimeStamp.split(" ").filter { it.trim().isNotEmpty() }
+                                    val index = names.indexOf(filename)
+                                    if (index != -1) {
+                                        times.getOrNull(index)?.toLongOrNull() ?: 0L
+                                    } else {
+                                        0L
+                                    }
+                                } else {
+                                    0L
+                                }
+                            }
                             if (bitmapUri != null || !baseUrl.isNullOrBlank()) {
                                 SyncImage(
                                     repository = repository,
@@ -365,6 +379,7 @@ fun MakerDetailContent(
                                     cornerSize = 16.dp,
                                     contentScale = ContentScale.Fit,
                                     fullImageOnClick = true,
+                                    timestamp = imageTimestamp,
                                     onDownloaded = onRefreshImages
                                 )
                             } else {
