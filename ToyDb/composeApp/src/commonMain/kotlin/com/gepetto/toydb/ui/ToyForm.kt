@@ -17,6 +17,8 @@ import org.jetbrains.compose.resources.stringResource
 import toydb.composeapp.generated.resources.*
 import club.gepetto.GcLog
 import club.gepetto.composeutils.image.GcImage
+import club.gepetto.composeutils.PlatformFile
+import coil3.SingletonImageLoader
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
@@ -36,6 +38,7 @@ fun ToyForm(
     modifier: Modifier = Modifier
 ) {
     var tabIndex by remember { mutableStateOf(0) }
+    val context = coil3.compose.LocalPlatformContext.current
     val tabs = listOf(
         stringResource(Res.string.tab_general),
         stringResource(Res.string.tab_makers_parts),
@@ -118,6 +121,16 @@ fun ToyForm(
                 FileSystem.SYSTEM.delete(destPath)
             }
             FileSystem.SYSTEM.copy(srcPath, destPath)
+            
+            try {
+                val absolutePath = PlatformFile(destPath.toString()).absolutePath
+                val imageLoader = SingletonImageLoader.get(context)
+                imageLoader.memoryCache?.remove(coil3.memory.MemoryCache.Key(absolutePath))
+                imageLoader.diskCache?.remove(absolutePath)
+                GcLog.d("ToyForm", "Evicted Coil cache for main picture: $absolutePath")
+            } catch (e: Exception) {
+                GcLog.e("ToyForm", "Error evicting Coil cache: ${e.message}", e)
+            }
             
             val size = FileSystem.SYSTEM.metadataOrNull(destPath)?.size ?: 0L
             val timestamp = System.currentTimeMillis()
