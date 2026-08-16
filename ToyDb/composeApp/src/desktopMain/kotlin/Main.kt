@@ -51,9 +51,10 @@ fun main(args: Array<String>) {
     if (isInitialInstall) {
         try {
             database.execute("DELETE FROM toys")
-            GcLog.d("ToyDbMain", "Initial install detected. Cleared toys table, keeping pre-populated makers and settings.")
+            database.execute("DELETE FROM app_settings WHERE key LIKE 'html_sync_imported_%'")
+            GcLog.d("ToyDbMain", "Initial install detected. Cleared toys table and sync metadata, keeping pre-populated makers and settings.")
         } catch (e: Exception) {
-            GcLog.e("ToyDbMain", "Failed to clear toys table on initial install: ${e.message}", e)
+            GcLog.e("ToyDbMain", "Failed to clear toys table and sync metadata on initial install: ${e.message}", e)
         }
     }
 

@@ -53,9 +53,11 @@ object HtmlSyncService {
         
         return withContext(club.gepetto.utils.ioDispatcher) {
             try {
+                GcLog.d(TAG, "Starting HTML Sync check. Base URL: $baseUrl")
                 // 1. Download category_settings.json
                 val catSettingsUrl = if (baseUrl.endsWith("/")) "${baseUrl}category_settings.json" else "$baseUrl/category_settings.json"
                 val catResponse = client.get(catSettingsUrl)
+                GcLog.d(TAG, "category_settings.json downloaded. status = ${catResponse.status.value}")
                 if (catResponse.status.value != 200) {
                     GcLog.e(TAG, "Failed to download category_settings.json from server: HTTP ${catResponse.status.value}")
                     return@withContext false
@@ -78,6 +80,7 @@ object HtmlSyncService {
                 cursorHash.close()
                 
                 var isNewer = catServerTime > catStoredTime || catStoredDateStr.isEmpty() || (catServerTime == catStoredTime && catServerHash != catStoredHash)
+                GcLog.d(TAG, "category_settings.json comparison: serverTime=$catServerTime, storedTime=$catStoredTime, isNewer=$isNewer")
                 
                 // Parse category settings to get dynamic categories
                 val parsedSettings = json.decodeFromString<JsonCategorySettingsFile>(catContent)
@@ -92,6 +95,7 @@ object HtmlSyncService {
                     makersUrl = if (baseUrl.endsWith("/")) "$baseUrl$makersFilename" else "$baseUrl/$makersFilename"
                     makersResponse = client.get(makersUrl)
                 }
+                GcLog.d(TAG, "Makers file downloaded ($makersFilename). status = ${makersResponse.status.value}")
                 if (makersResponse.status.value != 200) {
                     GcLog.e(TAG, "Failed to locate makers JSON file on server.")
                     return@withContext false
@@ -112,7 +116,9 @@ object HtmlSyncService {
                 val makersStoredHash = if (cursorMakersHash.next()) cursorMakersHash.getString("value") ?: "" else ""
                 cursorMakersHash.close()
 
-                if (makersServerTime > makersStoredTime || makersStoredDateStr.isEmpty() || (makersServerTime == makersStoredTime && makersServerHash != makersStoredHash)) {
+                val makersNewer = makersServerTime > makersStoredTime || makersStoredDateStr.isEmpty() || (makersServerTime == makersStoredTime && makersServerHash != makersStoredHash)
+                GcLog.d(TAG, "makers comparison: serverTime=$makersServerTime, storedTime=$makersStoredTime, makersNewer=$makersNewer")
+                if (makersNewer) {
                     isNewer = true
                 }
                 
@@ -130,6 +136,7 @@ object HtmlSyncService {
                     for (name in potentialNames) {
                         val url = if (baseUrl.endsWith("/")) "$baseUrl$name" else "$baseUrl/$name"
                         val response = client.get(url)
+                        GcLog.d(TAG, "Checking category file '$name' at $url, status = ${response.status.value}")
                         if (response.status.value == 200) {
                             foundContent = response.bodyAsText()
                             foundFilename = name
@@ -155,13 +162,35 @@ object HtmlSyncService {
                     val listStoredHash = if (cursorListHash.next()) cursorListHash.getString("value") ?: "" else ""
                     cursorListHash.close()
 
-                    if (listServerTime > listStoredTime || listStoredDateStr.isEmpty() || (listServerTime == listStoredTime && listServerHash != listStoredHash)) {
+                    val listNewer = listServerTime > listStoredTime || listStoredDateStr.isEmpty() || (listServerTime == listStoredTime && listServerHash != listStoredHash)
+                    GcLog.d(TAG, "category '${cat.category}' comparison: serverTime=$listServerTime, storedTime=$listStoredTime, listNewer=$listNewer")
+                    if (listNewer) {
                         isNewer = true
                     }
                     
                     categoryFilesToDownload.add(Triple(cat.category, foundFilename, foundContent))
                 }
+
+                // Check if local toys database has 0 records; if so, force sync
+                var hasToys = false
+                try {
+                    val countCursor = db.query("SELECT COUNT(*) as total FROM toys")
+                    if (countCursor.next()) {
+                        val total = countCursor.getInt("total") ?: 0
+                        hasToys = total > 0
+                    }
+                    countCursor.close()
+                } catch (e: Exception) {
+                    GcLog.e(TAG, "Error checking local toys count: ${e.message}", e)
+                }
+                GcLog.d(TAG, "Local toys count is empty: ${!hasToys}")
+
+                if (!hasToys) {
+                    GcLog.d(TAG, "Local toys table is empty. Forcing web synchronization.")
+                    isNewer = true
+                }
                 
+                GcLog.d(TAG, "Final isNewer check: $isNewer")
                 // If nothing is newer, skip sync
                 if (!isNewer) {
                     GcLog.d(TAG, "Local database is already up to date with HTML server.")
@@ -205,7 +234,7 @@ object HtmlSyncService {
                 return@withContext true
             } catch (e: Exception) {
                 GcLog.e(TAG, "Error performing HTML startup sync: ${e.message}", e)
-                return@withContext false
+                throw e
             }
         }
     }

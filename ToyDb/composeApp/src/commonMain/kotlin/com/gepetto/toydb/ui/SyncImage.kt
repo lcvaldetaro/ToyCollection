@@ -72,9 +72,10 @@ fun SyncImage(
 ) {
     val refNum = toy?.refNum ?: 0
     val toyDescription = toy?.description ?: filename ?: ""
+    var downloadSuccessTrigger by remember { mutableStateOf(0) }
 
     // Resolve local path
-    val localPath = remember(refNum, filename, isMainImage) {
+    val localPath = remember(refNum, filename, isMainImage, downloadSuccessTrigger) {
         if (isMainImage && toy != null) {
             resolveImageUri(prefix, toy.refNum)
         } else {
@@ -161,6 +162,7 @@ fun SyncImage(
                             }
                             withContext(Dispatchers.Main) {
                                 localFileExists = true
+                                downloadSuccessTrigger++
                                 onDownloaded()
                             }
                         } else {

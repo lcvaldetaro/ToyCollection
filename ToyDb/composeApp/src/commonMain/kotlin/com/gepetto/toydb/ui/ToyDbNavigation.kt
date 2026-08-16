@@ -124,12 +124,16 @@ fun ToyDbNavigation(
         com.gepetto.toydb.utils.ImageResolverConfig.imagesPath = repository.getDataPathSetting()
         
         launch(club.gepetto.utils.ioDispatcher) {
-            val syncCompleted = com.gepetto.toydb.service.HtmlSyncService.syncIfNewer(db, repository)
-            if (syncCompleted) {
-                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-                    categoriesSettings = repository.getCategorySettings()
-                    syncTrigger++
+            try {
+                val syncCompleted = com.gepetto.toydb.service.HtmlSyncService.syncIfNewer(db, repository)
+                if (syncCompleted) {
+                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                        categoriesSettings = repository.getCategorySettings()
+                        syncTrigger++
+                    }
                 }
+            } catch (e: Exception) {
+                club.gepetto.GcLog.e("ToyDbNavigation", "Failed to run startup HTML synchronization: ${e.message}", e)
             }
         }
     }

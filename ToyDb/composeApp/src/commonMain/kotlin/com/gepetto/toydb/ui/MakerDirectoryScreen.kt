@@ -55,6 +55,7 @@ fun MakerDirectoryScreen(
     }
 
     MakerDirectoryContent(
+        repository = repository,
         filteredMakers = filteredMakers,
         searchQuery = searchQuery,
         onSearchQueryChange = { searchQuery = it },
@@ -66,6 +67,7 @@ fun MakerDirectoryScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MakerDirectoryContent(
+    repository: ToyRepository? = null,
     filteredMakers: List<Pair<Maker, Int>>,
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
@@ -142,6 +144,7 @@ fun MakerDirectoryContent(
                                     if (columnHeight > 0) Modifier.height(columnHeightDp) else Modifier
 
                                 MakerItemCard(
+                                    repository = repository,
                                     maker = maker,
                                     toyCount = toyCount,
                                     modifier = localModifier
@@ -185,6 +188,7 @@ fun MakerDirectoryContentPreview() {
 
 @Composable
 fun MakerItemCard(
+    repository: ToyRepository? = null,
     maker: Maker,
     toyCount: Int,
     modifier: Modifier = Modifier,
@@ -195,38 +199,40 @@ fun MakerItemCard(
         maker.bitmaps.split(" ").filter { it.trim().isNotEmpty() }
     }
     val firstImage = makerImages.firstOrNull()
-    val bitmapUri = remember(firstImage) { firstImage?.let { resolveBitmapUri(it) } }
+    val imageTimestamp = remember(maker, firstImage) {
+        if (firstImage != null) {
+            val names = maker.bitmaps.split(" ").filter { it.trim().isNotEmpty() }
+            val times = maker.bitmapsTimeStamp.split(" ").filter { it.trim().isNotEmpty() }
+            val index = names.indexOf(firstImage)
+            if (index != -1) {
+                times.getOrNull(index)?.toLongOrNull() ?: 0L
+            } else {
+                0L
+            }
+        } else {
+            0L
+        }
+    }
+    val textBitmap = remember(maker.name, textColor) {
+        textAsBitmap(text = maker.name, textColor = textColor.toArgb())
+    }
 
     GcCard(
         modifier = modifier.clickable { onClick() },
     ) {
         Row {
-            if (bitmapUri == null) {
-                val textBitmap = remember(maker.name, textColor) {
-                    textAsBitmap(text = maker.name, textColor = textColor.toArgb())
-                }
-                GcImage(
-                    modifier = Modifier.align(Alignment.CenterVertically),
-                    imageBitmap = textBitmap,
-                    contentDescription = maker.name,
-                    fullImageOnClick = false,
-                    size = 48.dp,
-                    cornerSize = 16.dp,
-                    paddingSize = 4.dp,
-                    onClick = onClick
-                )
-            } else {
-                GcImage(
-                    modifier = Modifier.align(Alignment.CenterVertically),
-                    imageFile = bitmapUri,
-                    contentDescription = maker.name,
-                    fullImageOnClick = false,
-                    size = 48.dp,
-                    cornerSize = 16.dp,
-                    paddingSize = 4.dp,
-                    onClick = onClick
-                )
-            }
+            SyncImage(
+                repository = repository,
+                isMainImage = false,
+                filename = firstImage,
+                fallbackBitmap = textBitmap,
+                modifier = Modifier.align(Alignment.CenterVertically),
+                size = 48.dp,
+                cornerSize = 16.dp,
+                paddingSize = 4.dp,
+                timestamp = imageTimestamp,
+                onClick = onClick
+            )
 
             Column(
                 modifier = Modifier

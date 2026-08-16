@@ -49,9 +49,10 @@ class AppMainActivity : ComponentActivity() {
         if (isInitialInstall) {
             try {
                 database.execute("DELETE FROM toys")
-                android.util.Log.d("AppMainActivity", "Initial install detected. Cleared toys table, keeping pre-populated makers and settings.")
+                database.execute("DELETE FROM app_settings WHERE key LIKE 'html_sync_imported_%'")
+                android.util.Log.d("AppMainActivity", "Initial install detected. Cleared toys table and sync metadata, keeping pre-populated makers and settings.")
             } catch (e: Exception) {
-                android.util.Log.e("AppMainActivity", "Failed to clear toys table on initial install: ${e.message}", e)
+                android.util.Log.e("AppMainActivity", "Failed to clear toys table and sync metadata on initial install: ${e.message}", e)
             }
         }
 
