@@ -918,11 +918,7 @@ object ImportExportService {
             makerHtml.append("</table><p>Total in list: ${toys.size} models from ${sortedBrands.size} different brands, $factoryCount of them being factory models, ")
             makerHtml.append("$reproCount are reproductions.<br>$count24 are 1/28 scale or bigger, $count32 are 1/32 scale, $count44 are O scale, $countHO are HO scale and $countN are N scale or smaller.<br>")
             
-            if (config.imagePrefix.startsWith("car", ignoreCase = true)) {
-                makerHtml.append("</center><HR><center><img src='pistagif.gif'></center><HR><br><img SRC=\"http://www.truegem.net/cgi-bin/gifcounter/valdetaro/collection${config.imagePrefix}\"--><br>Build ${CommonConfig.versionCodeString}</body></HTML>")
-            } else {
-                makerHtml.append("</center><HR><center><img src='pistagif.gif'><center><HR><br><img SRC=\"http://www.truegem.net/cgi-bin/gifcounter/valdetaro/trdlist${config.imagePrefix}\"--><br>Build ${CommonConfig.versionCodeString}</body></HTML>")
-            }
+            makerHtml.append("</center><HR><center><img src='pistagif.gif'></center><HR><br><br>Build ${CommonConfig.versionCodeString}</body></HTML>")
 
             fs.write(makerPath) {
                 write(makerHtml.toString().toIso8859_1Bytes())
