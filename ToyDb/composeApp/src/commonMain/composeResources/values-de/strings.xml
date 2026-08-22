@@ -277,4 +277,8 @@ Alle Rechte vorbehalten.</string>
     <string name="web_sync_success">Web-Synchronisierung abgeschlossen</string>
     <string name="web_sync_error">Web-Synchronisierung fehlgeschlagen</string>
     <string name="web_sync_no_updates">Web-Synchronisierung abgeschlossen (bereits aktuell)</string>
+    <string name="nav_stats">Statistiken</string>
+    <string name="nav_makers">Hersteller</string>
+    <string name="nav_settings">Einstellungen</string>
+    <string name="nav_info">Info</string>
 </resources>

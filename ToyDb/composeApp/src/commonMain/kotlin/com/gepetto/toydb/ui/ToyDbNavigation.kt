@@ -255,10 +255,15 @@ fun ToyDbNavigation(
         BoxWithConstraints {
             val isLandscape = maxWidth > maxHeight
 
-        val buttons = remember(categoriesSettings, isLandscape) {
+        val navStats = stringResource(Res.string.nav_stats)
+        val navMakers = stringResource(Res.string.nav_makers)
+        val navSettings = stringResource(Res.string.nav_settings)
+        val navInfo = stringResource(Res.string.nav_info)
+
+        val buttons = remember(categoriesSettings, isLandscape, navStats, navMakers, navSettings, navInfo) {
             val list = mutableListOf<GcNavButton>()
             list.add(
-                GcNavButton(label = "Stats", imageVector = Icons.Default.Dashboard, navChoice = "dashboard", onClick = {
+                GcNavButton(label = navStats, imageVector = Icons.Default.Dashboard, navChoice = "dashboard", onClick = {
                     backStack.clear()
                     backStack.add(Destination.Dashboard)
                 })
@@ -280,19 +285,19 @@ fun ToyDbNavigation(
                 }
             }
             list.add(
-                GcNavButton(label = "Makers", imageVector = Icons.Default.Business, navChoice = "makers", onClick = {
+                GcNavButton(label = navMakers, imageVector = Icons.Default.Business, navChoice = "makers", onClick = {
                     backStack.clear()
                     backStack.add(Destination.MakerDirectory)
                 })
             )
             list.add(
-                GcNavButton(label = if (!isLandscape) "Setup" else "Settings", imageVector = Icons.Default.Settings, navChoice = "settings", onClick = {
+                GcNavButton(label = navSettings, imageVector = Icons.Default.Settings, navChoice = "settings", onClick = {
                     backStack.clear()
                     backStack.add(Destination.Settings)
                 })
             )
             list.add(
-                GcNavButton(label = "Info", imageVector = Icons.Default.Info, navChoice = "info", onClick = {
+                GcNavButton(label = navInfo, imageVector = Icons.Default.Info, navChoice = "info", onClick = {
                     backStack.clear()
                     backStack.add(Destination.Info)
                 })
