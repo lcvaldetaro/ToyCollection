@@ -21,7 +21,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "ToyCollectionMultiplatform"
+rootProject.name = "ToyCollection"
 
 include(":composeApp")
 include(":shared:common")
