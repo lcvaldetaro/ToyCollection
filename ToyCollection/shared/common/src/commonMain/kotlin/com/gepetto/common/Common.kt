@@ -1,7 +1,7 @@
 package com.gepetto.common
 
 import coil3.ImageLoader
-import toycollectionmultiplatform.shared.common.generated.resources.Res
+import toycollection.shared.common.generated.resources.Res
 
 object Common  {
     lateinit var directoryFile: GcFile

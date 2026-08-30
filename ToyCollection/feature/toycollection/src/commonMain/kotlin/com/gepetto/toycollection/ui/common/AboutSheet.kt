@@ -23,8 +23,8 @@ import club.gepetto.composeutils.Res
 import club.gepetto.composeutils.*
 import com.gepetto.toycollection.ui.collection.main.getResourceFromFilename
 import org.jetbrains.compose.resources.stringResource
-import toycollectionmultiplatform.shared.common.generated.resources.Res as SharedRes
-import toycollectionmultiplatform.shared.common.generated.resources.privacy_policy_link
+import toycollection.shared.common.generated.resources.Res as SharedRes
+import toycollection.shared.common.generated.resources.privacy_policy_link
 
 @Composable
 fun AboutSheet (

@@ -17,8 +17,8 @@ import coil3.PlatformContext
 import club.gepetto.composeutils.image.gCsetImagesBaseUrl
 import com.gepetto.common.WEBSITE_BASE_URL
 import org.jetbrains.compose.resources.painterResource
-import toycollectionmultiplatform.shared.common.generated.resources.Res
-import toycollectionmultiplatform.shared.common.generated.resources.icon
+import toycollection.shared.common.generated.resources.Res
+import toycollection.shared.common.generated.resources.icon
 
 
 fun main() {
