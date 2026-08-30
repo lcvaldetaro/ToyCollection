@@ -36,12 +36,12 @@ A Kotlin Multiplatform (KMP) application designed to browse and view Gepetto's e
 
 ## 📂 Core Module Structure
 
-* [**`:shared:common`**](file:///Users/luizvaldetaro/valdetaro/ToyCollection/ToyCollectionMultiplatform/shared/common): Shared common constants, settings models, platform utilities, and custom file systems.
-* [**`:feature:toycollection`**](file:///Users/luizvaldetaro/valdetaro/ToyCollection/ToyCollectionMultiplatform/feature/toycollection): The core feature implementation containing:
+* [**`:shared:common`**](file:///Users/luizvaldetaro/valdetaro/ToyCollection/ToyCollection/shared/common): Shared common constants, settings models, platform utilities, and custom file systems.
+* [**`:feature:toycollection`**](file:///Users/luizvaldetaro/valdetaro/ToyCollection/ToyCollection/feature/toycollection): The core feature implementation containing:
   - **MVI Intent Processors**: `HomeIntentProcessor`, `CollectionIntentProcessor`, `ToyIntentProcessor`, `MakerIntentProcessor`, `SearchIntentProcessor`.
   - **Data Providers**: Services that orchestrate local fetching and download syncing.
   - **UI Views**: Declarative screens including `HomeView`, `CollectionView`, `MakerView`, `ToyView`, `SearchView`, `WebPageView` (inline web search viewer), and `AboutSheet`.
-* [**`:composeApp`**](file:///Users/luizvaldetaro/valdetaro/ToyCollection/ToyCollectionMultiplatform/composeApp): Launcher project configuring application properties, dependencies, launcher entry points (`MainActivity` for Android, `Main` for desktop, and `main.kt` for Web wasmJs), and packaging build tasks.
+* [**`:composeApp`**](file:///Users/luizvaldetaro/valdetaro/ToyCollection/ToyCollection/composeApp): Launcher project configuring application properties, dependencies, launcher entry points (`MainActivity` for Android, `Main` for desktop, and `main.kt` for Web wasmJs), and packaging build tasks.
 
 ---
 
