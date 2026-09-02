@@ -165,10 +165,14 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file(project.findProperty("gepetto.lapcounter.store_file") as String? ?: "release.keystore")
-            storePassword = project.findProperty("gepetto.store_psw") as String?
-            keyAlias = project.findProperty("gepetto.key_alias") as String?
-            keyPassword = project.findProperty("gepetto.key_psw") as String?
+            val customStoreFile = project.findProperty("gepetto.lapcounter.store_file") as String?
+            val targetFile = file(customStoreFile ?: "release.keystore")
+            if (targetFile.exists()) {
+                storeFile = targetFile
+                storePassword = project.findProperty("gepetto.store_psw") as String?
+                keyAlias = project.findProperty("gepetto.key_alias") as String?
+                keyPassword = project.findProperty("gepetto.key_psw") as String?
+            }
         }
     }
 
@@ -195,18 +199,35 @@ android {
     }
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+            val releaseSigning = signingConfigs.getByName("release")
+            if (releaseSigning.storeFile?.exists() == true) {
+                signingConfig = releaseSigning
+            }
         }
         getByName("debug") {
             isMinifyEnabled = false
             isDebuggable = true
-            signingConfig = signingConfigs.getByName("release")
+            val releaseSigning = signingConfigs.getByName("release")
+            if (releaseSigning.storeFile?.exists() == true) {
+                signingConfig = releaseSigning
+            }
         }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    bundle {
+        language {
+            enableSplit = false
+        }
     }
 }
 

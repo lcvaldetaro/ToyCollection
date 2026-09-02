@@ -41,6 +41,7 @@ import toydb.composeapp.generated.resources.Res
 fun HomeDestination(
     onNavigateToDashboard: () -> Unit,
     onNavigateToInfo: () -> Unit,
+    title: String = stringResource(Res.string.app_name),
     themeMode: Int = 0,
     modifier: Modifier = Modifier
 ) {
@@ -121,6 +122,14 @@ fun HomeDestination(
             contentDescription = "Gepetto",
             modifier = Modifier.fillMaxSize(),
             contentScale = contentScale
+        )
+
+        HomeTitle(
+            title = title,
+            onTitleClick = onNavigateToInfo,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
         )
 
         ShowBanner(
@@ -217,7 +226,8 @@ fun HomeDestinationPreview() {
     GcTheme {
         HomeDestination(
             onNavigateToDashboard = {},
-            onNavigateToInfo = {}
+            onNavigateToInfo = {},
+            title = "Gepetto Toy Database Manager"
         )
     }
 }

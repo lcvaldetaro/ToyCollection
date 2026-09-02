@@ -135,6 +135,7 @@ fun ToyDbNavigation(
     var themeMode by remember { mutableStateOf(repository.getThemeSetting()) }
     var categoriesSettings by remember { mutableStateOf(repository.getCategorySettings()) }
     var syncTrigger by remember { mutableStateOf(0) }
+    var appTitle by remember { mutableStateOf(repository.getAppTitleSetting()) }
 
     var showSetupPrompt by remember {
         mutableStateOf(
@@ -355,6 +356,7 @@ fun ToyDbNavigation(
                         entryProvider = entryProvider {
                             entry<Destination.Home> {
                                 HomeDestination(
+                                    title = appTitle,
                                     onNavigateToDashboard = {
                                         backStack.add(Destination.Dashboard)
                                     },
@@ -438,6 +440,7 @@ fun ToyDbNavigation(
                                     },
                                     onNavigate = { backStack.add(it) },
                                     onAppTitleChanged = { newTitle ->
+                                        appTitle = newTitle
                                         onAppTitleChanged?.invoke(newTitle)
                                     }
                                 )
