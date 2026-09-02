@@ -4,6 +4,7 @@ import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
 
 sealed interface Destination : NavKey {
+    @Serializable data object Home : Destination
     @Serializable data object Dashboard : Destination
     @Serializable data class CategoryExplorer(val category: String) : Destination
     @Serializable data object MakerDirectory : Destination

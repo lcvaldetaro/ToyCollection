@@ -277,8 +277,18 @@ Todos los derechos reservados.</string>
     <string name="web_sync_success">Sincronización Web completada</string>
     <string name="web_sync_error">Sincronización Web fallida</string>
     <string name="web_sync_no_updates">Sincronización Web completada (ya estaba al día)</string>
+    <string name="nav_home">Inicio</string>
     <string name="nav_stats">Estadísticas</string>
     <string name="nav_makers">Fabricantes</string>
     <string name="nav_settings">Ajustes</string>
     <string name="nav_info">Info</string>
+    <string name="home_banner_p1">\tGepetto realmente ama los juguetes y los colecciona. Creó Toy Database Manager para organizar, catalogar, actualizar y gestionar sus colecciones de juguetes (Autos de Slot, Trenes a Escala, Modelos Estáticos, Kits de Modelismo y más) y sus fabricantes, pero diseñó la aplicación de forma genérica para que tú también puedas gestionar tus propias colecciones.</string>
+    <string name="home_banner_p2_pre">\n\tVe al </string>
+    <string name="home_banner_link_dashboard">Panel de Control</string>
+    <string name="home_banner_p2_post"> para ver el resumen de tu colección, totales y explorar categorías.</string>
+    <string name="home_banner_p3_pre">\n\tPara aprender cómo funciona todo o configurar la sincronización, consulta </string>
+    <string name="home_banner_link_info">Acerca de e Info</string>
+    <string name="home_banner_p3_post">.\n</string>
+    <string name="home_banner_p4">\n\t¡Disfruta gestionando tu colección!</string>
+    <string name="home_banner_show_info">Mostrar Introducción</string>
 </resources>

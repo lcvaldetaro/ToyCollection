@@ -277,8 +277,18 @@ Alle Rechte vorbehalten.</string>
     <string name="web_sync_success">Web-Synchronisierung abgeschlossen</string>
     <string name="web_sync_error">Web-Synchronisierung fehlgeschlagen</string>
     <string name="web_sync_no_updates">Web-Synchronisierung abgeschlossen (bereits aktuell)</string>
+    <string name="nav_home">Startseite</string>
     <string name="nav_stats">Statistiken</string>
     <string name="nav_makers">Hersteller</string>
     <string name="nav_settings">Einstellungen</string>
     <string name="nav_info">Info</string>
+    <string name="home_banner_p1">\tGepetto liebt Spielzeuge wirklich sehr und sammelt sie. Er hat den Toy Database Manager entwickelt, um seine Spielzeugsammlungen (Slotcars, Modelleisenbahnen, Standmodelle, Bausätze und mehr) sowie deren Hersteller zu organisieren, zu katalogisieren, zu aktualisieren und zu verwalten – er hat die App jedoch flexibel gestaltet, damit auch Sie Ihre eigenen Sammlungen verwalten können.</string>
+    <string name="home_banner_p2_pre">\n\tGehen Sie zum </string>
+    <string name="home_banner_link_dashboard">Dashboard</string>
+    <string name="home_banner_p2_post">, um eine Übersicht Ihrer Sammlung und Gesamtzahlen zu sehen und Kategorien zu erkunden.</string>
+    <string name="home_banner_p3_pre">\n\tUm mehr über die Funktionen zu erfahren oder die Synchronisierung einzurichten, lesen Sie </string>
+    <string name="home_banner_link_info">Über &amp; Info</string>
+    <string name="home_banner_p3_post">.\n</string>
+    <string name="home_banner_p4">\n\tViel Spaß beim Verwalten Ihrer Sammlung!</string>
+    <string name="home_banner_show_info">Einführung anzeigen</string>
 </resources>

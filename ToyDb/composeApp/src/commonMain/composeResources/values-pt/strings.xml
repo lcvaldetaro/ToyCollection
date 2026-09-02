@@ -277,8 +277,18 @@ Todos os direitos reservados.</string>
     <string name="web_sync_success">Sincronização Web concluída</string>
     <string name="web_sync_error">Falha na sincronização Web</string>
     <string name="web_sync_no_updates">Sincronização Web concluída (já estava atualizado)</string>
+    <string name="nav_home">Início</string>
     <string name="nav_stats">Estatísticas</string>
     <string name="nav_makers">Fabricantes</string>
     <string name="nav_settings">Ajustes</string>
     <string name="nav_info">Info</string>
+    <string name="home_banner_p1">\tGepetto realmente ama brinquedos e os coleciona. Ele criou o Toy Database Manager para organizar, catalogar, atualizar e gerenciar suas coleções de brinquedos (Autoramas, Trens em miniatura, Modelos estáticos, Kits de montagem e muito mais) e seus fabricantes, mas fez o aplicativo de forma genérica para que você também possa gerenciar suas próprias coleções.</string>
+    <string name="home_banner_p2_pre">\n\tAcesse o </string>
+    <string name="home_banner_link_dashboard">Painel</string>
+    <string name="home_banner_p2_post"> para ver a visão geral de sua coleção, totais e explorar categorias.</string>
+    <string name="home_banner_p3_pre">\n\tPara aprender como tudo funciona ou configurar a sincronização, confira </string>
+    <string name="home_banner_link_info">Sobre e Informações</string>
+    <string name="home_banner_p3_post">.\n</string>
+    <string name="home_banner_p4">\n\tAproveite o gerenciamento da sua coleção!</string>
+    <string name="home_banner_show_info">Mostrar Introdução</string>
 </resources>

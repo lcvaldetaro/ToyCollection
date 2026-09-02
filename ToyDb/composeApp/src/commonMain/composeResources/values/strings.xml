@@ -277,8 +277,18 @@ All rights reserved.</string>
     <string name="web_sync_success">Web synchronization completed</string>
     <string name="web_sync_error">Web synchronization failed</string>
     <string name="web_sync_no_updates">Web synchronization completed (already up to date)</string>
+    <string name="nav_home">Home</string>
     <string name="nav_stats">Stats</string>
     <string name="nav_makers">Makers</string>
     <string name="nav_settings">Settings</string>
     <string name="nav_info">Info</string>
+    <string name="home_banner_p1">\tGepetto really loves toys and collects them. He created Toy Database Manager to organize, catalog, update, and manage his toy collections (Slot Cars, Model Trains, Static Models, Model Kits, and more) and their manufacturers, but he made it generic so you can manage your own collections too.</string>
+    <string name="home_banner_p2_pre">\n\tHead over to the </string>
+    <string name="home_banner_link_dashboard">Dashboard</string>
+    <string name="home_banner_p2_post"> to see your collection overview, totals, and explore categories.</string>
+    <string name="home_banner_p3_pre">\n\tTo learn how everything works or set up synchronization, check out </string>
+    <string name="home_banner_link_info">About &amp; Info</string>
+    <string name="home_banner_p3_post">.\n</string>
+    <string name="home_banner_p4">\n\tEnjoy managing your collection!</string>
+    <string name="home_banner_show_info">Show Introduction</string>
 </resources>

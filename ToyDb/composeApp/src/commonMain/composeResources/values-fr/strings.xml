@@ -277,8 +277,18 @@ Tous droits réservés.</string>
     <string name="web_sync_success">Synchronisation Web terminée</string>
     <string name="web_sync_error">Synchronisation Web échouée</string>
     <string name="web_sync_no_updates">Synchronisation Web terminée (déjà à jour)</string>
+    <string name="nav_home">Accueil</string>
     <string name="nav_stats">Stats</string>
     <string name="nav_makers">Fabricants</string>
     <string name="nav_settings">Paramètres</string>
     <string name="nav_info">Info</string>
+    <string name="home_banner_p1">\tGepetto adore vraiment les jouets et les collectionne. Il a créé Toy Database Manager pour organiser, cataloguer, mettre à jour et gérer ses collections de jouets (Voitures de circuit, Trains miniatures, Modèles statiques, Maquettes et plus) ainsi que leurs fabricants, mais il l\'a conçue de façon générique afin que vous puissiez également gérer vos propres collections.</string>
+    <string name="home_banner_p2_pre">\n\tRendez-vous sur le </string>
+    <string name="home_banner_link_dashboard">Tableau de Bord</string>
+    <string name="home_banner_p2_post"> pour consulter l\'aperçu de votre collection, les totaux et explorer les catégories.</string>
+    <string name="home_banner_p3_pre">\n\tPour découvrir le fonctionnement ou configurer la synchronisation, consultez </string>
+    <string name="home_banner_link_info">À propos et Infos</string>
+    <string name="home_banner_p3_post">.\n</string>
+    <string name="home_banner_p4">\n\tBonne gestion de votre collection !</string>
+    <string name="home_banner_show_info">Afficher l\'Introduction</string>
 </resources>

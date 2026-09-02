@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Train
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Brush
 import androidx.compose.material.icons.filled.Toys
 import androidx.compose.material.icons.filled.Star
@@ -47,6 +48,7 @@ import club.gepetto.composeutils.navigation3.GcNavDisplay
 import club.gepetto.composeutils.navigation3.GcSceneStrategy
 import club.gepetto.composeutils.navigation3.rememberGcSceneStrategy
 import club.gepetto.composeutils.navigation3.removeUpToInclusive
+import club.gepetto.composeutils.navigation3.removeUpToExclusiveAndAdd
 import org.jetbrains.compose.resources.stringResource
 import toydb.composeapp.generated.resources.*
 import club.gepetto.composeutils.scaffold.GcAdaptiveScaffold
@@ -100,6 +102,27 @@ private fun copyMakerImages(repository: ToyRepository, selectedImagesPath: Strin
     }
 }
 
+private fun navigateRoot(backStack: MutableList<Destination>, target: Destination) {
+    if (target == Destination.Home) {
+        if (backStack.contains(Destination.Home)) {
+            while (backStack.last() != Destination.Home) {
+                backStack.removeLastOrNull()
+            }
+        } else {
+            backStack.clear()
+            backStack.add(Destination.Home)
+        }
+    } else {
+        if (backStack.contains(Destination.Home)) {
+            backStack.removeUpToExclusiveAndAdd(Destination.Home, target)
+        } else {
+            backStack.clear()
+            backStack.add(Destination.Home)
+            backStack.add(target)
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ToyDbNavigation(
@@ -145,7 +168,7 @@ fun ToyDbNavigation(
     }
 
     GcTheme(darkTheme = isDark) {
-        val backStack = remember { mutableStateListOf<Destination>(Destination.Dashboard) }
+        val backStack = remember { mutableStateListOf<Destination>(Destination.Home) }
         val gcSceneStrategy = rememberGcSceneStrategy<NavKey>()
 
         if (showSetupPrompt) {
@@ -244,6 +267,7 @@ fun ToyDbNavigation(
         }
 
         val currentChoice = when (val last = backStack.lastOrNull()) {
+            is Destination.Home -> "home"
             is Destination.Dashboard -> "dashboard"
             is Destination.CategoryExplorer -> "explorer_${last.category}"
             is Destination.MakerDirectory -> "makers"
@@ -255,17 +279,22 @@ fun ToyDbNavigation(
         BoxWithConstraints {
             val isLandscape = maxWidth > maxHeight
 
+        val navHome = stringResource(Res.string.nav_home)
         val navStats = stringResource(Res.string.nav_stats)
         val navMakers = stringResource(Res.string.nav_makers)
         val navSettings = stringResource(Res.string.nav_settings)
         val navInfo = stringResource(Res.string.nav_info)
 
-        val buttons = remember(categoriesSettings, isLandscape, navStats, navMakers, navSettings, navInfo) {
+        val buttons = remember(categoriesSettings, isLandscape, navHome, navStats, navMakers, navSettings, navInfo) {
             val list = mutableListOf<GcNavButton>()
             list.add(
+                GcNavButton(label = navHome, imageVector = Icons.Default.Home, navChoice = "home", onClick = {
+                    navigateRoot(backStack, Destination.Home)
+                })
+            )
+            list.add(
                 GcNavButton(label = navStats, imageVector = Icons.Default.Dashboard, navChoice = "dashboard", onClick = {
-                    backStack.clear()
-                    backStack.add(Destination.Dashboard)
+                    navigateRoot(backStack, Destination.Dashboard)
                 })
             )
             if (isLandscape) {
@@ -277,8 +306,7 @@ fun ToyDbNavigation(
                             imageVector = icon,
                             navChoice = "explorer_${setting.category}",
                             onClick = {
-                                backStack.clear()
-                                backStack.add(Destination.CategoryExplorer(setting.category))
+                                navigateRoot(backStack, Destination.CategoryExplorer(setting.category))
                             }
                         )
                     )
@@ -286,30 +314,23 @@ fun ToyDbNavigation(
             }
             list.add(
                 GcNavButton(label = navMakers, imageVector = Icons.Default.Business, navChoice = "makers", onClick = {
-                    backStack.clear()
-                    backStack.add(Destination.MakerDirectory)
+                    navigateRoot(backStack, Destination.MakerDirectory)
                 })
             )
             list.add(
                 GcNavButton(label = navSettings, imageVector = Icons.Default.Settings, navChoice = "settings", onClick = {
-                    backStack.clear()
-                    backStack.add(Destination.Settings)
+                    navigateRoot(backStack, Destination.Settings)
                 })
             )
             list.add(
                 GcNavButton(label = navInfo, imageVector = Icons.Default.Info, navChoice = "info", onClick = {
-                    backStack.clear()
-                    backStack.add(Destination.Info)
+                    navigateRoot(backStack, Destination.Info)
                 })
             )
             list
         }
 
-        val showBackgroundImage = backStack.lastOrNull() is Destination.Dashboard
-
         GcE2eBox(
-            imageResourceRes = if (showBackgroundImage) club.gepetto.composeutils.Res.drawable.gepetto else null,
-            darkImageResourceRes = if (showBackgroundImage) club.gepetto.composeutils.Res.drawable.invertedgepetto else null,
             backgroundColor = sysBackgroundColor()
         ) {
             GcAdaptiveScaffold(
@@ -323,8 +344,26 @@ fun ToyDbNavigation(
                         sceneStrategies = listOf(gcSceneStrategy),
                         transitionSpec = { EnterTransition.None togetherWith ExitTransition.None },
                         popTransitionSpec = { EnterTransition.None togetherWith ExitTransition.None },
-                        onBack = { backStack.removeLastOrNull() },
+                        onBack = {
+                            if (backStack.size > 1) {
+                                backStack.removeLastOrNull()
+                            } else if (backStack.lastOrNull() != Destination.Home) {
+                                backStack.clear()
+                                backStack.add(Destination.Home)
+                            }
+                        },
                         entryProvider = entryProvider {
+                            entry<Destination.Home> {
+                                HomeDestination(
+                                    onNavigateToDashboard = {
+                                        backStack.add(Destination.Dashboard)
+                                    },
+                                    onNavigateToInfo = {
+                                        backStack.add(Destination.Info)
+                                    },
+                                    themeMode = themeMode
+                                )
+                            }
                             entry<Destination.Dashboard> {
                                 key(syncTrigger) {
                                     DashboardScreen(repository, onNavigate = { backStack.add(it) })
