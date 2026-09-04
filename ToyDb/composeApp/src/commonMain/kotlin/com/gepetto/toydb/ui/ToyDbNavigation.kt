@@ -281,12 +281,12 @@ fun ToyDbNavigation(
             val isLandscape = maxWidth > maxHeight
 
         val navHome = stringResource(Res.string.nav_home)
-        val navStats = stringResource(Res.string.nav_stats)
+        val navDashboard = stringResource(Res.string.nav_dashboard)
         val navMakers = stringResource(Res.string.nav_makers)
         val navSettings = stringResource(Res.string.nav_settings)
         val navInfo = stringResource(Res.string.nav_info)
 
-        val buttons = remember(categoriesSettings, isLandscape, navHome, navStats, navMakers, navSettings, navInfo) {
+        val buttons = remember(categoriesSettings, isLandscape, navHome, navDashboard, navMakers, navSettings, navInfo) {
             val list = mutableListOf<GcNavButton>()
             list.add(
                 GcNavButton(label = navHome, imageVector = Icons.Default.Home, navChoice = "home", onClick = {
@@ -294,7 +294,7 @@ fun ToyDbNavigation(
                 })
             )
             list.add(
-                GcNavButton(label = navStats, imageVector = Icons.Default.Dashboard, navChoice = "dashboard", onClick = {
+                GcNavButton(label = navDashboard, imageVector = Icons.Default.Dashboard, navChoice = "dashboard", onClick = {
                     navigateRoot(backStack, Destination.Dashboard)
                 })
             )

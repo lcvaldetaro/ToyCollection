@@ -278,7 +278,7 @@ Todos os direitos reservados.</string>
     <string name="web_sync_error">Falha na sincronização Web</string>
     <string name="web_sync_no_updates">Sincronização Web concluída (já estava atualizado)</string>
     <string name="nav_home">Início</string>
-    <string name="nav_stats">Estatísticas</string>
+    <string name="nav_dashboard">Painel</string>
     <string name="nav_makers">Fabricantes</string>
     <string name="nav_settings">Ajustes</string>
     <string name="nav_info">Info</string>
