@@ -89,15 +89,15 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 }
 
 kotlin {
     androidTarget {
         compilerOptions {
-            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
             freeCompilerArgs.addAll(
                 "-opt-in=androidx.compose.ui.ExperimentalComposeUiApi",
                 "-opt-in=androidx.compose.animation.ExperimentalSharedTransitionApi",
@@ -108,7 +108,7 @@ kotlin {
     }
     jvm("desktop") {
         compilerOptions {
-            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
             freeCompilerArgs.addAll(
                 "-opt-in=androidx.compose.ui.ExperimentalComposeUiApi",
                 "-opt-in=androidx.compose.animation.ExperimentalSharedTransitionApi",
