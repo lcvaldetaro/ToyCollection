@@ -47,7 +47,7 @@ A Kotlin Multiplatform (KMP) application designed to browse and view Gepetto's e
 
 ## 🚀 Building & Running
 
-Ensure you have Java JDK 17+ installed.
+Ensure you have Java JDK 21+ installed.
 
 ### Run Desktop (JVM)
 ```bash

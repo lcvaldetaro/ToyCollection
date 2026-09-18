@@ -66,7 +66,7 @@ The directory contains two utility python scripts to ensure data consistency and
 
 ## 🚀 Building & Running
 
-Ensure you have Java JDK 17+ installed.
+Ensure you have Java JDK 21+ installed.
 
 ### Run Desktop (JVM)
 ```bash
