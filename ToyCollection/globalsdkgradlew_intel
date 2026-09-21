@@ -90,4 +90,8 @@ mkdir -p "$(dirname "$LAST_ARCH_FILE")"
 echo "$CURRENT_ARCH" > "$LAST_ARCH_FILE"
 
 # Run Gradle with target architecture set to Intel under Rosetta emulation
-exec arch -x86_64 "$SCRIPT_DIR/gradlew" -PmacArch=intel "$@"
+exec arch -x86_64 "$SCRIPT_DIR/gradlew" \
+    -Dorg.gradle.java.home="$FOUND_JAVA_HOME" \
+    -PintelJavaHome="$FOUND_JAVA_HOME" \
+    -PmacArch=intel \
+    "$@"

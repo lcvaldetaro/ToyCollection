@@ -235,62 +235,134 @@ compose.resources {
     publicResClass = true
 }
 
-val resolvedJavaHome: String? = run {
-    var found: String? = null
+fun isMatchingJdk(home: String?, targetArm64: Boolean): Boolean {
+    if (home.isNullOrEmpty()) return false
+    val isWin = org.gradle.internal.os.OperatingSystem.current().isWindows
+    val javaBin = if (isWin) File(home, "bin/java.exe") else File(home, "bin/java")
+    val jpackageBin = if (isWin) File(home, "bin/jpackage.exe") else File(home, "bin/jpackage")
+    if (!javaBin.exists() || !jpackageBin.exists()) return false
+    if (!org.gradle.internal.os.OperatingSystem.current().isMacOsX) return true
+    return try {
+        val p = ProcessBuilder("file", javaBin.absolutePath).start()
+        val out = p.inputStream.bufferedReader().readText().lowercase()
+        p.waitFor()
+        if (targetArm64) (out.contains("arm64") || out.contains("aarch64")) else out.contains("x86_64")
+    } catch (e: Exception) {
+        false
+    }
+}
+
+val resolvedJavaHome: String = run {
+    if (!org.gradle.internal.os.OperatingSystem.current().isMacOsX) {
+        val isWin = org.gradle.internal.os.OperatingSystem.current().isWindows
+        val env = System.getenv("JAVA_HOME")
+        val envJp = if (isWin) File(env ?: "", "bin/jpackage.exe") else File(env ?: "", "bin/jpackage")
+        if (!env.isNullOrEmpty() && envJp.exists()) {
+            return@run env
+        }
+        val sys = System.getProperty("java.home")
+        val sysJp = if (isWin) File(sys, "bin/jpackage.exe") else File(sys, "bin/jpackage")
+        if (sysJp.exists()) {
+            return@run sys
+        }
+        return@run env ?: sys
+    }
+
+    if (!isArm64) {
+        val prop = project.findProperty("intelJavaHome") as? String
+        if (isMatchingJdk(prop, false)) return@run prop!!
+    } else {
+        val prop = project.findProperty("armJavaHome") as? String
+        if (isMatchingJdk(prop, true)) return@run prop!!
+    }
+
     var dir: File? = projectDir
     while (dir != null) {
         val localJdk = File(dir, ".jdk/Contents/Home")
-        if (File(localJdk, "bin/jpackage").exists()) {
-            found = localJdk.absolutePath
-            break
+        if (isMatchingJdk(localJdk.absolutePath, isArm64)) {
+            return@run localJdk.absolutePath
         }
         val siblingDirs = dir.listFiles()?.filter { it.isDirectory }
         if (siblingDirs != null) {
             for (sib in siblingDirs) {
                 val sibJdk = File(sib, ".jdk/Contents/Home")
-                if (File(sibJdk, "bin/jpackage").exists()) {
-                    found = sibJdk.absolutePath
-                    break
+                if (isMatchingJdk(sibJdk.absolutePath, isArm64)) {
+                    return@run sibJdk.absolutePath
                 }
             }
         }
-        if (found != null) break
         dir = dir.parentFile
     }
-    if (found == null) {
-        val env = System.getenv("JAVA_HOME")
-        if (!env.isNullOrEmpty() && File(File(env), "bin/jpackage").exists()) {
-            found = env
+
+    if (isArm64) {
+        val jdksDir = File(System.getProperty("user.home"), ".gradle/jdks")
+        if (jdksDir.exists() && jdksDir.isDirectory) {
+            val jdk21Home = jdksDir.walkTopDown()
+                .filter { it.name == "Home" && it.absolutePath.contains("21") }
+                .find { isMatchingJdk(it.absolutePath, true) }
+            if (jdk21Home != null) return@run jdk21Home.absolutePath
+
+            val anyArm = jdksDir.walkTopDown()
+                .filter { it.name == "Home" }
+                .find { isMatchingJdk(it.absolutePath, true) }
+            if (anyArm != null) return@run anyArm.absolutePath
         }
     }
-    if (found == null) {
-        val sys = System.getProperty("java.home")
-        if (!sys.isNullOrEmpty() && File(File(sys), "bin/jpackage").exists()) {
-            found = sys
-        }
-    }
-    if (found == null) {
+
+    val envJava = System.getenv("JAVA_HOME")
+    if (isMatchingJdk(envJava, isArm64)) return@run envJava!!
+
+    val sysJava = System.getProperty("java.home")
+    if (isMatchingJdk(sysJava, isArm64)) return@run sysJava!!
+
+    if (org.gradle.internal.os.OperatingSystem.current().isMacOsX) {
+        val archArg = if (isArm64) "arm64" else "x86_64"
         try {
-            val process = ProcessBuilder("/usr/libexec/java_home").start()
-            val path = process.inputStream.bufferedReader().use { it.readText().trim() }
-            if (path.isNotEmpty() && File(File(path), "bin/jpackage").exists()) {
-                found = path
-            }
+            val p = ProcessBuilder("/usr/libexec/java_home", "-a", archArg, "-v", "21").start()
+            val out = p.inputStream.bufferedReader().use { it.readText().trim() }
+            p.waitFor()
+            if (isMatchingJdk(out, isArm64)) return@run out
         } catch (e: Exception) {}
-    }
-    if (found == null) {
-        val brewJavaHome = "/opt/homebrew/opt/openjdk/libexec/openjdk.jdk/Contents/Home"
-        if (File(brewJavaHome, "bin/jpackage").exists()) {
-            found = brewJavaHome
+        try {
+            val p = ProcessBuilder("/usr/libexec/java_home", "-a", archArg).start()
+            val out = p.inputStream.bufferedReader().use { it.readText().trim() }
+            p.waitFor()
+            if (isMatchingJdk(out, isArm64)) return@run out
+        } catch (e: Exception) {}
+
+        val jvmDir = File("/Library/Java/JavaVirtualMachines")
+        if (jvmDir.exists() && jvmDir.isDirectory) {
+            val jdk21 = jvmDir.listFiles()
+                ?.filter { it.name.contains("21") }
+                ?.map { File(it, "Contents/Home") }
+                ?.find { isMatchingJdk(it.absolutePath, isArm64) }
+            if (jdk21 != null) return@run jdk21.absolutePath
+
+            val anyJvm = jvmDir.listFiles()
+                ?.map { File(it, "Contents/Home") }
+                ?.find { isMatchingJdk(it.absolutePath, isArm64) }
+            if (anyJvm != null) return@run anyJvm.absolutePath
         }
+
+        val brewCandidate = if (isArm64) "/opt/homebrew/opt/openjdk/libexec/openjdk.jdk/Contents/Home" else "/usr/local/opt/openjdk/libexec/openjdk.jdk/Contents/Home"
+        if (isMatchingJdk(brewCandidate, isArm64)) return@run brewCandidate
     }
-    found
+
+    val fallback = System.getenv("JAVA_HOME") ?: System.getProperty("java.home")
+    if (isMatchingJdk(fallback, isArm64)) return@run fallback
+
+    if (org.gradle.internal.os.OperatingSystem.current().isMacOsX) {
+        val targetName = if (isArm64) "ARM64" else "Intel x86_64"
+        throw GradleException("Could not locate a valid JDK 21+ with jpackage for target architecture: $targetName")
+    }
+    fallback
 }
+println("[ArchitectureConfig] Target: macArch=$macArch (isArm64=$isArm64) -> javaHome: $resolvedJavaHome")
 
 compose.desktop {
     application {
         mainClass = "MainKt"
-        javaHome = resolvedJavaHome ?: System.getProperty("java.home")
+        javaHome = resolvedJavaHome
 
         buildTypes.release.proguard {
             configurationFiles.from(project.file("compose-proguard-rules.pro"))

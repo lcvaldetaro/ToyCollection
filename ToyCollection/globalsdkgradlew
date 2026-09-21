@@ -146,7 +146,15 @@ mkdir -p "$(dirname "$LAST_ARCH_FILE")"
 echo "$CURRENT_ARCH" > "$LAST_ARCH_FILE"
 
 if $IS_APPLE_SILICON; then
-    exec "$SCRIPT_DIR/gradlew" -PmacArch=arm64 "$@"
+    exec "$SCRIPT_DIR/gradlew" \
+        -Dorg.gradle.java.home="$FOUND_JAVA_HOME" \
+        -ParmJavaHome="$FOUND_JAVA_HOME" \
+        -PmacArch=arm64 \
+        "$@"
 else
-    exec "$SCRIPT_DIR/gradlew" -PmacArch=intel "$@"
+    exec "$SCRIPT_DIR/gradlew" \
+        -Dorg.gradle.java.home="$FOUND_JAVA_HOME" \
+        -PintelJavaHome="$FOUND_JAVA_HOME" \
+        -PmacArch=intel \
+        "$@"
 fi
