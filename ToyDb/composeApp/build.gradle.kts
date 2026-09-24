@@ -235,12 +235,50 @@ compose.resources {
     publicResClass = true
 }
 
+fun getJdkMajorVersion(home: String?): Int {
+    if (home.isNullOrEmpty()) return -1
+    val releaseFiles = listOf(File(home, "release"), File(home, "../release"))
+    for (rf in releaseFiles) {
+        if (rf.exists()) {
+            try {
+                rf.useLines { lines ->
+                    for (line in lines) {
+                        if (line.startsWith("JAVA_VERSION=")) {
+                            val verStr = line.substringAfter("=").trim('"', '\'')
+                            val major = verStr.split(".", "-").firstOrNull()?.toIntOrNull() ?: -1
+                            if (major > 0) return major
+                        }
+                    }
+                }
+            } catch (e: Exception) {}
+        }
+    }
+    val isWin = org.gradle.internal.os.OperatingSystem.current().isWindows
+    val javaBin = if (isWin) File(home, "bin/java.exe") else File(home, "bin/java")
+    if (javaBin.exists()) {
+        try {
+            val p = ProcessBuilder(javaBin.absolutePath, "-version").redirectErrorStream(true).start()
+            val out = p.inputStream.bufferedReader().readText()
+            p.waitFor()
+            val match = Regex("""(?:version\s+"(\d+))""").find(out)
+            if (match != null) {
+                return match.groupValues[1].toIntOrNull() ?: -1
+            }
+        } catch (e: Exception) {}
+    }
+    return -1
+}
+
 fun isMatchingJdk(home: String?, targetArm64: Boolean): Boolean {
     if (home.isNullOrEmpty()) return false
     val isWin = org.gradle.internal.os.OperatingSystem.current().isWindows
     val javaBin = if (isWin) File(home, "bin/java.exe") else File(home, "bin/java")
     val jpackageBin = if (isWin) File(home, "bin/jpackage.exe") else File(home, "bin/jpackage")
     if (!javaBin.exists() || !jpackageBin.exists()) return false
+
+    val major = getJdkMajorVersion(home)
+    if (major in 1..20) return false
+
     if (!org.gradle.internal.os.OperatingSystem.current().isMacOsX) return true
     return try {
         val p = ProcessBuilder("file", javaBin.absolutePath).start()
@@ -254,16 +292,20 @@ fun isMatchingJdk(home: String?, targetArm64: Boolean): Boolean {
 
 val resolvedJavaHome: String = run {
     if (!org.gradle.internal.os.OperatingSystem.current().isMacOsX) {
-        val isWin = org.gradle.internal.os.OperatingSystem.current().isWindows
         val env = System.getenv("JAVA_HOME")
-        val envJp = if (isWin) File(env ?: "", "bin/jpackage.exe") else File(env ?: "", "bin/jpackage")
-        if (!env.isNullOrEmpty() && envJp.exists()) {
-            return@run env
+        if (isMatchingJdk(env, false)) {
+            return@run env!!
         }
         val sys = System.getProperty("java.home")
-        val sysJp = if (isWin) File(sys, "bin/jpackage.exe") else File(sys, "bin/jpackage")
-        if (sysJp.exists()) {
+        if (isMatchingJdk(sys, false)) {
             return@run sys
+        }
+        val jdksDir = File(System.getProperty("user.home"), ".gradle/jdks")
+        if (jdksDir.exists() && jdksDir.isDirectory) {
+            val jdk21 = jdksDir.walkTopDown()
+                .filter { it.name == "Home" || it.name.startsWith("jdk") }
+                .find { isMatchingJdk(it.absolutePath, false) }
+            if (jdk21 != null) return@run jdk21.absolutePath
         }
         return@run env ?: sys
     }
@@ -294,19 +336,18 @@ val resolvedJavaHome: String = run {
         dir = dir.parentFile
     }
 
-    if (isArm64) {
-        val jdksDir = File(System.getProperty("user.home"), ".gradle/jdks")
-        if (jdksDir.exists() && jdksDir.isDirectory) {
-            val jdk21Home = jdksDir.walkTopDown()
-                .filter { it.name == "Home" && it.absolutePath.contains("21") }
-                .find { isMatchingJdk(it.absolutePath, true) }
-            if (jdk21Home != null) return@run jdk21Home.absolutePath
+    val jdksDir = File(System.getProperty("user.home"), ".gradle/jdks")
+    if (jdksDir.exists() && jdksDir.isDirectory) {
+        val jdk21Home = jdksDir.walkTopDown()
+            .filter { (it.name == "Home" || it.name == "Contents") && (it.absolutePath.contains("21") || it.absolutePath.contains("-21-")) }
+            .map { if (it.name == "Contents") File(it, "Home") else it }
+            .find { isMatchingJdk(it.absolutePath, isArm64) }
+        if (jdk21Home != null) return@run jdk21Home.absolutePath
 
-            val anyArm = jdksDir.walkTopDown()
-                .filter { it.name == "Home" }
-                .find { isMatchingJdk(it.absolutePath, true) }
-            if (anyArm != null) return@run anyArm.absolutePath
-        }
+        val anyMatching = jdksDir.walkTopDown()
+            .filter { it.name == "Home" }
+            .find { isMatchingJdk(it.absolutePath, isArm64) }
+        if (anyMatching != null) return@run anyMatching.absolutePath
     }
 
     val envJava = System.getenv("JAVA_HOME")
