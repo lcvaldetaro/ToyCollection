@@ -230,8 +230,8 @@ class ToyRepository(val db: ToyDatabase) {
         val toysList = mutableListOf<Toy>()
         try {
             val cursor = db.query(
-                "SELECT * FROM toys WHERE body_maker = ? ORDER BY description ASC",
-                listOf(makerName)
+                "SELECT * FROM toys WHERE TRIM(body_maker) = ? ORDER BY description ASC",
+                listOf(makerName.trim())
             )
             while (cursor.next()) {
                 val toyType = cursor.getString("toy_type") ?: "slot"
@@ -248,7 +248,7 @@ class ToyRepository(val db: ToyDatabase) {
         val counts = mutableMapOf<String, MutableMap<String, Int>>()
         try {
             val cursor = db.query(
-                "SELECT body_maker, toy_type, COUNT(*) FROM toys WHERE body_maker IS NOT NULL AND body_maker != '' GROUP BY body_maker, toy_type"
+                "SELECT TRIM(body_maker) AS body_maker, toy_type, COUNT(*) FROM toys WHERE body_maker IS NOT NULL AND TRIM(body_maker) != '' GROUP BY TRIM(body_maker), toy_type"
             )
             while (cursor.next()) {
                 val maker = cursor.getString("body_maker") ?: ""
@@ -302,7 +302,7 @@ class ToyRepository(val db: ToyDatabase) {
                 """.trimIndent(),
                 listOf(
                     toy.refNum, toy.toyType, toy.description, calculatedMakerCombo, toy.scale, toy.factoryCar,
-                    toy.bodyMaker, toy.acquired, toy.chassisType, toy.chassisMaker, toy.condition, toy.color,
+                    body, toy.acquired, toy.chassisType, chassis, toy.condition, toy.color,
                     toy.motorMaker, toy.motorDetails, toy.catalogNumber, toy.comments, toy.majorWork,
                     toy.minorWork, toy.repro, toy.value, toy.amountPaid, toy.amountSold, toy.traded, toy.buy,
                     toy.maintenance, toy.toMake, toy.detail, toy.boxed, toy.picture, toy.pictureSize,

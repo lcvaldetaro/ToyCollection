@@ -288,7 +288,7 @@ object ImportExportService {
                 """.trimIndent(),
                 listOf(
                     ref, toyType, c.description, calculatedMakerCombo, c.scale, c.factoryCar,
-                    c.bodyMaker, c.acquired, c.chassisType, c.chassisMaker, c.condition, c.color,
+                    body, c.acquired, c.chassisType, chassis, c.condition, c.color,
                     c.motorMaker, c.motorDetails, c.catalogNumber, c.comments, c.majorWork,
                     c.minorWork, c.repro, valDouble, paidDouble, c.amountSold, c.traded, c.buy,
                     c.maintenance, c.toMake, c.detail, c.boxed, finalPicture, finalPicSize,
