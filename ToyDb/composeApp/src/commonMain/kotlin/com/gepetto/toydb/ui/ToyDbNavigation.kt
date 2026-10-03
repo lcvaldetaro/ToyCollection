@@ -289,22 +289,46 @@ fun ToyDbNavigation(
         val buttons = remember(categoriesSettings, isLandscape, navHome, navDashboard, navMakers, navSettings, navInfo) {
             val list = mutableListOf<GcNavButton>()
             list.add(
-                GcNavButton(label = navHome, imageVector = Icons.Default.Home, navChoice = "home", onClick = {
-                    navigateRoot(backStack, Destination.Home)
-                })
+                GcNavButton(
+                    label = navHome,
+                    imageVector = Icons.Default.Home,
+                    iconSize = 24.dp,
+                    extraDp = 28.dp,
+                    navChoice = "home",
+                    onClick = {
+                        navigateRoot(backStack, Destination.Home)
+                    }
+                )
             )
             list.add(
-                GcNavButton(label = navDashboard, imageVector = Icons.Default.Dashboard, navChoice = "dashboard", onClick = {
-                    navigateRoot(backStack, Destination.Dashboard)
-                })
+                GcNavButton(
+                    label = navDashboard,
+                    imageVector = Icons.Default.Dashboard,
+                    iconSize = 24.dp,
+                    extraDp = 28.dp,
+                    navChoice = "dashboard",
+                    onClick = {
+                        navigateRoot(backStack, Destination.Dashboard)
+                    }
+                )
             )
             if (isLandscape) {
                 categoriesSettings.forEach { setting ->
                     val icon = getIconByName(setting.icon)
+                    val shortLabel = when (setting.category.lowercase()) {
+                        "slot" -> "Slots"
+                        "train" -> "Trains"
+                        "static" -> "Static"
+                        "kit" -> "Kits"
+                        "misc" -> "Misc"
+                        else -> setting.label.take(6)
+                    }
                     list.add(
                         GcNavButton(
-                            label = setting.label,
+                            label = shortLabel,
                             imageVector = icon,
+                            iconSize = 24.dp,
+                            extraDp = 28.dp,
                             navChoice = "explorer_${setting.category}",
                             onClick = {
                                 navigateRoot(backStack, Destination.CategoryExplorer(setting.category))
@@ -314,19 +338,40 @@ fun ToyDbNavigation(
                 }
             }
             list.add(
-                GcNavButton(label = navMakers, imageVector = Icons.Default.Business, navChoice = "makers", onClick = {
-                    navigateRoot(backStack, Destination.MakerDirectory)
-                })
+                GcNavButton(
+                    label = navMakers,
+                    imageVector = Icons.Default.Business,
+                    iconSize = 24.dp,
+                    extraDp = 28.dp,
+                    navChoice = "makers",
+                    onClick = {
+                        navigateRoot(backStack, Destination.MakerDirectory)
+                    }
+                )
             )
             list.add(
-                GcNavButton(label = navSettings, imageVector = Icons.Default.Settings, navChoice = "settings", onClick = {
-                    navigateRoot(backStack, Destination.Settings)
-                })
+                GcNavButton(
+                    label = navSettings,
+                    imageVector = Icons.Default.Settings,
+                    iconSize = 24.dp,
+                    extraDp = 28.dp,
+                    navChoice = "settings",
+                    onClick = {
+                        navigateRoot(backStack, Destination.Settings)
+                    }
+                )
             )
             list.add(
-                GcNavButton(label = navInfo, imageVector = Icons.Default.Info, navChoice = "info", onClick = {
-                    navigateRoot(backStack, Destination.Info)
-                })
+                GcNavButton(
+                    label = navInfo,
+                    imageVector = Icons.Default.Info,
+                    iconSize = 24.dp,
+                    extraDp = 28.dp,
+                    navChoice = "info",
+                    onClick = {
+                        navigateRoot(backStack, Destination.Info)
+                    }
+                )
             )
             list
         }

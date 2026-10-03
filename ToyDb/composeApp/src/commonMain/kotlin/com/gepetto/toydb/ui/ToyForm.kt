@@ -170,7 +170,7 @@ fun ToyForm(
     }
 
     Column(modifier = modifier.fillMaxSize().imePadding()) {
-        TabRow(selectedTabIndex = tabIndex) {
+        PrimaryScrollableTabRow(selectedTabIndex = tabIndex, edgePadding = 0.dp) {
             tabs.forEachIndexed { index, title ->
                 Tab(
                     selected = tabIndex == index,
