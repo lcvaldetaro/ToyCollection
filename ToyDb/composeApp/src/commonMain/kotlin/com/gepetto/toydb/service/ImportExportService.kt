@@ -8,6 +8,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import com.gepetto.toydb.CommonConfig
 import okio.FileSystem
+import okio.Path
 import okio.Path.Companion.toPath
 
 private const val TAG = "ImportExportService"
@@ -619,6 +620,48 @@ object ImportExportService {
         return totalUpdated
     }
 
+    private fun resolveToyPictureFilename(
+        toy: Toy,
+        imagePrefix: String,
+        targetDir: Path,
+        imagesDir: Path?,
+        fs: FileSystem
+    ): String {
+        val clean = toy.picture.trim().substringAfterLast('/').substringAfterLast('\\').lowercase()
+        val extensions = listOf("png", "jpg", "jpeg", "gif", "webp")
+        if (clean.isNotEmpty()) {
+            if (clean.contains(".")) {
+                if (fs.exists(targetDir.div(clean)) || (imagesDir != null && fs.exists(imagesDir.div(clean)))) {
+                    return clean
+                }
+                val rawName = clean.substringBeforeLast('.')
+                for (ext in extensions) {
+                    val candidate = "$rawName.$ext"
+                    if (fs.exists(targetDir.div(candidate)) || (imagesDir != null && fs.exists(imagesDir.div(candidate)))) {
+                        return candidate
+                    }
+                }
+                return clean
+            }
+            for (ext in extensions) {
+                val candidate = "$clean.$ext"
+                if (fs.exists(targetDir.div(candidate)) || (imagesDir != null && fs.exists(imagesDir.div(candidate)))) {
+                    return candidate
+                }
+            }
+            return "$clean.jpg"
+        }
+
+        val base = "${imagePrefix}${toy.refNum}".lowercase()
+        for (ext in extensions) {
+            val candidate = "$base.$ext"
+            if (fs.exists(targetDir.div(candidate)) || (imagesDir != null && fs.exists(imagesDir.div(candidate)))) {
+                return candidate
+            }
+        }
+        return "$base.jpg"
+    }
+
     fun exportHtml(db: ToyDatabase, exportDirectory: String): Int {
         GcLog.d(TAG, "Starting HTML export...")
         
@@ -629,6 +672,7 @@ object ImportExportService {
         var totalFilesGenerated = 0
         val fs = FileSystem.SYSTEM
         val targetDir = exportDirectory.toPath()
+        val imagesDir = getImagesPath(db)?.toPath()
         
         // Query all makers from database
         val makersList = mutableListOf<Maker>()
@@ -807,7 +851,7 @@ object ImportExportService {
                     toyHtml.append("<p><img src=\"working.gif\">Last updated on <font color=red>$dateStr</font>\n")
                     toyHtml.append("<center><table><td><center><table><td>\n")
 
-                    val picFileLower = "${config.imagePrefix}${toy.refNum}.jpg".lowercase()
+                    val picFileLower = resolveToyPictureFilename(toy, config.imagePrefix, targetDir, imagesDir, fs)
                     if (toy.picture.isNotEmpty()) {
                         toyHtml.append("<center><a href=\"$picFileLower\"><img src=$picFileLower width=320></a></center>\n")
                         if (toy.hasPicture.startsWith("y", ignoreCase = true)) {
@@ -877,7 +921,7 @@ object ImportExportService {
                         brandPicCount = 0
                     }
                     brandHtml.append("<td><center>")
-                    val picFileLower = "${config.imagePrefix}${toy.refNum}.jpg".lowercase()
+                    val picFileLower = resolveToyPictureFilename(toy, config.imagePrefix, targetDir, imagesDir, fs)
                     if (toy.picture.isNotEmpty()) {
                         brandHtml.append("<a href=\"${config.imagePrefix}_${toy.refNum}.html\"><img src=$picFileLower alt=\"${toy.description}\" width=\"100\">")
                     } else {
