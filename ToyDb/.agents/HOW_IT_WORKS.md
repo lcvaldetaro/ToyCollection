@@ -1,0 +1,424 @@
+# How the Toy Database Manager Works
+
+This document provides a technical overview of the architecture and operation of **Gepetto's Toy Database Manager (ToyDb)**. It is based on source code version **1.0.28 (code 28)**.
+
+Related documentation files:
+- `.agents/AGENTS.md`: Workspace rules, coding standards, and project mapping.
+- `README.md`: Targets, architecture summary, initial setup, and execution commands.
+- `SCHEMA.md`: Comprehensive relational database schema documentation.
+- `.agents/TODO.txt`: Backlog and completed development tasks.
+- `../ToyCollection/`: Companion application that displays toy collections for public viewing.
+
+---
+
+## 1. System Capabilities
+
+The Toy Database Manager is a **Kotlin Multiplatform (KMP) database and catalog management application**. It maintains, updates, imports, exports, and publishes collector toy collections and manufacturer directories:
+
+- **Entity Database**:
+  - Manages five standard toy categories: **Slot Cars** (`slot`), **Model Trains** (`train`), **Static Models** (`static`), **Model Kits** (`kit`), and **Others / Miscellaneous** (`misc`).
+  - Supports dynamic creation, customization, and deletion of custom toy categories.
+  - Maintains a complete directory of **Manufacturers** (`makers`) with country of origin, historical comments, and secondary logo/factory image bitmaps.
+- **Toy Specifications (34 Attributes)**:
+  - Tracks identifiers, physical specifications, mechanical parts, acquisition history, financial valuation, and restoration details.
+  - Records condition grading (`condition`), packaging status (`boxed`), reproduction status (`repro`), and trade flags (`traded`).
+- **Dynamic Category Management**:
+  - Maps each category to a unique identifier (`category`), file prefix rule (`image_prefix`), navigation label (`label`), display title (`title`), and icon name (`icon`).
+- **Media and Image Handling**:
+  - Primary image file resolution follows prefix rules (for example, `car1444.png`, `tra56.jpg`).
+  - Multi-image support: secondary image filenames are stored as space-separated lists (`bitmaps`), with synchronized file sizes (`bitmaps_size`) and modification timestamps (`bitmaps_timestamp`).
+  - On-demand image hydration: the application automatically downloads missing or outdated images over HTTP from a remote web host.
+- **Cascading Manufacturer Updates**:
+  - Supports renaming manufacturers with safe referential integrity.
+  - Automatically updates `body_maker`, `chassis_maker`, `motor_maker`, and recalculates composite `maker_combo` strings across all affected toy records.
+  - Detects duplicate names and prompts for confirmation with affected record counts.
+- **Import and Export Pipelines**:
+  - Imports and exports database tables to JSON files (`carmaker.json`, `category_settings.json`, `{prefix}list.json`).
+  - Automatically calculates actual file sizes and modification timestamps by scanning local image storage.
+  - Extracts additional historical metadata (`year_made`, racing `number`, `my_comments`) from legacy fixed-width text files (`.lst`).
+- **Static Website Publisher**:
+  - Generates a static website containing category index pages (`[prefix]maker.html`), manufacturer gallery pages (`[prefix]m_[index].html`), and single toy detail pages (`[prefix]_[ref_num].html`).
+  - Automatically calculates collection statistics (factory models, reproductions, scale distribution).
+- **Synchronization Subsystems**:
+  - **Remote Web HTTP Synchronization**: Automatically verifies remote JSON backups via HTTP, checks server modification timestamps and SHA-256 hashes, and imports updated data.
+  - **Cloud SFTP Synchronization**: Synchronizes images, JSON documents, and website files with a remote SSH/SFTP server. Computes smart differential plans (new files, modified file sizes, newer timestamps) and shows transfer progress.
+
+---
+
+## 2. Architecture & Modules
+
+The application is built using **Compose Multiplatform** and **Kotlin Multiplatform (KMP)**.
+
+### Target Platforms
+- **Desktop (JVM 21)**: macOS (Intel and Apple Silicon DMG) and Windows (MSI).
+- **Android**: Phones and tablets (minSdk 24, compileSdk 37, targetSdk 37).
+
+### Source Tree Layout
+
+```
+ToyDb/
+├── composeApp/
+│   ├── src/
+│   │   ├── commonMain/
+│   │   │   ├── kotlin/com/gepetto/toydb/
+│   │   │   │   ├── database/       # Database interfaces, models, SQL schema, migrations, ToyRepository
+│   │   │   │   ├── service/        # Import/Export, HTML generator, SFTP service contract, HTTP sync
+│   │   │   │   ├── ui/             # Compose UI screens, Nav3 navigation, forms, dialogs, image components
+│   │   │   │   └── utils/          # Cross-platform file/directory dialogs, image resolvers, scroll utilities
+│   │   │   └── composeResources/   # Localized strings (en, pt, de, es, fr, it), icons, default SQLite database
+│   │   ├── desktopMain/
+│   │   │   ├── kotlin/
+│   │   │   │   ├── Main.kt         # Desktop application entry point, window management, headless CLI commands
+│   │   │   │   └── com/gepetto/toydb/
+│   │   │   │       ├── database/   # DesktopToyDatabase (JDBC sqlite-jdbc implementation)
+│   │   │   │       ├── service/    # DesktopSftpService (SSHJ implementation)
+│   │   │   │       └── utils/      # Desktop platform implementations
+│   │   │   └── resources/          # Application icons (.icns, .ico, .png)
+│   │   └── androidMain/
+│   │       ├── kotlin/com/gepetto/toydb/
+│   │       │   ├── AppMainActivity.kt # Android Activity, BouncyCastle initialization, database provisioning
+│   │       │   ├── database/       # AndroidToyDatabase (Android SQLite framework implementation)
+│   │       │   ├── service/        # AndroidSftpService (SSHJ implementation for Android)
+│   │       │   └── utils/          # Android platform implementations
+│   │       └── AndroidManifest.xml # Android permissions (Internet, Network State, Storage)
+│   ├── packaging/                  # macOS packaging scripts and background artwork
+│   ├── wix/                        # Windows WiX MSI packaging definitions
+│   └── build.gradle.kts            # Multiplatform build configuration, dependencies, and packaging tasks
+└── json/                           # Reference dataset for testing and headless verification
+```
+
+---
+
+## 3. Database Layer & Schema
+
+The persistence layer uses a custom platform-independent database abstraction (`ToyDatabase` and `SqlCursor`). It avoids heavy ORM dependencies to ensure fast startup and reliable cross-platform execution.
+
+### Database Abstraction (`database/Database.kt`)
+- `interface ToyDatabase`: Exposes `execute(sql, bindArgs)` and `query(sql, bindArgs): SqlCursor`.
+- `interface SqlCursor`: Provides `next()`, `getString(col)`, `getInt(col)`, `getDouble(col)`, and `close()`.
+- **Desktop Implementation** (`DesktopDatabase.kt`): Uses `java.sql.Connection` and `org.xerial:sqlite-jdbc`.
+- **Android Implementation** (`AndroidDatabase.kt`): Uses `android.database.sqlite.SQLiteDatabase`.
+
+### Schema Version & Migrations
+The database version is tracked using `PRAGMA user_version` (current: `DATABASE_VERSION = 8`).
+- **Version 1**: Initial creation of `category_settings`, `makers`, and `toys` tables.
+- **Version 2**: Creation of the `app_settings` key-value table.
+- **Version 3**: Updated display label for category `misc` to `'Others'`.
+- **Version 4**: Added `year_made`, `number`, and `my_comments` columns to table `toys`.
+- **Version 5**: Added column `title` to table `category_settings`.
+- **Version 6**: Ensured non-empty default titles for all pre-populated categories.
+- **Version 7**: Added column `icon` to table `category_settings`.
+- **Version 8**: Backfilled default vector icon names (`car`, `train`, `build`, `category`) into `category_settings`.
+
+### Core Database Tables
+
+```sql
+-- 1. Category Settings Table
+CREATE TABLE IF NOT EXISTS category_settings (
+    category TEXT PRIMARY KEY,
+    image_prefix TEXT NOT NULL,
+    label TEXT NOT NULL,
+    title TEXT NOT NULL DEFAULT '',
+    icon TEXT NOT NULL DEFAULT 'category'
+);
+
+-- 2. Manufacturers Table
+CREATE TABLE IF NOT EXISTS makers (
+    name TEXT PRIMARY KEY,
+    country TEXT,
+    bitmaps TEXT,
+    bitmaps_size TEXT,
+    bitmaps_timestamp TEXT,
+    comments TEXT
+);
+
+-- 3. Master Toys Table
+CREATE TABLE IF NOT EXISTS toys (
+    ref_num INTEGER NOT NULL,
+    toy_type TEXT NOT NULL REFERENCES category_settings(category),
+    description TEXT NOT NULL,
+    maker_combo TEXT,
+    scale TEXT,
+    factory_car TEXT DEFAULT 'n',
+    body_maker TEXT,
+    acquired TEXT,
+    chassis_type TEXT,
+    chassis_maker TEXT,
+    condition TEXT,
+    color TEXT,
+    motor_maker TEXT,
+    motor_details TEXT,
+    catalog_number TEXT,
+    comments TEXT,
+    major_work TEXT,
+    minor_work TEXT,
+    repro TEXT,
+    value REAL DEFAULT 0.0,
+    amount_paid REAL DEFAULT 0.0,
+    amount_sold TEXT,
+    traded TEXT,
+    buy TEXT,
+    maintenance TEXT,
+    to_make TEXT,
+    detail TEXT,
+    boxed TEXT DEFAULT 'n',
+    picture TEXT,
+    picture_size INTEGER DEFAULT 0,
+    picture_timestamp INTEGER DEFAULT 0,
+    has_picture TEXT DEFAULT 'n',
+    bitmaps TEXT,
+    bitmaps_size TEXT,
+    bitmaps_timestamp TEXT,
+    year_made TEXT DEFAULT '',
+    number TEXT DEFAULT '',
+    my_comments TEXT DEFAULT '',
+    PRIMARY KEY (toy_type, ref_num)
+);
+
+-- 4. Application Settings Table
+CREATE TABLE IF NOT EXISTS app_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);
+```
+
+### Cascading Manufacturer Renaming
+When a user renames a manufacturer in `ToyRepository.renameMaker(oldName, updatedMaker)`:
+1. Verifies that the new name is not blank and does not collide with an existing manufacturer.
+2. Counts all affected toys using `getAffectedToysCountForMaker(oldName)` across `body_maker`, `chassis_maker`, `motor_maker`, and `maker_combo`.
+3. Updates the primary key record in the `makers` table.
+4. Executes a single atomic SQL update across all matching toy records to replace old manufacturer references.
+5. Recalculates and updates the composite `maker_combo` field using the standard application rule:
+   - If `body_maker == chassis_maker`: uses `body_maker`.
+   - If one maker is blank: uses the non-blank maker.
+   - If both makers exist and differ: formats as `"{chassis_maker}/{body_maker}"`.
+
+---
+
+## 4. Media & Image Architecture
+
+### Image Resolution Algorithm (`utils/ImageResolver.kt`)
+The primary picture of a toy does not always use the `.jpg` extension. To resolve an image:
+1. `resolveToyPictureFilename(toy, imagePrefix, targetDir, imagesDir, fs)`:
+   - Cleans leading directory separators and converts to lowercase.
+   - If `toy.picture` contains an extension, it checks if that file exists in the active data directory or the images directory.
+   - If the exact file is not present, it checks candidate extensions (`.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`) on disk.
+   - If `toy.picture` has no extension or is blank, it checks disk for `{imagePrefix}{refNum}.*`.
+   - If no candidate exists on disk, it falls back to `{imagePrefix}{refNum}.jpg`.
+
+### Secondary Images (Bitmaps)
+- Manufacturers and toys can reference multiple secondary pictures.
+- Stored as space-separated lists in `bitmaps` (for example, `"car1444_chassis.jpg car1444_box.png"`).
+- Helper method `Toy.getSecondaryImages()` parses strings into `List<ToyImage>` objects containing filename, byte size, and timestamp.
+- When exporting to JSON, `ImportExportService.processBitmaps()` verifies local files, reads their filesystem metadata, and updates sizes and timestamps.
+
+### Lazy On-Demand Image Hydration (`ui/SyncImage.kt`)
+`SyncImage` displays images using `GcImage` from `gepetto-utils`. If an image is missing or outdated:
+1. Compares local file modification timestamp with `pictureTimeStamp` (or `bitmapsTimeStamp`).
+2. If missing or the remote timestamp is newer:
+   - Reads the configured HTTP `base_url` from `app_settings`.
+   - Initiates an asynchronous HTTP GET request using Ktor.
+   - Writes downloaded bytes directly to the local image storage directory.
+   - Triggers UI recomposition immediately upon completion.
+
+---
+
+## 5. Import, Export, & Publishing Pipelines
+
+### JSON Data Serialization (`service/ImportExportService.kt`)
+The application supports import and export interoperability with the legacy file format.
+
+| Content | Export Filename | Database Table |
+| :--- | :--- | :--- |
+| Manufacturers | `carmaker.json` (or `makers.json`) | `makers` |
+| Category Definitions | `category_settings.json` | `category_settings` |
+| Slot Cars | `carlist.json` | `toys` (`toy_type = 'slot'`) |
+| Model Trains | `tralist.json` | `toys` (`toy_type = 'train'`) |
+| Static Models | `stalist.json` | `toys` (`toy_type = 'static'`) |
+| Model Kits | `plalist.json` | `toys` (`toy_type = 'kit'`) |
+| Miscellaneous Toys | `mislist.json` | `toys` (`toy_type = 'misc'`) |
+
+Every exported JSON document contains an envelope with generation metadata:
+- `date`: Formatted date string (for example, `"October 4, 2026"`).
+- `buildNumber`: Application versionCode string.
+- `makers`, `settings`, or `cars`: Serialized entity payload array.
+
+### Fixed-Width LST Backfill (`backfillFromLstFiles`)
+Before exporting HTML, the service inspects the export directory for legacy fixed-width `.lst` files (such as `carlist.lst` or `tralist.lst`):
+1. Detects table column positions using the dashed separator line (`--- ---`).
+2. Locates column bounds for `Reg.` (reference number), `Made` (year made), `#` (racing number), and `My comments`.
+3. Parses each line according to column bounds and updates matching records in SQLite.
+
+### Static HTML Website Generation (`exportHtml`)
+The export function creates a complete static website:
+1. **Category Index Page** (`{prefix}maker.html`):
+   - Displays a grid of all manufacturers with associated toy counts.
+   - Summarizes category collection statistics: total toys, count of factory models, count of reproductions, and distribution by scale (`1/28 or bigger`, `1/32`, `O scale`, `HO scale`, `N scale or smaller`).
+2. **Brand Gallery Pages** (`{prefix}m_{index}.html`):
+   - Lists all toys for a specific manufacturer.
+   - Displays thumbnail links, descriptions, reproduction markers, and manufacturer comments.
+3. **Single Toy Pages** (`{prefix}_{ref_num}.html`):
+   - Detailed page containing 320px hero image, link to full image, actual vs. similar model indicator, and secondary bitmap gallery.
+   - Tabular specifications: scale, catalog number, brand, chassis configuration, motor details, color, year made, racing number, boxed status, and comments.
+   - Standard chassis convention legend explaining chassis coding letters.
+
+---
+
+## 6. Remote Synchronization Subsystems
+
+### Remote Web HTTP Synchronization (`service/HtmlSyncService.kt`)
+When configured with a `base_url` (for example, `https://gepetto.club/slots/`):
+1. Executed asynchronously during application startup in `ToyDbNavigation`.
+2. Downloads remote `category_settings.json` and manufacturer JSON files.
+3. Calculates SHA-256 content hashes and parses `date` headers.
+4. Compares values against local metadata keys in `app_settings` (`html_sync_imported_date_*`, `html_sync_imported_hash_*`).
+5. If the server contains newer data, or if the local `toys` table is empty:
+   - Performs a clean database replacement.
+   - Updates local metadata keys with the latest timestamps and hashes.
+
+### Cloud SFTP Synchronization (`service/SftpService.kt`)
+Supports bidirectional synchronization of images, JSON documents, and static HTML files with a remote SSH/SFTP server.
+- **Implementations**:
+  - Desktop: `DesktopSftpService` using `net.schmizz.sshj`.
+  - Android: `AndroidSftpService` using `net.schmizz.sshj` with BouncyCastle security provider.
+- **Authentication Modes**:
+  - Password authentication.
+  - SSH private key authentication (with optional passphrase).
+- **Host Key Verification**:
+  - Computes host key fingerprint. If not in `approvedFingerprints`, pauses execution and prompts the user for verification.
+- **Selective Synchronization Plan**:
+  - `calculateUploadPlan` / `calculateDownloadPlan`: Scans local and remote directories.
+  - Categorizes actions into: `New File`, `Size Changed`, `Newer Timestamp`, or `Overwrite (JSON)`.
+  - Renders a selection dialog allowing the user to select specific files.
+  - Executes batch transfers with file-by-file progress reporting.
+
+---
+
+## 7. User Interface & Navigation
+
+### Jetpack Navigation 3 Integration
+Navigation uses `androidx.navigation3` and `club.gepetto.composeutils.navigation3.GcNavDisplay`.
+
+```
+                  ┌────────────────────── HomeDestination ──────────────────────┐
+                  │ Landing screen with Gepetto artwork, banner, and navigation │
+                  └──────────────────────────────┬──────────────────────────────┘
+                                                 │
+         ┌───────────────────┬───────────────────┼───────────────────┬───────────────────┐
+         ▼                   ▼                   ▼                   ▼                   ▼
+   DashboardScreen     ExplorerScreen   MakerDirectoryScreen   SettingsScreen       InfoScreen
+   Collection stats    Category browse   Makers directory      Backup/Restore       App info &
+   and valuations      and search        and brand details     SFTP & Sync          user guide
+         │                   │                   │
+         └─────────┬─────────┴─────────┬─────────┘
+                   ▼                   ▼
+            ToyDetailScreen     MakerDetailScreen
+            (Detail Pane)       (Detail Pane)
+                   │                   │
+                   ▼                   ▼
+             EditToyScreen       EditMakerScreen
+             (Bottom Sheet)      (Bottom Sheet)
+```
+
+### Multi-Pane Scene Strategies (`GcSceneStrategy`)
+- **Detail Panes**: `ToyDetail`, `AddToy`, and `AddMaker` are registered with `GcSceneStrategy.detailPane(resizeable = true)`. On desktop and wide screens, they open alongside the primary list pane.
+- **Bottom Sheets**: `EditToy` and `EditMaker` are registered with `GcSceneStrategy.bottomSheetPane()`. They open as contextual bottom sheets on top of active content.
+
+### Adaptive Navigation Scaffold (`GcAdaptiveScaffold`)
+- **Portrait Orientation**: Displays a compact bottom navigation bar (`GcNavBar`).
+- **Landscape / Desktop Orientation**: Renders a vertical navigation rail.
+- **Dynamic Category Buttons**: Dynamically injects navigation items for all categories registered in table `category_settings`, matching icons via `getIconByName()`.
+
+### Localization
+String resources are fully localized across six languages under `composeApp/src/commonMain/composeResources/`:
+- `values/strings.xml` (English - default)
+- `values-pt/strings.xml` (Portuguese)
+- `values-de/strings.xml` (German)
+- `values-es/strings.xml` (Spanish)
+- `values-fr/strings.xml` (French)
+- `values-it/strings.xml` (Italian)
+
+---
+
+## 8. Data Storage & Platform Locations
+
+### SQLite Database File (`toydb.db`)
+- Packed default database: `composeResources/files/default_toydb.db`.
+- Unpacked automatically on first run if the target file is missing or smaller than 50 KB.
+- Clears pre-populated toys on fresh install to prepare for user import, while preserving category settings and manufacturers.
+
+### Platform Storage Paths
+- **macOS**: `~/Library/Application Support/ToyDatabaseManager/toydb.db`
+- **Windows**: `%APPDATA%/ToyDatabaseManager/toydb.db`
+- **Linux**: `~/.local/share/ToyDatabaseManager/toydb.db`
+- **Android**: Application internal storage via `context.getDatabasePath("toydb.db")`
+
+### Unified Data Directory (`data_path`)
+The application prompts the user on first launch to configure a data directory for images, JSON documents, and HTML exports:
+- Stored under key `data_path` in table `app_settings` (with backward-compatible mirrors `images_path` and `import_export_path`).
+- Global image resolution reads this path via `ImageResolverConfig.imagesPath`.
+
+---
+
+## 9. Standard Operation Flows
+
+### 1. Cataloging a New Toy
+1. Select a category in the navigation rail or open **Explorer**.
+2. Click the **Add Toy** floating action button (`Destination.AddToy`).
+3. Enter reference number (`refNum`), description, scale, manufacturer, and mechanical specifications.
+4. Save the record. The application automatically calculates `maker_combo` and records the toy in SQLite.
+
+### 2. Renaming a Manufacturer
+1. Open **Makers Directory** and select the manufacturer (`Destination.MakerDetail`).
+2. Click **Edit** to open the bottom sheet form (`Destination.EditMaker`).
+3. Change the name. The application checks whether associated toys exist.
+4. If toys exist, a confirmation dialog shows:
+   *"Renaming '<Old>' to '<New>' will also update <N> associated toy(s). Do you want to proceed?"*
+5. On confirmation, the database updates the maker and cascades changes across all referencing toys.
+
+### 3. Publishing Website & Backfilling Data
+1. Navigate to **Settings** (`Destination.Settings`).
+2. Under **Database Operations**, click **Export HTML Web Pages**.
+3. The service parses any existing `.lst` files to backfill missing metadata.
+4. The service generates `{prefix}maker.html`, brand pages, and individual toy HTML detail pages in the target data directory.
+
+### 4. Synchronizing with Cloud Storage
+1. In **Settings**, configure SFTP credentials (host, port, username, authentication method, remote directory).
+2. Click **Test SFTP Connection** to verify connectivity and approve host key fingerprints.
+3. Click **Upload to Cloud** or **Download from Cloud**.
+4. Review the selective synchronization plan modal and confirm the file transfer.
+
+---
+
+## 10. Headless CLI Commands
+
+The desktop application includes command-line flags for batch execution and automated testing without launching the GUI:
+
+```bash
+# Headless JSON Import and Export verification
+./gradlew :composeApp:run --args="--headless-import-export"
+
+# Headless HTML Website Generation
+./gradlew :composeApp:run --args="--headless-export-html"
+```
+
+---
+
+## 11. Verification & Build Commands
+
+According to workspace rules (Rule 14 in `.agents/AGENTS.md`), **never run `gradlew assemble`**. Use the following verification commands:
+
+```bash
+# Verify Desktop JVM compilation
+./gradlew compileKotlinDesktop
+
+# Verify Android Debug compilation
+./gradlew compileDebugKotlinAndroid
+
+# Run Desktop Application
+./gradlew :composeApp:run
+```
+
+Packaging installers:
+- **macOS DMG**: Build using `./globalsdkgradlew` (Apple Silicon) or `./globalsdkgradlew_intel` (Intel).
+- **Windows MSI**: Build using WiX definitions in `composeApp/wix/main.wxs`.

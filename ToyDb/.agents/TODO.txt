@@ -1,2 +1,2 @@
-HARDER:
-- [x] Migrato to JDK21
+[ ]-have a "file manager to manipulate a toy's file"
+[ ]-simplify the settings
