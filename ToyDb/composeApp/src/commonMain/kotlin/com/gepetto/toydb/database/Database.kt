@@ -3,7 +3,7 @@ package com.gepetto.toydb.database
 import club.gepetto.GcLog
 import kotlinx.serialization.Serializable
 
-const val DATABASE_VERSION = 8
+const val DATABASE_VERSION = 9
 const val TAG = "ToyDbDatabase"
 
 interface SqlCursor {
@@ -201,6 +201,10 @@ val CREATE_SCHEMA_SQL_LIST = listOf(
 
     """
     INSERT OR IGNORE INTO app_settings (key, value) VALUES ('theme', '0');
+    """.trimIndent(),
+
+    """
+    INSERT OR IGNORE INTO app_settings (key, value) VALUES ('base_url', 'https://gepetto.club/database/');
     """.trimIndent()
 )
 
@@ -290,6 +294,9 @@ fun runMigration(db: ToyDatabase, version: Int) {
             db.execute("UPDATE category_settings SET icon = 'train' WHERE category = 'train' AND icon = 'category'")
             db.execute("UPDATE category_settings SET icon = 'car' WHERE category = 'static' AND icon = 'category'")
             db.execute("UPDATE category_settings SET icon = 'build' WHERE category = 'kit' AND icon = 'category'")
+        }
+        9 -> {
+            db.execute("INSERT OR IGNORE INTO app_settings (key, value) VALUES ('base_url', 'https://gepetto.club/database/')")
         }
     }
 }

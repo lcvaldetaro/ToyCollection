@@ -100,7 +100,7 @@ The persistence layer uses a custom platform-independent database abstraction (`
 - **Android Implementation** (`AndroidDatabase.kt`): Uses `android.database.sqlite.SQLiteDatabase`.
 
 ### Schema Version & Migrations
-The database version is tracked using `PRAGMA user_version` (current: `DATABASE_VERSION = 8`).
+The database version is tracked using `PRAGMA user_version` (current: `DATABASE_VERSION = 9`).
 - **Version 1**: Initial creation of `category_settings`, `makers`, and `toys` tables.
 - **Version 2**: Creation of the `app_settings` key-value table.
 - **Version 3**: Updated display label for category `misc` to `'Others'`.
@@ -109,6 +109,7 @@ The database version is tracked using `PRAGMA user_version` (current: `DATABASE_
 - **Version 6**: Ensured non-empty default titles for all pre-populated categories.
 - **Version 7**: Added column `icon` to table `category_settings`.
 - **Version 8**: Backfilled default vector icon names (`car`, `train`, `build`, `category`) into `category_settings`.
+- **Version 9**: Seeded default `base_url` (`https://gepetto.club/database/`, matching Toy Collection's default) into `app_settings`.
 
 ### Core Database Tables
 
@@ -266,15 +267,41 @@ The export function creates a complete static website:
 
 ## 6. Remote Synchronization Subsystems
 
-### Remote Web HTTP Synchronization (`service/HtmlSyncService.kt`)
-When configured with a `base_url` (for example, `https://gepetto.club/slots/`):
-1. Executed asynchronously during application startup in `ToyDbNavigation`.
-2. Downloads remote `category_settings.json` and manufacturer JSON files.
-3. Calculates SHA-256 content hashes and parses `date` headers.
-4. Compares values against local metadata keys in `app_settings` (`html_sync_imported_date_*`, `html_sync_imported_hash_*`).
-5. If the server contains newer data, or if the local `toys` table is empty:
-   - Performs a clean database replacement.
-   - Updates local metadata keys with the latest timestamps and hashes.
+### The Base URL Configuration (`base_url`)
+The **Base URL** setting (configured under **Settings** $\rightarrow$ **Remote Web Synchronization**, stored in `app_settings` with the key `'base_url'`, and defaulting to `https://gepetto.club/database/`, identical to the Toy Collection companion app) defines the root HTTP/HTTPS web address hosting published collection assets and JSON database backups.
+
+The application uses the Base URL for two distinct operations:
+
+#### 1. Automated and Manual Database Synchronization (`service/HtmlSyncService.kt`)
+`HtmlSyncService` ensures that client devices stay synchronized with the latest master collection data:
+- **Execution Triggers**:
+  - **Startup Synchronization**: Runs automatically in the background on application startup inside `ToyDbNavigation`.
+  - **Manual Synchronization**: Triggered when the user clicks the **Run Web Sync Now** button in **Settings**.
+- **Remote Files Downloaded**:
+  - `category_settings.json`: Contains category rules, prefixes, and titles.
+  - `carmaker.json` (or fallback `makers.json`): Contains manufacturer directory records.
+  - `{prefix}list.json`: Category toy lists dynamically resolved for each active category (e.g., `carlist.json`, `tralist.json`, `stalist.json`, `plalist.json`, `mislist.json`).
+- **Differential Verification**:
+  - Computes the SHA-256 hash of each downloaded JSON file.
+  - Parses the `date` string from the JSON envelope (e.g., `"October 4, 2026"`).
+  - Compares the remote timestamp and hash against local values stored in `app_settings` (`html_sync_imported_date_*` and `html_sync_imported_hash_*`).
+- **Import Execution**:
+  - If any remote file is newer than the local record, if the hash differs, or if the local `toys` table has zero records (such as on a fresh installation):
+  - The service executes a clean transaction: deletes existing records in `toys`, `makers`, and `category_settings`, imports the downloaded data, and updates the local metadata timestamps and hashes in `app_settings`.
+
+#### 2. On-Demand Lazy Image Hydration (`ui/SyncImage.kt`)
+The Base URL enables lazy media loading without requiring a full upfront download of multi-gigabyte photo archives:
+- **Execution Triggers**:
+  - Active whenever a toy is displayed in `ToyDetailScreen` or `ExplorerScreen`, or when manufacturer logos and factory photos are viewed in `MakerDetailScreen`.
+- **Condition Check**:
+  - The UI evaluates whether the required image (primary picture or secondary bitmap) exists in local disk storage.
+  - If the file exists, it compares the file's last modified timestamp on disk against the expected timestamp recorded in the database (`pictureTimeStamp` or `bitmapsTimeStamp`).
+- **HTTP Fetching**:
+  - If the image file is missing, or if the database timestamp indicates the local file is outdated:
+  - `SyncImage` constructs the target URL: `"${baseUrl}/${filename}"` (or `"${baseUrl}${filename}"` if baseUrl ends with a slash).
+  - Sends an asynchronous HTTP GET request using Ktor.
+  - Writes the received image bytes directly to the local image directory (`ImageResolverConfig.imagesPath`).
+  - Updates UI state to render the downloaded image immediately.
 
 ### Cloud SFTP Synchronization (`service/SftpService.kt`)
 Supports bidirectional synchronization of images, JSON documents, and static HTML files with a remote SSH/SFTP server.

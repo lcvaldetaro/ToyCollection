@@ -271,7 +271,7 @@ Alle Rechte vorbehalten.</string>
     <string name="sftp_sync_exclude_html_files">HTML-Dateien ausschließen</string>
     <string name="html_sync_title">Web-Synchronisierung</string>
     <string name="base_url_label">Basis-URL</string>
-    <string name="base_url_placeholder">http://example.com/toydb</string>
+    <string name="base_url_placeholder">https://gepetto.club/database/</string>
     <string name="base_url_saved">Basis-URL erfolgreich gespeichert</string>
     <string name="web_sync_running">Web-Synchronisierung läuft...</string>
     <string name="web_sync_success">Web-Synchronisierung abgeschlossen</string>

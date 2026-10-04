@@ -1,2 +1,2 @@
-HARDER:
-- [x] Migrato to JDK21
+[ ]-change icon to the icon of Toy DB
+[ ]-Change package to "com.gepetto.toydb"

@@ -177,6 +177,7 @@ android {
     }
 
     defaultConfig {
+        // TODO change to "com.gepetto.slotcarscollection"
         applicationId = "com.gepetto.toydb"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()

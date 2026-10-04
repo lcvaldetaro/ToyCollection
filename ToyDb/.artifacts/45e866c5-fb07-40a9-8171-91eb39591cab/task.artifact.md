@@ -1,3 +1,0 @@
-- [x] Update `ExplorerScreen.kt` to use `rememberSaveable` for UI state
-- [x] Update `MakerDetailScreen.kt` to use `rememberSaveable` for UI state
-- [x] Update `MakerDirectoryScreen.kt` to use `rememberSaveable` for UI state
