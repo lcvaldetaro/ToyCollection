@@ -291,4 +291,8 @@ All rights reserved.</string>
     <string name="home_banner_p3_post">.\n</string>
     <string name="home_banner_p4">\n\tEnjoy managing your collection!</string>
     <string name="home_banner_show_info">Show Introduction</string>
+    <string name="rename_maker_confirm_title">Rename Manufacturer</string>
+    <string name="rename_maker_confirm_message">Renaming \'%1$s\' to \'%2$s\' will also update %3$d associated toy(s). Do you want to proceed?</string>
+    <string name="rename_maker_confirm_button">Rename</string>
+    <string name="maker_already_exists">A manufacturer named \'%1$s\' already exists.</string>
 </resources>

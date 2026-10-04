@@ -11,6 +11,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import club.gepetto.composeutils.GcSpacing
+import club.gepetto.composeutils.sysBackgroundColor
 import club.gepetto.composeutils.sysTextColor
 import com.gepetto.toydb.database.Maker
 import com.gepetto.toydb.database.ToyRepository
@@ -35,6 +36,8 @@ fun MakerForm(
     var bitmapsTimeStamp by remember { mutableStateOf(initialMaker.bitmapsTimeStamp) }
     var comments by remember { mutableStateOf(initialMaker.comments) }
     var showRenameDialog by remember { mutableStateOf(false) }
+    var showConfirmRenameDialog by remember { mutableStateOf(false) }
+    var pendingMakerToSave by remember { mutableStateOf<Maker?>(null) }
 
     Column(
         modifier = modifier
@@ -56,7 +59,7 @@ fun MakerForm(
             value = name,
             onValueChange = { name = it },
             label = { Text(stringResource(Res.string.manufacturer_name_required)) },
-            enabled = !isEditMode, // Name is primary key, cannot edit
+            enabled = true,
             modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
             singleLine = true
         )
@@ -145,15 +148,24 @@ fun MakerForm(
             }
             Button(
                 onClick = {
-                    if (name.trim().isEmpty()) return@Button
+                    val cleanName = name.trim()
+                    if (cleanName.isEmpty()) return@Button
                     val maker = Maker(
-                        name = name.trim(),
+                        name = cleanName,
                         country = country.trim(),
                         bitmaps = bitmaps.trim(),
                         bitmapsSize = bitmapsSize,
                         bitmapsTimeStamp = bitmapsTimeStamp,
                         comments = comments.trim()
                     )
+                    if (isEditMode && cleanName != initialMaker.name.trim()) {
+                        val affectedCount = repository.getAffectedToysCountForMaker(initialMaker.name)
+                        if (affectedCount > 0) {
+                            pendingMakerToSave = maker
+                            showConfirmRenameDialog = true
+                            return@Button
+                        }
+                    }
                     onSave(maker)
                 },
                 colors = ButtonDefaults.buttonColors(
@@ -164,6 +176,65 @@ fun MakerForm(
             ) {
                 Text(stringResource(Res.string.save))
             }
+        }
+
+        if (showConfirmRenameDialog && pendingMakerToSave != null) {
+            val count = remember(pendingMakerToSave) {
+                repository.getAffectedToysCountForMaker(initialMaker.name)
+            }
+            AlertDialog(
+                onDismissRequest = {
+                    showConfirmRenameDialog = false
+                    pendingMakerToSave = null
+                },
+                containerColor = sysBackgroundColor(),
+                titleContentColor = sysTextColor(),
+                textContentColor = sysTextColor(),
+                title = {
+                    Text(
+                        text = stringResource(Res.string.rename_maker_confirm_title),
+                        fontWeight = FontWeight.Bold,
+                        color = sysTextColor()
+                    )
+                },
+                text = {
+                    Text(
+                        text = stringResource(
+                            Res.string.rename_maker_confirm_message,
+                            initialMaker.name,
+                            pendingMakerToSave!!.name,
+                            count
+                        ),
+                        color = sysTextColor()
+                    )
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            val makerToSave = pendingMakerToSave!!
+                            showConfirmRenameDialog = false
+                            pendingMakerToSave = null
+                            onSave(makerToSave)
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        )
+                    ) {
+                        Text(stringResource(Res.string.rename_maker_confirm_button))
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = {
+                            showConfirmRenameDialog = false
+                            pendingMakerToSave = null
+                        }
+                    ) {
+                        Text(stringResource(Res.string.cancel))
+                    }
+                }
+            )
         }
     }
 }

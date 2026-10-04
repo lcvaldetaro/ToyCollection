@@ -469,7 +469,18 @@ fun ToyDbNavigation(
                             entry<Destination.EditMaker>(
                                 metadata = GcSceneStrategy.bottomSheetPane()
                             ) { key ->
-                                EditMakerScreen(repository, makerName = key.makerName, onBack = { backStack.removeUpToInclusive(key) })
+                                EditMakerScreen(
+                                    repository = repository,
+                                    makerName = key.makerName,
+                                    onBack = { backStack.removeUpToInclusive(key) },
+                                    onRenamed = { oldName, newName ->
+                                        val index = backStack.indexOfLast { it is Destination.MakerDetail && it.makerName == oldName }
+                                        if (index != -1) {
+                                            backStack[index] = Destination.MakerDetail(newName)
+                                        }
+                                        backStack.removeUpToInclusive(key)
+                                    }
+                                )
                             }
                             entry<Destination.Settings> {
                                 SettingsScreen(

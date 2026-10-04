@@ -291,4 +291,8 @@ Todos los derechos reservados.</string>
     <string name="home_banner_p3_post">.\n</string>
     <string name="home_banner_p4">\n\t¡Disfruta gestionando tu colección!</string>
     <string name="home_banner_show_info">Mostrar Introducción</string>
+    <string name="rename_maker_confirm_title">Renombrar Fabricante</string>
+    <string name="rename_maker_confirm_message">Renombrar \'%1$s\' a \'%2$s\' también actualizará %3$d juguete(s) asociado(s). ¿Desea continuar?</string>
+    <string name="rename_maker_confirm_button">Renombrar</string>
+    <string name="maker_already_exists">Ya existe un fabricante llamado \'%1$s\'.</string>
 </resources>

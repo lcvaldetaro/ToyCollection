@@ -291,4 +291,8 @@ Alle Rechte vorbehalten.</string>
     <string name="home_banner_p3_post">.\n</string>
     <string name="home_banner_p4">\n\tViel Spaß beim Verwalten Ihrer Sammlung!</string>
     <string name="home_banner_show_info">Einführung anzeigen</string>
+    <string name="rename_maker_confirm_title">Hersteller umbenennen</string>
+    <string name="rename_maker_confirm_message">Das Umbenennen von \'%1$s\' in \'%2$s\' aktualisiert auch %3$d zugehörige(s) Spielzeug(e). Möchten Sie fortfahren?</string>
+    <string name="rename_maker_confirm_button">Umbenennen</string>
+    <string name="maker_already_exists">Ein Hersteller namens \'%1$s\' existiert bereits.</string>
 </resources>

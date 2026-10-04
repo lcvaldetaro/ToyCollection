@@ -291,4 +291,8 @@ Tutti i diritti riservati.</string>
     <string name="home_banner_p3_post">.\n</string>
     <string name="home_banner_p4">\n\tBuon divertimento nella gestione della tua collezione!</string>
     <string name="home_banner_show_info">Mostra Introduzione</string>
+    <string name="rename_maker_confirm_title">Rinomina Produttore</string>
+    <string name="rename_maker_confirm_message">Rinominare \'%1$s\' in \'%2$s\' aggiornerà anche %3$d giocattolo/i associato/i. Vuoi procedere?</string>
+    <string name="rename_maker_confirm_button">Rinomina</string>
+    <string name="maker_already_exists">Esiste già un produttore chiamato \'%1$s\'.</string>
 </resources>

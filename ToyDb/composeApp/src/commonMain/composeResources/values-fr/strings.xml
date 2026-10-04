@@ -291,4 +291,8 @@ Tous droits réservés.</string>
     <string name="home_banner_p3_post">.\n</string>
     <string name="home_banner_p4">\n\tBonne gestion de votre collection !</string>
     <string name="home_banner_show_info">Afficher l\'Introduction</string>
+    <string name="rename_maker_confirm_title">Renommer le Fabricant</string>
+    <string name="rename_maker_confirm_message">Renommer \'%1$s\' en \'%2$s\' mettra également à jour %3$d jouet(s) associé(s). Voulez-vous continuer?</string>
+    <string name="rename_maker_confirm_button">Renommer</string>
+    <string name="maker_already_exists">Un fabricant nommé \'%1$s\' existe déjà.</string>
 </resources>

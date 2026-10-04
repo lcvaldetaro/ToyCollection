@@ -2,6 +2,13 @@ package com.gepetto.toydb.database
 
 import club.gepetto.GcLog
 
+sealed class RenameMakerResult {
+    data class Success(val updatedToysCount: Int) : RenameMakerResult()
+    data object NameAlreadyExists : RenameMakerResult()
+    data object InvalidName : RenameMakerResult()
+    data class Error(val message: String) : RenameMakerResult()
+}
+
 class ToyRepository(val db: ToyDatabase) {
 
     fun getDashboardStats(): DashboardStats {
@@ -223,6 +230,128 @@ class ToyRepository(val db: ToyDatabase) {
             GcLog.d("ToyRepository", "Deleted maker $name")
         } catch (e: Exception) {
             GcLog.e("ToyRepository", "Error deleting maker: ${e.message}", e)
+        }
+    }
+
+    fun getAffectedToysCountForMaker(makerName: String): Int {
+        val trimmed = makerName.trim()
+        if (trimmed.isEmpty()) return 0
+        var count = 0
+        try {
+            val cursor = db.query(
+                """
+                SELECT COUNT(*) FROM toys WHERE 
+                    TRIM(body_maker) = ? OR 
+                    TRIM(chassis_maker) = ? OR 
+                    TRIM(motor_maker) = ? OR 
+                    TRIM(maker_combo) = ? OR 
+                    maker_combo LIKE ? OR 
+                    maker_combo LIKE ?
+                """.trimIndent(),
+                listOf(trimmed, trimmed, trimmed, trimmed, "$trimmed/%", "%/$trimmed")
+            )
+            if (cursor.next()) {
+                count = cursor.getInt("COUNT(*)") ?: 0
+            }
+            cursor.close()
+        } catch (e: Exception) {
+            GcLog.e("ToyRepository", "Error getting affected toys count for maker $makerName: ${e.message}", e)
+        }
+        return count
+    }
+
+    fun renameMaker(oldName: String, updatedMaker: Maker): RenameMakerResult {
+        val cleanOld = oldName.trim()
+        val cleanNew = updatedMaker.name.trim()
+
+        if (cleanNew.isEmpty()) {
+            return RenameMakerResult.InvalidName
+        }
+
+        // If the name hasn't changed (case-sensitive check)
+        if (cleanOld == cleanNew) {
+            saveMaker(updatedMaker)
+            return RenameMakerResult.Success(0)
+        }
+
+        // If changing to a different name (ignoring case), verify it does not collide with an existing maker
+        if (!cleanOld.equals(cleanNew, ignoreCase = true)) {
+            val existing = getMaker(cleanNew)
+            if (existing != null) {
+                return RenameMakerResult.NameAlreadyExists
+            }
+        }
+
+        try {
+            val affectedCount = getAffectedToysCountForMaker(cleanOld)
+
+            // Update makers table
+            db.execute(
+                """
+                UPDATE makers SET 
+                    name = ?, country = ?, bitmaps = ?, bitmaps_size = ?, bitmaps_timestamp = ?, comments = ?
+                WHERE TRIM(name) = ?
+                """.trimIndent(),
+                listOf(
+                    cleanNew,
+                    updatedMaker.country.trim(),
+                    updatedMaker.bitmaps.trim(),
+                    updatedMaker.bitmapsSize,
+                    updatedMaker.bitmapsTimeStamp,
+                    updatedMaker.comments.trim(),
+                    cleanOld
+                )
+            )
+
+            // Cascade update to toys table
+            db.execute(
+                """
+                UPDATE toys SET
+                    body_maker = CASE WHEN TRIM(body_maker) = ? THEN ? ELSE body_maker END,
+                    chassis_maker = CASE WHEN TRIM(chassis_maker) = ? THEN ? ELSE chassis_maker END,
+                    motor_maker = CASE WHEN TRIM(motor_maker) = ? THEN ? ELSE motor_maker END
+                WHERE 
+                    TRIM(body_maker) = ? OR 
+                    TRIM(chassis_maker) = ? OR 
+                    TRIM(motor_maker) = ? OR 
+                    TRIM(maker_combo) = ? OR 
+                    maker_combo LIKE ? OR 
+                    maker_combo LIKE ?
+                """.trimIndent(),
+                listOf(
+                    cleanOld, cleanNew,
+                    cleanOld, cleanNew,
+                    cleanOld, cleanNew,
+                    cleanOld, cleanOld, cleanOld, cleanOld,
+                    "$cleanOld/%", "%/$cleanOld"
+                )
+            )
+
+            // Recalculate maker_combo for affected toys
+            db.execute(
+                """
+                UPDATE toys SET
+                    maker_combo = CASE
+                        WHEN TRIM(body_maker) = TRIM(chassis_maker) THEN TRIM(body_maker)
+                        WHEN body_maker IS NULL OR TRIM(body_maker) = '' THEN TRIM(chassis_maker)
+                        WHEN chassis_maker IS NULL OR TRIM(chassis_maker) = '' THEN TRIM(body_maker)
+                        ELSE TRIM(chassis_maker) || '/' || TRIM(body_maker)
+                    END
+                WHERE 
+                    TRIM(body_maker) = ? OR 
+                    TRIM(chassis_maker) = ? OR
+                    TRIM(maker_combo) = ? OR
+                    maker_combo LIKE ? OR
+                    maker_combo LIKE ?
+                """.trimIndent(),
+                listOf(cleanNew, cleanNew, cleanOld, "$cleanOld/%", "%/$cleanOld")
+            )
+
+            GcLog.d("ToyRepository", "Renamed maker '$cleanOld' to '$cleanNew' ($affectedCount toys updated)")
+            return RenameMakerResult.Success(affectedCount)
+        } catch (e: Exception) {
+            GcLog.e("ToyRepository", "Error renaming maker '$cleanOld' to '$cleanNew': ${e.message}", e)
+            return RenameMakerResult.Error(e.message ?: "Unknown error")
         }
     }
 
