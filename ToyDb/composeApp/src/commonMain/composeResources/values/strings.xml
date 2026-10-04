@@ -280,7 +280,7 @@ All rights reserved.</string>
     <string name="nav_home">Home</string>
     <string name="nav_dashboard">Dash</string>
     <string name="nav_makers">Makers</string>
-    <string name="nav_settings">Config</string>
+    <string name="nav_settings">Settings</string>
     <string name="nav_info">Info</string>
     <string name="home_banner_p1">\tGepetto really loves toys and collects them. He created Toy Database Manager to organize, catalog, update, and manage his toy collections (Slot Cars, Model Trains, Static Models, Model Kits, and more) and their manufacturers, but he made it generic so you can manage your own collections too.</string>
     <string name="home_banner_p2_pre">\n\tHead over to the </string>
