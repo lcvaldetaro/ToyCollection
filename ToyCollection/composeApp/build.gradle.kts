@@ -60,20 +60,33 @@ android {
 
     defaultConfig {
         // TODO change it to "com.gepetto.toydb"
-        applicationId = "com.gepetto.slotcarscollection"
+        applicationId = "com.gepetto.toydb"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = libs.versions.versionCode.get().toInt()
         versionName = libs.versions.versionName.get()
     }
     
-    signingConfigs {
+    /*signingConfigs {
         create("release") {
             val storeFilePath = project.findProperty("gepetto.store_file") as? String
             storeFile = storeFilePath?.let { file(it) }
             storePassword = project.findProperty("gepetto.store_psw") as? String
             keyAlias = project.findProperty("gepetto.key_alias") as? String
             keyPassword = project.findProperty("gepetto.key_psw") as? String
+        }
+    }*/
+
+    signingConfigs {
+        create("release") {
+            val customStoreFile = project.findProperty("gepetto.lapcounter.store_file") as String?
+            val targetFile = file(customStoreFile ?: "release.keystore")
+            if (targetFile.exists()) {
+                storeFile = targetFile
+                storePassword = project.findProperty("gepetto.store_psw") as String?
+                keyAlias = project.findProperty("gepetto.key_alias") as String?
+                keyPassword = project.findProperty("gepetto.key_psw") as String?
+            }
         }
     }
 

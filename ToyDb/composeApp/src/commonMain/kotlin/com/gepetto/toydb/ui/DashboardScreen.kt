@@ -23,10 +23,23 @@ import com.gepetto.toydb.database.DashboardStats
 import com.gepetto.toydb.database.CategoryStat
 import com.gepetto.toydb.database.CategorySetting
 import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.Image
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import club.gepetto.composeutils.GcTheme
+import club.gepetto.composeutils.Res as GcRes
+import club.gepetto.composeutils.slotcaricon
+import club.gepetto.composeutils.train
+import club.gepetto.composeutils.staticmodel
+import club.gepetto.composeutils.plastickits
+import club.gepetto.composeutils.others
+import toydb.composeapp.generated.resources.Res
 import toydb.composeapp.generated.resources.*
 
 @Composable
@@ -132,8 +145,10 @@ fun DashboardContent(
             contentPadding = PaddingValues(bottom = GcSpacing.Standard)
         ) {
             items(stats.categories) { catStat ->
-                val categoryName = categoriesSettings.find { it.category == catStat.category }?.label
+                val categorySetting = categoriesSettings.find { it.category == catStat.category }
+                val categoryName = categorySetting?.label
                     ?: catStat.category.replaceFirstChar { it.uppercase() }
+                val iconDrawable = getCollectionDrawableResource(catStat.category, categorySetting?.icon)
 
                 Card(
                     modifier = Modifier
@@ -147,19 +162,39 @@ fun DashboardContent(
                             .padding(GcSpacing.Standard)
                             .fillMaxWidth()
                     ) {
-                        Text(
-                            text = categoryName,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = sysTextColor()
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.Top
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(end = GcSpacing.Small)
+                            ) {
+                                Text(
+                                    text = categoryName,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = sysTextColor()
+                                )
+                                Spacer(modifier = Modifier.height(GcSpacing.Small))
+                                Text(
+                                    text = stringResource(Res.string.items_count, catStat.count),
+                                    fontSize = 14.sp,
+                                    color = sysTextColor()
+                                )
+                            }
+                            Image(
+                                painter = painterResource(iconDrawable),
+                                contentDescription = categoryName,
+                                contentScale = ContentScale.Fit,
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(RoundedCornerShape(6.dp))
+                            )
+                        }
                         Spacer(modifier = Modifier.height(GcSpacing.Small))
-                        Text(
-                            text = stringResource(Res.string.items_count, catStat.count),
-                            fontSize = 14.sp,
-                            color = sysTextColor()
-                        )
-                        Spacer(modifier = Modifier.height(GcSpacing.XSmall))
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
@@ -171,6 +206,33 @@ fun DashboardContent(
                 }
             }
         }
+    }
+}
+
+fun getCollectionDrawableResource(category: String, iconSetting: String? = null): DrawableResource {
+    val cat = category.trim().lowercase()
+    val iconKey = iconSetting?.trim()?.lowercase() ?: ""
+
+    when (iconKey) {
+        "slotcaricon", "slotcar", "slot", "slots" -> return GcRes.drawable.slotcaricon
+        "train", "trains" -> return GcRes.drawable.train
+        "staticmodel", "staticmodels", "static" -> return GcRes.drawable.staticmodel
+        "plastickits", "plastickit", "kit", "kits", "build" -> return GcRes.drawable.plastickits
+        "others", "other", "misc", "miscellaneous", "category" -> return GcRes.drawable.others
+        "car" -> return if (cat in listOf("static", "staticmodel")) {
+            GcRes.drawable.staticmodel
+        } else {
+            GcRes.drawable.slotcaricon
+        }
+    }
+
+    return when (cat) {
+        "slot", "slots", "slotcar", "slotcars" -> GcRes.drawable.slotcaricon
+        "train", "trains" -> GcRes.drawable.train
+        "static", "staticmodel", "staticmodels" -> GcRes.drawable.staticmodel
+        "kit", "kits", "modelkit", "modelkits", "plastic", "plastickits" -> GcRes.drawable.plastickits
+        "misc", "miscellaneous", "others", "other" -> GcRes.drawable.others
+        else -> GcRes.drawable.others
     }
 }
 

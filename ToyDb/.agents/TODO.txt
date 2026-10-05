@@ -1,6 +1,6 @@
-[ ]-have a "file manager to manipulate a toy's file"
+[ ]-have a "file manager to manipulate a toy's image files"
 [ ]-simplify the settings
 [x]-change hte default URL to http://valdetaro.com/database
-[ ]-on dashboard, the collection cards should have icons on the top right - equivalent to Toy collection
+[x]-on dashboard, the collection cards should have icons on the top right - equivalent to Toy collection
 [x]-change icon to the same as Toy collection
-[ ]-change package to  "com.gepetto.slotcarscollection"
+[x]-change package to  "com.gepetto.slotcarscollection"

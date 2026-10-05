@@ -1,2 +1,2 @@
-[ ]-change icon to the icon of Toy DB
-[ ]-Change package to "com.gepetto.toydb"
+[x]-change icon to the icon of Toy DB
+[x]-Change package to "com.gepetto.toydb"
