@@ -1,23 +1,12 @@
 # Gepetto's Toy Collection Workspace
 
-This workspace houses two Kotlin Multiplatform (KMP) applications developed to manage and view Gepetto's extensive toy collections (comprising Slot Cars, Model Trains, Static Models, Model Kits, and Miscellaneous items).
+This workspace houses a Kotlin Multiplatform (KMP) application developed to manage and view Gepetto's extensive toy collections (comprising Slot Cars, Model Trains, Static Models, Model Kits, and Miscellaneous items).
 
 ---
 
 ## 📂 Project Index
 
-### 1. 🔍 [ToyCollectionMultiplatform (Viewer App)](file:///Users/luizvaldetaro/valdetaro/ToyCollection/ToyCollectionMultiplatform)
-A multi-device viewer designed for browsing, searching, and inspecting toys and manufacturers.
-* **Targets**: Android, Desktop (macOS, Windows), and Web (Wasm/JS).
-* **Key Features**:
-  * Syncs data dynamically over HTTP from web endpoints (`https://gepetto.club/database/`).
-  * Features adaptive layouts that morph based on display width and orientation (e.g., bottom bar navigation on portrait mobile screens vs. a side navigation rail on landscape desktop windows).
-  * Uses Material 3 with adaptive multi-pane layouts (single pane on mobile, List-Detail-Extra pane layout on tablet/desktop).
-  * Built using KMP, Compose Multiplatform, and the **Circum MVI** architecture library.
-
----
-
-### 2. 🗄 [ToyDb (Database Manager / CRUD Editor)](file:///Users/luizvaldetaro/valdetaro/ToyCollection/ToyDb)
+### 1. 🗄 ToyDb (Database Manager / CRUD Editor)
 A local database coordinator designed to execute CRUD operations, imports, exports, and integrity validations.
 * **Targets**: Desktop (macOS, Windows).
 * **Key Features**:
