@@ -3,8 +3,12 @@ HARD:
 [ ]-have a "file manager to manipulate a toy's image files"
 
 SIMPLE:
-[ ]-simplify the settings
 [ ]-ability to export/import the DB and images to a zip, and save it / read it / the same way Race Director does
+[ ]-change info tab "Backup" to "Server Sync"
+[ ]-create help tab for "backup and restore"
+[ ]-create help tab for categories
+[ ]-simplify the settings / break into categories with tabs / "Theme" | "Server Sync" | "Categories" | "Backup and Restore"
+
 
 [x]-change hte default URL to http://valdetaro.com/database
 [x]-on dashboard, the collection cards should have icons on the top right - equivalent to Toy collection
