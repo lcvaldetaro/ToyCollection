@@ -8,7 +8,7 @@ SIMPLE:
 [ ]-create help tab for "backup and restore"
 [ ]-create help tab for categories
 [ ]-simplify the settings / break into categories with tabs / "Theme" | "Server Sync" | "Categories" | "Backup and Restore"
-
+[ ]-desktop must check if there is a new version to download
 
 [x]-change hte default URL to http://valdetaro.com/database
 [x]-on dashboard, the collection cards should have icons on the top right - equivalent to Toy collection

@@ -5,8 +5,8 @@
 > **Workspace**: `/Users/luizvaldetaro/valdetaro`
 > **Document Location**: `ToyCollection/.agents/WEB_PORT_PLAN.md`
 > **Current Phase**: Phase 0 (not started). No project source file has been changed yet.
-> **Last Updated**: 2026-10-06 (Rev 4: review against `HEAD` `b54abfe`; owner decisions D8-D12 and D14; fixed grep gate; no image-name guessing; start-up title and error handling; ASSEMBLE gate; toml-only versions; HTTP cache, host name and documentation items)
-> **Code baseline**: ToyCollection commit `1891463` (branch `main`). Source code is unchanged up to `HEAD` `b54abfe` (later commits change documents only). versionCode 232, versionName 3.0.32, Kotlin 2.4.20, Compose Multiplatform 1.12.1, gepetto-utils 2.1.2.
+> **Last Updated**: 2026-10-06 (Rev 5: review against `HEAD` `161b028`; InfoScreen double-spacer fix; defensive webpack config; headless path note)
+> **Code baseline**: ToyCollection commit `1891463` (branch `main`). Source code is unchanged up to `HEAD` `161b028` (later commits change documents only). versionCode 232, versionName 3.0.32, Kotlin 2.4.20, Compose Multiplatform 1.12.1, gepetto-utils 2.1.2.
 
 ---
 
@@ -229,6 +229,7 @@ Notes:
 // Emit the sql.js WebAssembly binary next to composeApp.js (sql.js loads it by file name at run time).
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 
+config.plugins = config.plugins || [];
 config.plugins.push(
     new CopyWebpackPlugin({
         patterns: [
@@ -258,7 +259,7 @@ Line numbers are for commit `1891463` (still valid at `HEAD` `b54abfe`, checked 
 | **`ui/MakerDetailScreen.kt`** | (a) `FileSystem.SYSTEM` becomes `systemFileSystem` (≈ 126-136). (b) `System.currentTimeMillis()` becomes `gcCurrentTimeMillis()` (≈ 137). (c) Hide the "add image" `IconButton` (≈ 332) on Web. (d) In `allImagePaths` (≈ 108-114): when `isWebPlatform()`, assign `makerImages.toTypedArray()`. Without this, line ≈ 344 `if (allImagePaths.isNotEmpty())` skips the maker images gallery completely on Web (ISSUE-17). |
 | **`ui/MakerForm.kt`** | Hide the rename icon (≈ 90) with `if (!isWebPlatform())`. |
 | **`ui/ImageRenameDialog.kt`** | `FileSystem.SYSTEM` becomes `systemFileSystem` (≈ 55, 191). |
-| **`ui/InfoScreen.kt`** | (a) ≈ 57: `java.util.Locale.getDefault().language.lowercase()` becomes `androidx.compose.ui.text.intl.Locale.current.language.lowercase()`. (b) ≈ 262, in `BackupTabContent`: wrap `Button(onClick = onNavigateToSftpSetup)` (text `sftp_setup_guide_btn`, "SFTP Server Setup Guide") in `if (!isWebPlatform()) { ... }`. Keep the Backup tab and its text on Web (decision D8, ISSUE-19). |
+| **`ui/InfoScreen.kt`** | (a) ≈ 57: `java.util.Locale.getDefault().language.lowercase()` becomes `androidx.compose.ui.text.intl.Locale.current.language.lowercase()`. (b) ≈ 262–272, in `BackupTabContent`: wrap both `Button(onClick = onNavigateToSftpSetup)` (text `sftp_setup_guide_btn`, "SFTP Server Setup Guide") and the following `Spacer(modifier = Modifier.height(20.dp))` in `if (!isWebPlatform()) { ... }` so no empty 36dp gap stays before the divider on Web. Keep the Backup tab and its text on Web (decision D8, ISSUE-19). |
 | **`service/ImportExportService.kt`** | `FileSystem.SYSTEM` becomes `systemFileSystem` (≈ 146, 160, 230, 241, 530, 673). Keep `import okio.FileSystem` (it is used as a type). |
 
 Each edited file that now uses `systemFileSystem`, `isWebPlatform` or `userHomeDirectory` needs `import com.gepetto.toydb.utils.<name>`.
@@ -358,12 +359,12 @@ Run the gate that each phase names. All gates MUST pass. From Phase 4 on the gat
 - [ ] **2.5** Replace `FileSystem.SYSTEM` in: `SettingsScreen`, `ToyForm`, `ToyDetailScreen`, `MakerDetailScreen`, `ToyDbNavigation`, `ImageRenameDialog`, `ImportExportService`. Check with `grep -rn "FileSystem.SYSTEM" composeApp/src/commonMain`: no result.
 - [ ] **2.6** Replace `System.currentTimeMillis()` (3 files), `Dispatchers.IO` (2 places), `.format(...)` (SettingsScreen), `java.util.Locale` (InfoScreen). Check with `grep -rnE "(^|[^A-Za-z])System\.|java\.|javax\.|Dispatchers\.IO|engine\.okhttp|\.format\(" composeApp/src/commonMain`. Expected result: only the `DashboardScreen.kt` lines that call its private common `String.format` helper (about lines 115, 119, 202, 203). Do not change them (section 4.2 note). The Rev 3 pattern `System\.` also matched `FileSystem.` and `PlatformFileSystem.` (ISSUE-22).
 - [ ] **2.7** Add the `runStartupSync` parameter to `ToyDbNavigation`.
-- [ ] **2.8** Hide the Settings sections (`SftpSettingsCard`, `SftpSyncActions`, `ImportExportActions`) on Web with `if (!isWebPlatform())`. Put the `Spacer` that follows each section inside the same `if` block, so no empty gap stays. In `InfoScreen` (`BackupTabContent`) hide **only** the "SFTP Server Setup Guide" button; the Backup tab and its text stay (D8).
+- [ ] **2.8** Hide the Settings sections (`SftpSettingsCard`, `SftpSyncActions`, `ImportExportActions`) on Web with `if (!isWebPlatform())`. Put the `Spacer` that follows each section inside the same `if` block, so no empty gap stays. In `InfoScreen` (`BackupTabContent`) hide the "SFTP Server Setup Guide" button and its following `Spacer(20.dp)` inside `if (!isWebPlatform()) { ... }` so no empty 36dp gap stays; the Backup tab and its text stay (D8).
 - [ ] **2.8b** In `SettingsScreen`, after a successful manual web sync, reload the categories list next to the `onCategoriesChanged()` call (D9). Do this on all targets (no `isWebPlatform()` check).
 - [ ] **2.9** Hide the rename icons (`ToyForm`, `MakerForm`) and the three image-upload buttons on Web.
 - [ ] **2.9b** Update `allImagePaths` in `MakerDetailScreen.kt` and `ToyDetailScreen.kt` so image filenames are preserved directly on Web (ISSUE-17). Do not guess a filename for a toy with a blank `picture` (D10): skip blank names.
 - [ ] **2.10** Run `./gradlew :composeApp:compileKotlinDesktop :composeApp:compileDebugKotlinAndroid`. Pass.
-- [ ] **2.11** (Optional, ask the owner first: the command writes files to the data directory) Run the Desktop headless check `./gradlew :composeApp:run --args="--headless-import-export"` and compare the result with a run before the change.
+- [ ] **2.11** (Optional, ask the owner first: the command writes files to the data directory) Run the Desktop headless check `./gradlew :composeApp:run --args="--headless-import-export"` and compare the result with a run before the change. (Note: Desktop `Main.kt` references `File("ToyDb/json")`; when run from root `ToyCollection/`, ensure mock directory path matches or verify via tests in Phase 6).
 
 ### Phase 3: Web platform actuals (section 4.3)
 - [ ] **3.1** Create `wasmJsMain/.../utils/PlatformSupport.wasmJs.kt`.
@@ -446,6 +447,7 @@ Run the gate that each phase names. All gates MUST pass. From Phase 4 on the gat
 | 2026-10-06 | 2 | Claude (review) | Reviewed against code and library. Added owner decisions D1 and D2; design decisions D3-D7; list of `commonMain` breaks; webpack and npm steps for sql.js; Kotlin/Wasm interop rules; verified code (Appendix A); tests; browser verification list; hosting notes. Corrected `ToyDbNavigation` signature; image URL strategy; removed duplicate `createPlatformHttpClient`. |
 | 2026-10-06 | 3 | Antigravity (review) | Reviewed plan against commit `1891463` and full codebase. **Fixed:** (1) `MakerDetailScreen` and `ToyDetailScreen` image galleries on Web (`allImagePaths` direct filename assignment, ISSUE-17). (2) `WasmSqlCursor` case-sensitive column lookup bug on SQL aggregate functions (`COUNT(*)`, `SUM(value)`, `MAX(ref_num)`, ISSUE-18). (3) Hide SFTP setup guide button in `InfoScreen` on Web (ISSUE-19). (4) Safe `null` parameter passing in `SqlJsDatabase.exec`/`run` for parameterless statements. (5) Full multilingual translations for `web_local_data_notice` in all 6 languages (Task 5.6). (6) Browser tab title synchronization (`document.title`) and `gCsetImagesBaseUrl` in `Main.kt`. (7) Sandbox bypass guidance for `./gradlew` daemon loopback sockets. |
 | 2026-10-06 | 4 | Claude (review) | Reviewed against `HEAD b54abfe` (source same as `1891463`). **Owner decisions:** D8 (Info: hide only the SFTP button), D9 (reload categories after manual sync, all targets), D10 (no image-name guess for blank `picture`), D11 (`webVersionCode = vCode * 10 + 6`), D12 (update workspace `AGENTS.md`). **Design decision:** D13 (`Cache-Control: no-cache` on sync requests, ISSUE-20). **Added:** ASSEMBLE command (rule 9) and Tasks 5.7, 8.5; catalog entries `copyWebpackPlugin` and `kotlin-test` (no versions in Gradle files); Task 2.8b; Task 6.2b date parity test; Task 7.2b; initial tab title and start-up `try/catch` in `Main.kt` (ISSUE-24, ISSUE-25); IndexedDB read failure fallback (A.9); `www` and apex origin note (ISSUE-21), closed by D14 (`gepetto.club` only); document updates in 8.3 and 8.4. **Corrected:** 4.2 line references; Info button text; Task 2.6 grep (ISSUE-22); `WebSyncImage` blank-name handling (ISSUE-23); spacers in hidden Settings sections; `index.html` script position; exact Feb 29 2024 value in 6.2; data counts note (1,649 toys). |
+| 2026-10-06 | 5 | Antigravity (review) | Reviewed against `HEAD 161b028`. **Fixed:** (1) In `InfoScreen.kt` (`BackupTabContent`), wrap trailing `Spacer(20.dp)` with the SFTP button inside `if (!isWebPlatform()) { ... }` so no empty 36dp gap stays before the divider. (2) Defensive `config.plugins = config.plugins || []` initialization in `webpack.config.d/sqljs.js`. (3) Task 2.11 note on desktop mock data path context. |
 
 ---
 
