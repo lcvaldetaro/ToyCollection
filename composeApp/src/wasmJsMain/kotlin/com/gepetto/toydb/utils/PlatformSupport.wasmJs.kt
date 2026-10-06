@@ -31,3 +31,9 @@ actual val systemFileSystem: FileSystem = NoFileSystem
 actual fun userHomeDirectory(): String? = null
 
 actual fun isWebPlatform(): Boolean = true
+
+actual fun getDefaultBaseUrl(): String = "http://valdetaro.com/database/"
+
+actual fun createToyHttpClient(block: io.ktor.client.HttpClientConfig<*>.() -> Unit): io.ktor.client.HttpClient {
+    return club.gepetto.composeutils.createPlatformHttpClient(block)
+}

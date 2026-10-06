@@ -1,0 +1,41 @@
+{
+    "date": "October 6, 2026",
+    "buildNumber": "232",
+    "settings": [
+        {
+            "category": "kit",
+            "imagePrefix": "pla",
+            "label": "Model Kits",
+            "title": "Models Kit",
+            "icon": "build"
+        },
+        {
+            "category": "misc",
+            "imagePrefix": "mis",
+            "label": "Others",
+            "title": "Miscelaneous toys",
+            "icon": "category"
+        },
+        {
+            "category": "slot",
+            "imagePrefix": "car",
+            "label": "Slot Cars",
+            "title": "Slot car",
+            "icon": "car"
+        },
+        {
+            "category": "static",
+            "imagePrefix": "sta",
+            "label": "Static Models",
+            "title": "Static Models",
+            "icon": "car"
+        },
+        {
+            "category": "train",
+            "imagePrefix": "tra",
+            "label": "Model Trains",
+            "title": "Train",
+            "icon": "train"
+        }
+    ]
+}

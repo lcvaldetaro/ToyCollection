@@ -113,6 +113,7 @@ fun SettingsScreen(
     var excludeHtmlFiles by remember { mutableStateOf(false) }
     var showWebSyncDialog by remember { mutableStateOf(false) }
     var webSyncDialogPhase by remember { mutableStateOf("Progress") }
+    var webSyncErrorMessage by remember { mutableStateOf("") }
 
     // Host Fingerprint verification state
     class HostKeyVerification(
@@ -980,6 +981,14 @@ fun SettingsScreen(
                         )
                     }
                     Text(descText, color = sysTextColor())
+                    if (webSyncDialogPhase == "Error" && webSyncErrorMessage.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = webSyncErrorMessage,
+                            color = MaterialTheme.colorScheme.error,
+                            fontSize = 12.sp
+                        )
+                    }
                 }
             },
             confirmButton = {
@@ -1056,6 +1065,7 @@ fun SettingsScreen(
                                     repository.setBaseUrlSetting(htmlBaseUrl)
                                     statusText = webSyncRunningText
                                     webSyncDialogPhase = "Progress"
+                                    webSyncErrorMessage = ""
                                     showWebSyncDialog = true
                                     coroutineScope.launch {
                                         try {
@@ -1070,6 +1080,7 @@ fun SettingsScreen(
                                                 webSyncDialogPhase = "NoUpdates"
                                             }
                                         } catch (e: Exception) {
+                                            webSyncErrorMessage = e.message ?: ""
                                             statusText = webSyncErrorText
                                             webSyncDialogPhase = "Error"
                                         }
@@ -1272,6 +1283,7 @@ fun SettingsScreen(
                                 repository.setBaseUrlSetting(htmlBaseUrl)
                                 statusText = webSyncRunningText
                                 webSyncDialogPhase = "Progress"
+                                webSyncErrorMessage = ""
                                 showWebSyncDialog = true
                                 coroutineScope.launch {
                                     try {
@@ -1286,6 +1298,7 @@ fun SettingsScreen(
                                             webSyncDialogPhase = "NoUpdates"
                                         }
                                     } catch (e: Exception) {
+                                        webSyncErrorMessage = e.message ?: ""
                                         statusText = webSyncErrorText
                                         webSyncDialogPhase = "Error"
                                     }

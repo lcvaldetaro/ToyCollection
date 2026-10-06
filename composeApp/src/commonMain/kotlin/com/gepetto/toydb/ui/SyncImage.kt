@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import club.gepetto.composeutils.image.GcImage
 import club.gepetto.composeutils.PlatformBitmap
-import club.gepetto.composeutils.createPlatformHttpClient
+import com.gepetto.toydb.utils.createToyHttpClient
 import com.gepetto.toydb.database.Toy
 import com.gepetto.toydb.database.ToyRepository
 import com.gepetto.toydb.utils.resolveImageUri
@@ -35,7 +35,7 @@ import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toPath
 
-private val htmlHttpClient = createPlatformHttpClient()
+private val htmlHttpClient = createToyHttpClient()
 
 fun resolveImagesDir(db: com.gepetto.toydb.database.ToyDatabase): Path {
     val customPath = ImageResolverConfig.imagesPath

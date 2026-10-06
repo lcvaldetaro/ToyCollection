@@ -614,10 +614,18 @@ class ToyRepository(val db: ToyDatabase) {
     fun setSftpApprovedFingerprintsSetting(fingerprints: String?) = setAppSetting("sftp_approved_fingerprints", fingerprints)
 
     companion object {
-        const val DEFAULT_BASE_URL = "https://gepetto.club/database/"
+        val DEFAULT_BASE_URL: String get() = com.gepetto.toydb.utils.getDefaultBaseUrl()
     }
 
-    fun getBaseUrlSetting(): String = getAppSetting("base_url")?.takeIf { it.isNotBlank() } ?: DEFAULT_BASE_URL
+    fun getDefaultBaseUrlSetting(): String = com.gepetto.toydb.utils.getDefaultBaseUrl()
+
+    fun getBaseUrlSetting(): String {
+        val setting = getAppSetting("base_url")?.takeIf { it.isNotBlank() }
+        if (com.gepetto.toydb.utils.isWebPlatform() && (setting == null || setting == "https://gepetto.club/database/")) {
+            return getDefaultBaseUrlSetting()
+        }
+        return setting ?: getDefaultBaseUrlSetting()
+    }
     fun setBaseUrlSetting(url: String?) = setAppSetting("base_url", url)
 
     fun addSftpApprovedFingerprint(fingerprint: String) {

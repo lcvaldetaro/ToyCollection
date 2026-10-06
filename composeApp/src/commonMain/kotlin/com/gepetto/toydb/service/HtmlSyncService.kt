@@ -1,7 +1,7 @@
 package com.gepetto.toydb.service
 
 import club.gepetto.GcLog
-import club.gepetto.composeutils.createPlatformHttpClient
+import com.gepetto.toydb.utils.createToyHttpClient
 import com.gepetto.toydb.database.ToyDatabase
 import com.gepetto.toydb.database.ToyRepository
 import com.gepetto.toydb.utils.JsonDateParser
@@ -22,7 +22,7 @@ object HtmlSyncService {
     private const val TAG = "HtmlSyncService"
     
     // D13: the browser must not answer the sync requests from its HTTP cache (ISSUE-20).
-    private val client = createPlatformHttpClient {
+    private val client = createToyHttpClient {
         defaultRequest { header(HttpHeaders.CacheControl, "no-cache") }
     }
     

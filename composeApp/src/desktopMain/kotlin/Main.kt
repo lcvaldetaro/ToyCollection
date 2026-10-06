@@ -21,6 +21,23 @@ import okio.FileSystem
 import okio.Path.Companion.toPath
 
 fun main(args: Array<String>) {
+    // Override disabled algorithms to re-enable TLS_RSA_* ciphers if they are disabled by the JVM configuration
+    try {
+        val disabledAlgorithms = java.security.Security.getProperty("jdk.tls.disabledAlgorithms")
+        if (disabledAlgorithms != null && disabledAlgorithms.contains("TLS_RSA_*")) {
+            val newDisabledAlgorithms = disabledAlgorithms
+                .replace(", TLS_RSA_*", "")
+                .replace("TLS_RSA_*, ", "")
+                .replace("TLS_RSA_*", "")
+            java.security.Security.setProperty("jdk.tls.disabledAlgorithms", newDisabledAlgorithms)
+            println("Security Override: Removed TLS_RSA_* from disabled algorithms list.")
+        }
+    } catch (e: Exception) {
+        System.err.println("Failed to override jdk.tls.disabledAlgorithms: ${e.message}")
+    }
+
+    GcLog.plant(GcLog.DebugTree())
+
     // Initialize Coil 3 Image Loader for Desktop
     SingletonImageLoader.setSafe {
         ImageLoader.Builder(PlatformContext.INSTANCE)
