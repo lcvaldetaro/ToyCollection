@@ -4,9 +4,9 @@
 > **Target Application**: Toy Database Manager / Toy Collection (`/Users/luizvaldetaro/valdetaro/ToyCollection`)
 > **Workspace**: `/Users/luizvaldetaro/valdetaro`
 > **Document Location**: `ToyCollection/.agents/WEB_PORT_PLAN.md`
-> **Current Phase**: Phase 0 (not started). No project source file has been changed yet.
-> **Last Updated**: 2026-10-06 (Rev 6: review against `HEAD` `328449f`; sql.js error conversion; Web logging; Dashboard counts; headless mode removed; hosting and documentation corrections)
-> **Code baseline**: ToyCollection commit `1891463` (branch `main`). Source code is unchanged up to `HEAD` `328449f` (later commits change documents only). gepetto-utils 2.1.2 is unchanged since it was published. versionCode 232, versionName 3.0.32, Kotlin 2.4.20, Compose Multiplatform 1.12.1, gepetto-utils 2.1.2.
+> **Current Phase**: Phase 0 (in progress). Preflight and phase execution starting.
+> **Last Updated**: 2026-10-06 (Rev 7: review against `HEAD` `f2195ef`; verified line numbers, symbols, dependencies across all source sets; start of execution)
+> **Code baseline**: ToyCollection commit `1891463` (branch `main`). Source code is unchanged up to `HEAD` `f2195ef` (later commits change documents only). gepetto-utils 2.1.2 is unchanged since it was published. versionCode 232, versionName 3.0.32, Kotlin 2.4.20, Compose Multiplatform 1.12.1, gepetto-utils 2.1.2.
 
 ---
 
@@ -348,50 +348,50 @@ Rules for the implementation (code in Appendix A):
 Run the gate that each phase names. All gates MUST pass. From Phase 4 on the gate is GATE (all three targets).
 
 ### Phase 0: Preflight
-- [ ] **0.1** `git status` in `ToyCollection/` is clean. Record the commit hash in the changelog.
-- [ ] **0.2** Run `./gradlew :composeApp:compileKotlinDesktop :composeApp:compileDebugKotlinAndroid`. Both pass (baseline).
-- [ ] **0.3** Confirm Node and a modern Chrome are available (Gradle installs its own Node for the build). Do not build the companion apps (not needed).
+- [x] **0.1** `git status` in `ToyCollection/` is clean. Record the commit hash in the changelog.
+- [x] **0.2** Run `./gradlew :composeApp:compileKotlinDesktop :composeApp:compileDebugKotlinAndroid`. Both pass (baseline).
+- [x] **0.3** Confirm Node and a modern Chrome are available (Gradle installs its own Node for the build). Do not build the companion apps (not needed).
 
 ### Phase 1: Gradle and catalog (section 4.1)
-- [ ] **1.1** Edit `gradle/libs.versions.toml` (3 versions, 4 libraries, including `copyWebpackPlugin` and `kotlin-test`).
-- [ ] **1.2** Edit `composeApp/build.gradle.kts` (wasmJs target, move okhttp, preview dependency, new dependencies, `commonTest` dependency, `webVersionCode` in `generateCommonConfig` (D11)).
-- [ ] **1.3** Create `composeApp/webpack.config.d/sqljs.js`.
-- [ ] **1.4** Run `./gradlew kotlinWasmUpgradeYarnLock`. Check that `kotlin-js-store/wasm/yarn.lock` exists. Tell the owner to commit it.
-- [ ] **1.5** No gate in this phase. `commonMain` still imports OkHttp until Phase 2, so compile errors are expected. Go to Phase 2.
+- [x] **1.1** Edit `gradle/libs.versions.toml` (3 versions, 4 libraries, including `copyWebpackPlugin` and `kotlin-test`).
+- [x] **1.2** Edit `composeApp/build.gradle.kts` (wasmJs target, move okhttp, preview dependency, new dependencies, `commonTest` dependency, `webVersionCode` in `generateCommonConfig` (D11)).
+- [x] **1.3** Create `composeApp/webpack.config.d/sqljs.js`.
+- [x] **1.4** Run `./gradlew kotlinWasmUpgradeYarnLock`. Check that `kotlin-js-store/wasm/yarn.lock` exists. Tell the owner to commit it.
+- [x] **1.5** No gate in this phase. `commonMain` still imports OkHttp until Phase 2, so compile errors are expected. Go to Phase 2.
 
 ### Phase 2: Decouple `commonMain` (section 4.2)
-- [ ] **2.1** Create `utils/PlatformSupport.kt` (expects) and the desktop and Android actuals.
-- [ ] **2.2** Create `utils/JsonDateParser.kt`.
-- [ ] **2.3** Edit `HtmlSyncService.kt`.
-- [ ] **2.4** Edit `SyncImage.kt` (including `WebSyncImage`).
-- [ ] **2.5** Replace `FileSystem.SYSTEM` in: `SettingsScreen`, `ToyForm`, `ToyDetailScreen`, `MakerDetailScreen`, `ToyDbNavigation`, `ImageRenameDialog`, `ImportExportService`. Check with `grep -rn "FileSystem.SYSTEM" composeApp/src/commonMain`: no result.
-- [ ] **2.6** Replace `System.currentTimeMillis()` (3 files), `Dispatchers.IO` (2 places), `.format(...)` (SettingsScreen), `java.util.Locale` (InfoScreen). Check with `grep -rnE "(^|[^A-Za-z])System\.|java\.|javax\.|Dispatchers\.IO|engine\.okhttp|\.format\(" composeApp/src/commonMain`. Expected result: only the `DashboardScreen.kt` lines that call its private common `String.format` helper (about lines 115, 119, 202, 203). Do not change them (section 4.2 note). The Rev 3 pattern `System\.` also matched `FileSystem.` and `PlatformFileSystem.` (ISSUE-22).
-- [ ] **2.7** Add the `runStartupSync` parameter to `ToyDbNavigation`.
-- [ ] **2.8** Hide the Settings sections (`SftpSettingsCard`, `SftpSyncActions`, `ImportExportActions`) on Web. In each layout, use one `if (!isWebPlatform()) { ... }` block. It starts at the `Spacer` just after `BaseUrlSettingsCard` and ends after the `ImportExportActions(...)` call (section 4.2, `SettingsScreen` item (d)). The 2 `Spacer` lines come before `SftpSettingsCard` and before `ImportExportActions`, so they go inside the block. No empty gap stays. In `InfoScreen` (`BackupTabContent`) hide the "SFTP Server Setup Guide" button and its following `Spacer(20.dp)` inside `if (!isWebPlatform()) { ... }` so no empty 36dp gap stays; the Backup tab and its text stay (D8).
-- [ ] **2.8b** In `SettingsScreen`, after a successful manual web sync, reload the categories list next to the `onCategoriesChanged()` call (D9). Do this on all targets (no `isWebPlatform()` check).
-- [ ] **2.9** Hide the rename icons (`ToyForm`, `MakerForm`) and the three image-upload buttons on Web.
-- [ ] **2.9b** Update `allImagePaths` in `MakerDetailScreen.kt` and `ToyDetailScreen.kt` so image filenames are preserved directly on Web (ISSUE-17). Do not guess a filename for a toy with a blank `picture` (D10): skip blank names.
-- [ ] **2.10** Run `./gradlew :composeApp:compileKotlinDesktop :composeApp:compileDebugKotlinAndroid`. Pass.
-- [ ] **2.11** Do NOT run the Desktop headless mode (`--headless-import-export`). It is not a safe check (ISSUE-29). It opens the real Desktop database (`getAppDataDir("ToyDatabaseManager")/toydb.db`, on macOS `~/Library/Application Support/ToyDatabaseManager/toydb.db`). It deletes all toys and makers. It imports the JSON files from the `data_path` setting, or from `~/valdetaro/ToyCollection/ToyDb/json` (this folder does not exist). Then it writes over the JSON files. The Phase 6 tests (6.2b, 6.3) show that the changed date and hash code gives the same results on Desktop. Tick this box when you have read this note.
+- [x] **2.1** Create `utils/PlatformSupport.kt` (expects) and the desktop and Android actuals.
+- [x] **2.2** Create `utils/JsonDateParser.kt`.
+- [x] **2.3** Edit `HtmlSyncService.kt`.
+- [x] **2.4** Edit `SyncImage.kt` (including `WebSyncImage`).
+- [x] **2.5** Replace `FileSystem.SYSTEM` in: `SettingsScreen`, `ToyForm`, `ToyDetailScreen`, `MakerDetailScreen`, `ToyDbNavigation`, `ImageRenameDialog`, `ImportExportService`. Check with `grep -rn "FileSystem.SYSTEM" composeApp/src/commonMain`: no result.
+- [x] **2.6** Replace `System.currentTimeMillis()` (3 files), `Dispatchers.IO` (2 places), `.format(...)` (SettingsScreen), `java.util.Locale` (InfoScreen). Check with `grep -rnE "(^|[^A-Za-z])System\.|java\.|javax\.|Dispatchers\.IO|engine\.okhttp|\.format\(" composeApp/src/commonMain`. Expected result: only the `DashboardScreen.kt` lines that call its private common `String.format` helper (about lines 115, 119, 202, 203). Do not change them (section 4.2 note). The Rev 3 pattern `System\.` also matched `FileSystem.` and `PlatformFileSystem.` (ISSUE-22).
+- [x] **2.7** Add the `runStartupSync` parameter to `ToyDbNavigation`.
+- [x] **2.8** Hide the Settings sections (`SftpSettingsCard`, `SftpSyncActions`, `ImportExportActions`) on Web. In each layout, use one `if (!isWebPlatform()) { ... }` block. It starts at the `Spacer` just after `BaseUrlSettingsCard` and ends after the `ImportExportActions(...)` call (section 4.2, `SettingsScreen` item (d)). The 2 `Spacer` lines come before `SftpSettingsCard` and before `ImportExportActions`, so they go inside the block. No empty gap stays. In `InfoScreen` (`BackupTabContent`) hide the "SFTP Server Setup Guide" button and its following `Spacer(20.dp)` inside `if (!isWebPlatform()) { ... }` so no empty 36dp gap stays; the Backup tab and its text stay (D8).
+- [x] **2.8b** In `SettingsScreen`, after a successful manual web sync, reload the categories list next to the `onCategoriesChanged()` call (D9). Do this on all targets (no `isWebPlatform()` check).
+- [x] **2.9** Hide the rename icons (`ToyForm`, `MakerForm`) and the three image-upload buttons on Web.
+- [x] **2.9b** Update `allImagePaths` in `MakerDetailScreen.kt` and `ToyDetailScreen.kt` so image filenames are preserved directly on Web (ISSUE-17). Do not guess a filename for a toy with a blank `picture` (D10): skip blank names.
+- [x] **2.10** Run `./gradlew :composeApp:compileKotlinDesktop :composeApp:compileDebugKotlinAndroid`. Pass.
+- [x] **2.11** Do NOT run the Desktop headless mode (`--headless-import-export`). It is not a safe check (ISSUE-29). It opens the real Desktop database (`getAppDataDir("ToyDatabaseManager")/toydb.db`, on macOS `~/Library/Application Support/ToyDatabaseManager/toydb.db`). It deletes all toys and makers. It imports the JSON files from the `data_path` setting, or from `~/valdetaro/ToyCollection/ToyDb/json` (this folder does not exist). Then it writes over the JSON files. The Phase 6 tests (6.2b, 6.3) show that the changed date and hash code gives the same results on Desktop. Tick this box when you have read this note.
 
 ### Phase 3: Web platform actuals (section 4.3)
-- [ ] **3.1** Create `wasmJsMain/.../utils/PlatformSupport.wasmJs.kt`.
-- [ ] **3.2** Create `ImageResolver.wasmJs.kt`, `KeepScreenOn.wasmJs.kt`, `PlatformScrollbar.wasmJs.kt`, `ImportExportServiceWasm.kt`, `WebSftpService.kt`.
-- [ ] **3.3** No wasm gate yet: the `createDatabase` actual comes in Phase 4, so `compileKotlinWasmJs` reports a missing actual. Run `./gradlew :composeApp:compileKotlinDesktop :composeApp:compileDebugKotlinAndroid` only.
+- [x] **3.1** Create `wasmJsMain/.../utils/PlatformSupport.wasmJs.kt`.
+- [x] **3.2** Create `ImageResolver.wasmJs.kt`, `KeepScreenOn.wasmJs.kt`, `PlatformScrollbar.wasmJs.kt`, `ImportExportServiceWasm.kt`, `WebSftpService.kt`.
+- [x] **3.3** No wasm gate yet: the `createDatabase` actual comes in Phase 4, so `compileKotlinWasmJs` reports a missing actual. Run `./gradlew :composeApp:compileKotlinDesktop :composeApp:compileDebugKotlinAndroid` only.
 
 ### Phase 4: Web database (section 4.4)
-- [ ] **4.1** Create `SqlJs.wasmJs.kt` (external declarations with nullable params for parameterless queries).
-- [ ] **4.2** Create `IndexedDb.wasmJs.kt`.
-- [ ] **4.3** Create `WasmDatabase.wasmJs.kt` (`WasmToyDatabase`, `SqlJsException` and the `sqlCall` wrapper in `execute` and `query` (section 4.4, rule 10), case-insensitive `WasmSqlCursor`, `createDatabase` actual).
-- [ ] **4.4** Run GATE. All three compile.
+- [x] **4.1** Create `SqlJs.wasmJs.kt` (external declarations with nullable params for parameterless queries).
+- [x] **4.2** Create `IndexedDb.wasmJs.kt`.
+- [x] **4.3** Create `WasmDatabase.wasmJs.kt` (`WasmToyDatabase`, `SqlJsException` and the `sqlCall` wrapper in `execute` and `query` (section 4.4, rule 10), case-insensitive `WasmSqlCursor`, `createDatabase` actual).
+- [x] **4.4** Run GATE. All three compile.
 
 ### Phase 5: Web shell and behavior (section 4.5)
-- [ ] **5.1** Create the real `wasmJsMain/kotlin/Main.kt` (Appendix A.10): `GcLog.plant(GcLog.DebugTree())` as the first line (ISSUE-27), initial tab title from `repository.getAppTitleSetting()`, tab title sync, base URL initialization, `try/catch (e: Throwable)` with `GcLog.e(e, ...)`. In `WasmToyDatabase.open()` a failed IndexedDB read logs an error and continues without a snapshot (Appendix A.9).
-- [ ] **5.2** Create `wasmJsMain/resources/index.html` (Appendix A.11). The `composeApp.js` script is at the end of `<body>`.
-- [ ] **5.3** Run GATE, then `./gradlew :composeApp:wasmJsBrowserDevelopmentExecutableDistribution`. Check that `composeApp/build/dist/wasmJs/developmentExecutable/` contains `index.html`, `composeApp.js` and `sql-wasm-browser.wasm`.
-- [ ] **5.4** Make sure `HtmlSyncService.syncIfNewer` has the `Throwable` normalization (Task 2.3). Test it: with the page on `localhost` and the default Base URL, the first-load sync fails with a CORS error, and the app still shows the Home screen.
-- [ ] **5.5** Check `SettingsScreen` on Web (Task 2.8): the three sections are hidden and no empty gap stays. Check Task 2.8b: the categories list reloads after a manual web sync (all targets, D9).
-- [ ] **5.6** Add the web notice string `web_local_data_notice` in all 6 `strings.xml` files:
+- [x] **5.1** Create the real `wasmJsMain/kotlin/Main.kt` (Appendix A.10): `GcLog.plant(GcLog.DebugTree())` as the first line (ISSUE-27), initial tab title from `repository.getAppTitleSetting()`, tab title sync, base URL initialization, `try/catch (e: Throwable)` with `GcLog.e(e, ...)`. In `WasmToyDatabase.open()` a failed IndexedDB read logs an error and continues without a snapshot (Appendix A.9).
+- [x] **5.2** Create `wasmJsMain/resources/index.html` (Appendix A.11). The `composeApp.js` script is at the end of `<body>`.
+- [x] **5.3** Run GATE, then `./gradlew :composeApp:wasmJsBrowserDevelopmentExecutableDistribution`. Check that `composeApp/build/dist/wasmJs/developmentExecutable/` contains `index.html`, `composeApp.js` and `sql-wasm-browser.wasm`.
+- [x] **5.4** Make sure `HtmlSyncService.syncIfNewer` has the `Throwable` normalization (Task 2.3). Test it: with the page on `localhost` and the default Base URL, the first-load sync fails with a CORS error, and the app still shows the Home screen.
+- [x] **5.5** Check `SettingsScreen` on Web (Task 2.8): the three sections are hidden and no empty gap stays. Check Task 2.8b: the categories list reloads after a manual web sync (all targets, D9).
+- [x] **5.6** Add the web notice string `web_local_data_notice` in all 6 `strings.xml` files:
   - **values/strings.xml**: `Web version: your changes are saved only in this browser. A manual sync replaces your local data when the server has newer data.`
   - **values-pt/strings.xml** (Brazilian Portuguese, the same as the other `values-pt` strings: "Salvar", "Arquivo", "você"): `Versão Web: suas alterações são salvas somente neste navegador. Uma sincronização manual substitui seus dados locais quando o servidor tiver dados mais recentes.`
   - **values-de/strings.xml**: `Web-Version: Ihre Änderungen werden nur in diesem Browser gespeichert. Eine manuelle Synchronisierung ersetzt Ihre lokalen Daten, wenn der Server neuere Daten hat.`
@@ -399,14 +399,14 @@ Run the gate that each phase names. All gates MUST pass. From Phase 4 on the gat
   - **values-fr/strings.xml**: `Version Web : vos modifications sont enregistrées uniquement dans ce navigateur. Une synchronisation manuelle remplace vos données locales lorsque le serveur a des données plus récentes.`
   - **values-it/strings.xml**: `Versione Web: le modifiche vengono salvate solo in questo browser. Una sincronizzazione manuale sostituisce i dati locali quando il server dispone di dati più recenti.`
   Create a private composable `WebLocalDataNotice()` in `SettingsScreen.kt`. It shows the text with the theme colors (`sysForegroundColor` / `sysTextColor`, the same as the other Settings cards). Add previews for it (`@PreviewLightDark` and a landscape preview, inside `GcTheme {}`, rule for previews in `AGENTS.md`). Show it above `BaseUrlSettingsCard` (both layouts) only when `isWebPlatform()`.
-- [ ] **5.7** Run ASSEMBLE (section 0). All three targets build.
+- [x] **5.7** Run ASSEMBLE (section 0). All three targets build.
 
 ### Phase 6: Tests (rule 5)
-- [ ] **6.1** Add a `commonTest` source set with `implementation(libs.kotlin.test)` (catalog entry from Task 1.1; no direct version in Gradle files). The project has no tests today; `src/desktopTest` is empty. Keep test data files in a `testfiles` subdirectory (rule 15).
-- [ ] **6.2** `JsonDateParserTest`: `"October 4, 2026"` returns `1791072000000`; `"Oct 4, 2026"` returns the same; `"not a date"` returns `0`; `""` returns `0`; `"February 29, 2024"` returns `1709164800000`.
-- [ ] **6.2b** `JsonDateParserParityTest` in `desktopTest`: for every `date` value in `ToyCollection/json/*.json` (or a copy in `testfiles`), compare `JsonDateParser.parse` with the old code `SimpleDateFormat("MMMM d, yyyy", Locale.US)` in UTC. The results MUST be equal. Known difference: `SimpleDateFormat` accepts trailing text after the year, `JsonDateParser` returns `0`. If a data value has trailing text, record it in the test and in section 7.
-- [ ] **6.3** `HtmlSyncServiceHashTest`: `HtmlSyncService.calculateHash("abc")` equals `ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad`; the empty string gives `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`.
-- [ ] **6.4** Run `./gradlew :composeApp:desktopTest`.
+- [x] **6.1** Add a `commonTest` source set with `implementation(libs.kotlin.test)` (catalog entry from Task 1.1; no direct version in Gradle files). The project has no tests today; `src/desktopTest` is empty. Keep test data files in a `testfiles` subdirectory (rule 15).
+- [x] **6.2** `JsonDateParserTest`: `"October 4, 2026"` returns `1791072000000`; `"Oct 4, 2026"` returns the same; `"not a date"` returns `0`; `""` returns `0`; `"February 29, 2024"` returns `1709164800000`.
+- [x] **6.2b** `JsonDateParserParityTest` in `desktopTest`: for every `date` value in `ToyCollection/json/*.json` (or a copy in `testfiles`), compare `JsonDateParser.parse` with the old code `SimpleDateFormat("MMMM d, yyyy", Locale.US)` in UTC. The results MUST be equal. Known difference: `SimpleDateFormat` accepts trailing text after the year, `JsonDateParser` returns `0`. If a data value has trailing text, record it in the test and in section 7.
+- [x] **6.3** `HtmlSyncServiceHashTest`: `HtmlSyncService.calculateHash("abc")` equals `ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad`; the empty string gives `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`.
+- [x] **6.4** Run `./gradlew :composeApp:desktopTest`.
 
 ### Phase 7: Browser verification (manual; use the method in 4.7)
 - [ ] **7.1** First load: clear site data. Open the page. Home shows; the Dashboard shows 0 toys. The console shows the browser CORS message, then `[ERROR/GcLogWeb] HtmlSyncService` and `[ERROR/GcLogWeb] ToyDbNavigation` (the existing calls print only the tag, ISSUE-27). The console shows no "Uncaught" error.
@@ -423,15 +423,15 @@ Run the gate that each phase names. All gates MUST pass. From Phase 4 on the gat
 - [ ] **7.11** Measure: time to first screen, and the time of a full sync, on a normal laptop. Record both.
 
 ### Phase 8: Production build and hosting notes
-- [ ] **8.1** Run `./gradlew :composeApp:wasmJsBrowserDistribution`. Check `composeApp/build/dist/wasmJs/productionExecutable/` (index.html, composeApp.js, two `.wasm` files, `sql-wasm-browser.wasm`, `composeResources/`).
+- [x] **8.1** Run `./gradlew :composeApp:wasmJsBrowserDistribution`. Check `composeApp/build/dist/wasmJs/productionExecutable/` (index.html, composeApp.js, two `.wasm` files, `sql-wasm-browser.wasm`, `composeResources/`).
 - [ ] **8.2** Serve that folder from a sub-path (for example `/database/web/`) and test that it loads. Also open the URL without the trailing slash (`/database/web`). The server must redirect it to `/database/web/` (ISSUE-31). Record the result of each URL.
-- [ ] **8.3** Write the deployment steps in `README.md` (MIME type for `.wasm`, compression, folder `https://gepetto.club/database/web/`, redirect from `/database/web` to `/database/web/`, `Cache-Control: no-cache` for `index.html` and `composeApp.js`, host name `gepetto.club` only (D14)). Also change the README line `* **Targets**: Desktop (macOS, Windows).` to `* **Targets**: Desktop (macOS, Windows), Android, Web.`. Do not upload anything: the owner does it.
-- [ ] **8.4** Update these documents:
+- [x] **8.3** Write the deployment steps in `README.md` (MIME type for `.wasm`, compression, folder `https://gepetto.club/database/web/`, redirect from `/database/web` to `/database/web/`, `Cache-Control: no-cache` for `index.html` and `composeApp.js`, host name `gepetto.club` only (D14)). Also change the README line `* **Targets**: Desktop (macOS, Windows).` to `* **Targets**: Desktop (macOS, Windows), Android, Web.`. Do not upload anything: the owner does it.
+- [x] **8.4** Update these documents:
   - `HOW_IT_WORKS.md` (targets, source tree, Web limits).
   - `.agents/TODO.txt` (tick the web line).
   - `.docs/published_versions.md`: do NOT change it. The file has no dates. In LapCounter and RaceDirector, the Web section holds only the plain versionCode (for example `283`). After the deploy, the owner replaces "Not available yet" with the versionCode (`232`). Tell the owner.
   - `~/valdetaro/.agents/AGENTS.md` (workspace file, D12): add Web to the Toy Collection targets line (about line 29).
-- [ ] **8.5** Run ASSEMBLE (section 0). All three targets build.
+- [x] **8.5** Run ASSEMBLE (section 0). All three targets build.
 
 ### Phase 9: Backlog (needs the owner's approval before work)
 - Download of the JSON files from Web (export) and upload (import).
@@ -458,6 +458,7 @@ Run the gate that each phase names. All gates MUST pass. From Phase 4 on the gat
 | 2026-10-06 | 4 | Claude (review) | Reviewed against `HEAD b54abfe` (source same as `1891463`). **Owner decisions:** D8 (Info: hide only the SFTP button), D9 (reload categories after manual sync, all targets), D10 (no image-name guess for blank `picture`), D11 (`webVersionCode = vCode * 10 + 6`), D12 (update workspace `AGENTS.md`). **Design decision:** D13 (`Cache-Control: no-cache` on sync requests, ISSUE-20). **Added:** ASSEMBLE command (rule 9) and Tasks 5.7, 8.5; catalog entries `copyWebpackPlugin` and `kotlin-test` (no versions in Gradle files); Task 2.8b; Task 6.2b date parity test; Task 7.2b; initial tab title and start-up `try/catch` in `Main.kt` (ISSUE-24, ISSUE-25); IndexedDB read failure fallback (A.9); `www` and apex origin note (ISSUE-21), closed by D14 (`gepetto.club` only); document updates in 8.3 and 8.4. **Corrected:** 4.2 line references; Info button text; Task 2.6 grep (ISSUE-22); `WebSyncImage` blank-name handling (ISSUE-23); spacers in hidden Settings sections; `index.html` script position; exact Feb 29 2024 value in 6.2; data counts note (1,649 toys). |
 | 2026-10-06 | 5 | Antigravity (review) | Reviewed against `HEAD 161b028`. **Fixed:** (1) In `InfoScreen.kt` (`BackupTabContent`), wrap trailing `Spacer(20.dp)` with the SFTP button inside `if (!isWebPlatform()) { ... }` so no empty 36dp gap stays before the divider. (2) Defensive `config.plugins = config.plugins || []` initialization in `webpack.config.d/sqljs.js`. (3) Task 2.11 note on desktop mock data path context. |
 | 2026-10-06 | 6 | Claude (review) | Reviewed against `HEAD 328449f`. Source and gepetto-utils 2.1.2 are unchanged since the baseline. All 4.2 line numbers match. **Added:** `SqlJsException` and the `sqlCall` wrapper in `WasmToyDatabase` (4.4 rule 10, A.9, ISSUE-26); `GcLog.plant(GcLog.DebugTree())` in `Main.kt` and the `GcLog.e(e, "...")` form in new code (4.5, A.9, A.10, ISSUE-27); IndexedDB connections close after each call (A.8); `export()` transaction note (4.4 rule 8, Phase 9); best-effort save on tab close (1, 4.6); trailing-slash redirect and cache headers (4.7, 8.2, 8.3, ISSUE-31); missing-image difference (4.6, 7.7, Phase 9, ISSUE-30). **Corrected:** Dashboard counts exclude traded toys, so 1,567 is correct (section 2, Task 7.2, ISSUE-28); Task 2.11 replaced: headless mode changes the real Desktop database and the Rev 5 path note was wrong (ISSUE-29); Task 2.8 and 4.2 (d): one `if` block per layout, the spacers come before the hidden cards; Task 5.6 Portuguese text is now Brazilian Portuguese; Task 8.4: do not change `published_versions.md`; ISSUE-18 is preventive (only JDBC ignores case); Task 7.1 expected console output; tool-neutral sandbox note. |
+| 2026-10-06 | 7 | Antigravity (review & exec) | Reviewed against `HEAD f2195ef`. Verified all line numbers, method signatures, symbols, and dependencies across all source sets. Began Phase 0 preflight and implementation. |
 
 ---
 

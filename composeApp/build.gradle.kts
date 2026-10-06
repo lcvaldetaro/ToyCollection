@@ -52,6 +52,7 @@ val generateCommonConfig = tasks.register("generateCommonConfig") {
                 const val versionName = "$vName"
                 const val versionCode = ${vCode}L
                 const val desktopVersionCode = ${desktopCode}L
+                const val webVersionCode = ${vCode * 10 + 6}L
                 const val versionCodeString = "$vCode"
             }
         """.trimIndent())
@@ -89,6 +90,15 @@ kotlin {
             )
         }
     }
+    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
+    wasmJs {
+        browser {
+            commonWebpackConfig {
+                outputFileName = "composeApp.js"
+            }
+        }
+        binaries.executable()
+    }
 
     sourceSets {
         val commonMain = sourceSets.getByName("commonMain")
@@ -106,13 +116,13 @@ kotlin {
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
-            implementation(libs.androidx.ui.tooling.preview)
+            implementation(libs.jetbrains.compose.ui.tooling.preview)
+            implementation(libs.kotlincrypto.sha2)
 
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.coil3.coil.compose)
             implementation(libs.okio)
             implementation(libs.ktor.client.core)
-            implementation(libs.ktor.client.okhttp)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
 
@@ -127,6 +137,11 @@ kotlin {
             implementation(libs.adaptive.navigation)
         }
 
+        val commonTest = sourceSets.getByName("commonTest")
+        commonTest.dependencies {
+            implementation(libs.kotlin.test)
+        }
+
         val desktopMain = sourceSets.getByName("desktopMain")
         desktopMain.dependencies {
             val osName = System.getProperty("os.name").lowercase()
@@ -139,6 +154,7 @@ kotlin {
             } else {
                 implementation(compose.desktop.currentOs)
             }
+            implementation(libs.ktor.client.okhttp)
             implementation(libs.kotlinx.coroutines.swing)
             // SQLite JDBC driver for desktop SQLite support
             implementation("org.xerial:sqlite-jdbc:3.45.1.0")
@@ -148,6 +164,7 @@ kotlin {
 
         val androidMain = sourceSets.getByName("androidMain")
         androidMain.dependencies {
+            implementation(libs.ktor.client.okhttp)
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.appcompat)
             implementation(libs.kotlinx.coroutines.android)
@@ -155,6 +172,13 @@ kotlin {
             implementation("org.bouncycastle:bcprov-jdk18on:1.78.1")
             implementation(libs.androidx.ui.tooling)
             implementation(libs.androidx.ui.tooling.preview)
+        }
+
+        val wasmJsMain = sourceSets.getByName("wasmJsMain")
+        wasmJsMain.dependencies {
+            implementation(libs.ktor.client.js)
+            implementation(npm("sql.js", libs.versions.sqlJs.get()))
+            implementation(devNpm("copy-webpack-plugin", libs.versions.copyWebpackPlugin.get()))
         }
     }
 }

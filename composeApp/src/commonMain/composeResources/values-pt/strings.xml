@@ -300,4 +300,5 @@ Todos os direitos reservados.</string>
     <string name="rename_maker_confirm_message">Renomear \'%1$s\' para \'%2$s\' também atualizará %3$d brinquedo(s) associado(s). Deseja continuar?</string>
     <string name="rename_maker_confirm_button">Renomear</string>
     <string name="maker_already_exists">Já existe um fabricante chamado \'%1$s\'.</string>
+    <string name="web_local_data_notice">Versão Web: suas alterações são salvas somente neste navegador. Uma sincronização manual substitui seus dados locais quando o servidor tiver dados mais recentes.</string>
 </resources>

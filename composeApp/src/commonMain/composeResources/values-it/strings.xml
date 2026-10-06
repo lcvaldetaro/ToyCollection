@@ -300,4 +300,5 @@ Tutti i diritti riservati.</string>
     <string name="rename_maker_confirm_message">Rinominare \'%1$s\' in \'%2$s\' aggiornerà anche %3$d giocattolo/i associato/i. Vuoi procedere?</string>
     <string name="rename_maker_confirm_button">Rinomina</string>
     <string name="maker_already_exists">Esiste già un produttore chiamato \'%1$s\'.</string>
+    <string name="web_local_data_notice">Versione Web: le modifiche vengono salvate solo in questo browser. Una sincronizzazione manuale sostituisce i dati locali quando il server dispone di dati più recenti.</string>
 </resources>

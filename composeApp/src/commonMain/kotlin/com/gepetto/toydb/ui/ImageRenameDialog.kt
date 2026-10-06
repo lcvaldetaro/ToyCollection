@@ -17,6 +17,7 @@ import club.gepetto.composeutils.image.GcImage
 import com.gepetto.toydb.database.ToyRepository
 import com.gepetto.toydb.utils.resolveBitmapUri
 import com.gepetto.toydb.utils.formatTimestamp
+import com.gepetto.toydb.utils.systemFileSystem
 import okio.FileSystem
 import okio.Path.Companion.toPath
 import org.jetbrains.compose.resources.stringResource
@@ -52,7 +53,7 @@ fun ImageRenameDialog(
             val size = sizes.getOrNull(idx)?.toLongOrNull() ?: 0L
             val timestamp = timestamps.getOrNull(idx)?.toLongOrNull() ?: 0L
             val absolutePath = resolveBitmapUri(name)
-            val exists = absolutePath != null && FileSystem.SYSTEM.exists(absolutePath.toPath())
+            val exists = absolutePath != null && systemFileSystem.exists(absolutePath.toPath())
             
             ImageDetail(
                 index = idx,
@@ -188,7 +189,7 @@ fun ImageRenameDialog(
                             try {
                                 val oldPath = item.absolutePath.toPath()
                                 val newPath = oldPath.parent!!.div(newName)
-                                FileSystem.SYSTEM.atomicMove(oldPath, newPath)
+                                systemFileSystem.atomicMove(oldPath, newPath)
                             } catch (e: Exception) {
                                 club.gepetto.GcLog.e("ImageRenameDialog", "Failed to rename ${item.originalName} to $newName: ${e.message}", e)
                             }

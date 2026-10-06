@@ -56,6 +56,7 @@ import com.gepetto.toydb.database.ToyDatabase
 import com.gepetto.toydb.database.ToyRepository
 import com.gepetto.toydb.service.SftpService
 import com.gepetto.toydb.utils.isDesktopPlatform
+import com.gepetto.toydb.utils.systemFileSystem
 
 private fun copyMakerImages(repository: ToyRepository, selectedImagesPath: String) {
     val possibleImagesDirs = listOf(
@@ -64,7 +65,7 @@ private fun copyMakerImages(repository: ToyRepository, selectedImagesPath: Strin
         "ToyDb/images",
         "../ToyDb/images"
     )
-    val sourceDir = possibleImagesDirs.map { it.toPath() }.find { FileSystem.SYSTEM.exists(it) }
+    val sourceDir = possibleImagesDirs.map { it.toPath() }.find { systemFileSystem.exists(it) }
     if (sourceDir == null) {
         GcLog.e("ToyDbSetup", "Source images directory not found in possible default locations.")
         return
@@ -77,8 +78,8 @@ private fun copyMakerImages(repository: ToyRepository, selectedImagesPath: Strin
     }
 
     try {
-        if (!FileSystem.SYSTEM.exists(targetDir)) {
-            FileSystem.SYSTEM.createDirectories(targetDir)
+        if (!systemFileSystem.exists(targetDir)) {
+            systemFileSystem.createDirectories(targetDir)
         }
         val makers = repository.getMakers()
         val filenames = makers.flatMap { maker ->
@@ -88,10 +89,10 @@ private fun copyMakerImages(repository: ToyRepository, selectedImagesPath: Strin
         var copiedCount = 0
         for (filename in filenames) {
             val srcFile = sourceDir.div(filename)
-            if (FileSystem.SYSTEM.exists(srcFile)) {
+            if (systemFileSystem.exists(srcFile)) {
                 val destFile = targetDir.div(filename)
-                if (!FileSystem.SYSTEM.exists(destFile)) {
-                    FileSystem.SYSTEM.copy(srcFile, destFile)
+                if (!systemFileSystem.exists(destFile)) {
+                    systemFileSystem.copy(srcFile, destFile)
                     copiedCount++
                 }
             }
@@ -129,6 +130,7 @@ fun ToyDbNavigation(
     db: ToyDatabase,
     sftpService: SftpService,
     onAppTitleChanged: ((String) -> Unit)? = null,
+    runStartupSync: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val repository = remember { ToyRepository(db) }
@@ -147,17 +149,19 @@ fun ToyDbNavigation(
     LaunchedEffect(repository) {
         com.gepetto.toydb.utils.ImageResolverConfig.imagesPath = repository.getDataPathSetting()
         
-        launch(club.gepetto.utils.ioDispatcher) {
-            try {
-                val syncCompleted = com.gepetto.toydb.service.HtmlSyncService.syncIfNewer(db, repository)
-                if (syncCompleted) {
-                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-                        categoriesSettings = repository.getCategorySettings()
-                        syncTrigger++
+        if (runStartupSync) {
+            launch(club.gepetto.utils.ioDispatcher) {
+                try {
+                    val syncCompleted = com.gepetto.toydb.service.HtmlSyncService.syncIfNewer(db, repository)
+                    if (syncCompleted) {
+                        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                            categoriesSettings = repository.getCategorySettings()
+                            syncTrigger++
+                        }
                     }
+                } catch (e: Exception) {
+                    club.gepetto.GcLog.e("ToyDbNavigation", "Failed to run startup HTML synchronization: ${e.message}", e)
                 }
-            } catch (e: Exception) {
-                club.gepetto.GcLog.e("ToyDbNavigation", "Failed to run startup HTML synchronization: ${e.message}", e)
             }
         }
     }

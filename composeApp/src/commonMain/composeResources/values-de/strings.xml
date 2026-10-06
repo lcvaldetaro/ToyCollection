@@ -300,4 +300,5 @@ Alle Rechte vorbehalten.</string>
     <string name="rename_maker_confirm_message">Das Umbenennen von \'%1$s\' in \'%2$s\' aktualisiert auch %3$d zugehörige(s) Spielzeug(e). Möchten Sie fortfahren?</string>
     <string name="rename_maker_confirm_button">Umbenennen</string>
     <string name="maker_already_exists">Ein Hersteller namens \'%1$s\' existiert bereits.</string>
+    <string name="web_local_data_notice">Web-Version: Ihre Änderungen werden nur in diesem Browser gespeichert. Eine manuelle Synchronisierung ersetzt Ihre lokalen Daten, wenn der Server neuere Daten hat.</string>
 </resources>

@@ -24,6 +24,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import com.gepetto.toydb.database.ToyRepository
 import com.gepetto.toydb.utils.rememberImagePicker
+import com.gepetto.toydb.utils.systemFileSystem
+import com.gepetto.toydb.utils.isWebPlatform
+import club.gepetto.composeutils.gcCurrentTimeMillis
 import okio.FileSystem
 import okio.Path.Companion.toPath
 import androidx.compose.material.icons.Icons
@@ -109,18 +112,18 @@ fun ToyForm(
             customPath.toPath()
         } else {
             val possibleDirs = listOf("images", "../images", "ToyDb/images", "../ToyDb/images")
-            possibleDirs.map { it.toPath() }.find { FileSystem.SYSTEM.exists(it) } ?: "images".toPath()
+            possibleDirs.map { it.toPath() }.find { systemFileSystem.exists(it) } ?: "images".toPath()
         }
         
         val destPath = targetDir.div(destFilename)
         try {
-            if (!FileSystem.SYSTEM.exists(targetDir)) {
-                FileSystem.SYSTEM.createDirectories(targetDir)
+            if (!systemFileSystem.exists(targetDir)) {
+                systemFileSystem.createDirectories(targetDir)
             }
-            if (FileSystem.SYSTEM.exists(destPath)) {
-                FileSystem.SYSTEM.delete(destPath)
+            if (systemFileSystem.exists(destPath)) {
+                systemFileSystem.delete(destPath)
             }
-            FileSystem.SYSTEM.copy(srcPath, destPath)
+            systemFileSystem.copy(srcPath, destPath)
             
             try {
                 val absolutePath = PlatformFile(destPath.toString()).absolutePath
@@ -132,8 +135,8 @@ fun ToyForm(
                 GcLog.e("ToyForm", "Error evicting Coil cache: ${e.message}", e)
             }
             
-            val size = FileSystem.SYSTEM.metadataOrNull(destPath)?.size ?: 0L
-            val timestamp = System.currentTimeMillis()
+            val size = systemFileSystem.metadataOrNull(destPath)?.size ?: 0L
+            val timestamp = gcCurrentTimeMillis()
             
             picture = destFilename
             pictureSize = size.toString()
@@ -156,11 +159,11 @@ fun ToyForm(
             customPath.toPath()
         } else {
             val possibleDirs = listOf("images", "../images", "ToyDb/images", "../ToyDb/images")
-            possibleDirs.map { it.toPath() }.find { FileSystem.SYSTEM.exists(it) } ?: "images".toPath()
+            possibleDirs.map { it.toPath() }.find { systemFileSystem.exists(it) } ?: "images".toPath()
         }
         
         val destPath = targetDir.div(destFilename)
-        if (FileSystem.SYSTEM.exists(destPath)) {
+        if (systemFileSystem.exists(destPath)) {
             pendingImagePath = selectedPath
             overwriteDestPath = destPath.toString()
             showOverwriteDialog = true
@@ -232,12 +235,14 @@ fun ToyForm(
                 4 -> { // Images
                     FormField(label = stringResource(Res.string.form_field_main_picture), value = picture, onValueChange = { picture = it })
                     
-                    Spacer(modifier = Modifier.height(GcSpacing.Small))
-                    Button(
-                        onClick = imagePicker,
-                        modifier = Modifier.fillMaxWidth().padding(vertical = GcSpacing.Small)
-                    ) {
-                        Text(stringResource(Res.string.add_picture_btn))
+                    if (!isWebPlatform()) {
+                        Spacer(modifier = Modifier.height(GcSpacing.Small))
+                        Button(
+                            onClick = imagePicker,
+                            modifier = Modifier.fillMaxWidth().padding(vertical = GcSpacing.Small)
+                        ) {
+                            Text(stringResource(Res.string.add_picture_btn))
+                        }
                     }
 
                     Row(
@@ -255,9 +260,11 @@ fun ToyForm(
                         Box(modifier = Modifier.weight(1f)) {
                             FormField(label = stringResource(Res.string.form_field_secondary_bitmaps), value = bitmaps, onValueChange = { bitmaps = it })
                         }
-                        Spacer(modifier = Modifier.width(GcSpacing.Small))
-                        IconButton(onClick = { showRenameDialog = true }) {
-                            Icon(Icons.Default.Edit, contentDescription = "Edit Filenames")
+                        if (!isWebPlatform()) {
+                            Spacer(modifier = Modifier.width(GcSpacing.Small))
+                            IconButton(onClick = { showRenameDialog = true }) {
+                                Icon(Icons.Default.Edit, contentDescription = "Edit Filenames")
+                            }
                         }
                     }
 

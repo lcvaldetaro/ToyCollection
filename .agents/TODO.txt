@@ -15,4 +15,4 @@ SIMPLE:
 [x]-change icon to the same as Toy collection
 [x]-change package to "com.gepetto.slotcarscollection"
 [x]-create tabbed info page
-[ ]-creation of web version (see .agents/WEB_PORT_PLAN.md)
+[x]-creation of web version (see .agents/WEB_PORT_PLAN.md)

@@ -16,13 +16,16 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import club.gepetto.composeutils.image.GcImage
 import club.gepetto.composeutils.PlatformBitmap
+import club.gepetto.composeutils.createPlatformHttpClient
 import com.gepetto.toydb.database.Toy
 import com.gepetto.toydb.database.ToyRepository
 import com.gepetto.toydb.utils.resolveImageUri
 import com.gepetto.toydb.utils.resolveBitmapUri
 import com.gepetto.toydb.utils.ImageResolverConfig
+import com.gepetto.toydb.utils.systemFileSystem
+import com.gepetto.toydb.utils.userHomeDirectory
+import com.gepetto.toydb.utils.isWebPlatform
 import io.ktor.client.*
-import io.ktor.client.engine.okhttp.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import kotlinx.coroutines.Dispatchers
@@ -32,7 +35,7 @@ import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toPath
 
-private val htmlHttpClient = HttpClient(OkHttp)
+private val htmlHttpClient = createPlatformHttpClient()
 
 fun resolveImagesDir(db: com.gepetto.toydb.database.ToyDatabase): Path {
     val customPath = ImageResolverConfig.imagesPath
@@ -40,13 +43,13 @@ fun resolveImagesDir(db: com.gepetto.toydb.database.ToyDatabase): Path {
         return customPath.toPath()
     }
     // Desktop / Fallbacks
-    val homeDir = System.getProperty("user.home")
+    val homeDir = userHomeDirectory()
     if (homeDir != null) {
         val f = homeDir.toPath().div("valdetaro/ToyCollection/ToyDb/images")
-        if (FileSystem.SYSTEM.exists(f)) return f
+        if (systemFileSystem.exists(f)) return f
     }
     val possibleDirs = listOf("images", "../images", "ToyDb/images", "../ToyDb/images")
-    possibleDirs.map { it.toPath() }.find { FileSystem.SYSTEM.exists(it) }?.let { return it }
+    possibleDirs.map { it.toPath() }.find { systemFileSystem.exists(it) }?.let { return it }
     
     return "images".toPath()
 }
@@ -70,6 +73,11 @@ fun SyncImage(
     onClick: () -> Unit = {},
     onDownloaded: () -> Unit = {}
 ) {
+    if (isWebPlatform()) {
+        WebSyncImage(toy, repository, modifier, prefix, filename, isMainImage, size, cornerSize, paddingSize, contentScale, fullImageOnClick, files, fallbackBitmap, onClick)
+        return
+    }
+
     val refNum = toy?.refNum ?: 0
     val toyDescription = toy?.description ?: filename ?: ""
     var downloadSuccessTrigger by remember { mutableStateOf(0) }
@@ -98,7 +106,7 @@ fun SyncImage(
     val localFileTime = remember(localPath) {
         if (localPath != null) {
             try {
-                val metadata = FileSystem.SYSTEM.metadataOrNull(localPath.toPath())
+                val metadata = systemFileSystem.metadataOrNull(localPath.toPath())
                 metadata?.lastModifiedAtMillis ?: 0L
             } catch (e: Exception) {
                 0L
@@ -157,7 +165,7 @@ fun SyncImage(
                         val response = htmlHttpClient.get(url)
                         if (response.status.value == 200) {
                             val bytes = response.readBytes()
-                            FileSystem.SYSTEM.write(targetFile) {
+                            systemFileSystem.write(targetFile) {
                                 write(bytes)
                             }
                             withContext(Dispatchers.Main) {
@@ -205,4 +213,45 @@ fun SyncImage(
             }
         }
     }
+}
+
+@Composable
+private fun WebSyncImage(
+    toy: Toy?,
+    repository: ToyRepository?,
+    modifier: Modifier,
+    prefix: String,
+    filename: String?,
+    isMainImage: Boolean,
+    size: Dp,
+    cornerSize: Dp,
+    paddingSize: Dp,
+    contentScale: ContentScale,
+    fullImageOnClick: Boolean,
+    files: Array<String>?,
+    fallbackBitmap: PlatformBitmap?,
+    onClick: () -> Unit
+) {
+    val baseUrl = remember { repository?.getBaseUrlSetting() }
+    // D10: no guessed file name. A blank name shows the fallback image, as on Desktop.
+    val name = if (isMainImage) {
+        toy?.picture?.trim()?.takeIf { it.isNotEmpty() }
+    } else {
+        filename?.trim()?.takeIf { it.isNotEmpty() }
+    }
+    val urlForImages = if (baseUrl.isNullOrBlank() || name == null) null else baseUrl.trimEnd('/') + "/"
+    GcImage(
+        modifier = modifier,
+        imageFile = if (urlForImages == null) null else name,
+        urlForImages = urlForImages,
+        imageBitmap = if (urlForImages == null) fallbackBitmap else null,
+        contentDescription = toy?.description ?: filename ?: "",
+        fullImageOnClick = fullImageOnClick,
+        size = size,
+        cornerSize = cornerSize,
+        paddingSize = paddingSize,
+        files = files,
+        contentScale = contentScale,
+        onClick = onClick
+    )
 }

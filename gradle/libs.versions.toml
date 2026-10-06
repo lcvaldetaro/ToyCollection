@@ -61,6 +61,9 @@ androidxLifeCycleNavigation3 = "2.11.0"
 sshj = "0.41.1"
 slf4jSimple = "2.0.20"
 jetbrainsCompose = "1.12.1"
+sqlJs = "1.14.2"
+kotlincryptoHash = "0.8.0"
+copyWebpackPlugin = "13.0.0"
 
 [libraries]
 accompanist-pager = { module = "com.google.accompanist:accompanist-pager", version.ref = "accompanistPager" }
@@ -131,6 +134,10 @@ androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecyc
 androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
 androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
+ktor-client-js = { module = "io.ktor:ktor-client-js", version.ref = "ktorClientCore" }
+kotlincrypto-sha2 = { module = "org.kotlincrypto.hash:sha2", version.ref = "kotlincryptoHash" }
+jetbrains-compose-ui-tooling-preview = { module = "org.jetbrains.compose.ui:ui-tooling-preview", version.ref = "jetbrainsCompose" }
+kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

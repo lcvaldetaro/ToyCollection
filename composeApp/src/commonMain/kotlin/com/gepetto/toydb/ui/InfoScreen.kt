@@ -19,6 +19,7 @@ import club.gepetto.composeutils.GcTheme
 import club.gepetto.composeutils.sysBackgroundColor
 import club.gepetto.composeutils.sysForegroundColor
 import com.gepetto.toydb.CommonConfig
+import com.gepetto.toydb.utils.isWebPlatform
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.StringResource
@@ -54,7 +55,7 @@ fun InfoScreen(
 
     val currentLang = remember {
         val lang = try {
-            java.util.Locale.getDefault().language.lowercase()
+            androidx.compose.ui.text.intl.Locale.current.language.lowercase()
         } catch (_: Exception) {
             "en"
         }
@@ -257,19 +258,23 @@ fun BackupTabContent(
             color = sysForegroundColor().copy(alpha = 0.8f)
         )
 
-        Spacer(Modifier.height(16.dp))
+        if (!isWebPlatform()) {
+            Spacer(Modifier.height(16.dp))
 
-        Button(
-            onClick = onNavigateToSftpSetup,
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-        ) {
-            Text(
-                text = stringResource(Res.string.sftp_setup_guide_btn),
-                style = MaterialTheme.typography.labelLarge
-            )
+            Button(
+                onClick = onNavigateToSftpSetup,
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+            ) {
+                Text(
+                    text = stringResource(Res.string.sftp_setup_guide_btn),
+                    style = MaterialTheme.typography.labelLarge
+                )
+            }
+
+            Spacer(Modifier.height(20.dp))
+        } else {
+            Spacer(Modifier.height(16.dp))
         }
-
-        Spacer(Modifier.height(20.dp))
         HorizontalDivider(color = sysForegroundColor().copy(alpha = 0.15f))
         Spacer(Modifier.height(16.dp))
 

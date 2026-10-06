@@ -43,6 +43,9 @@ import com.gepetto.toydb.database.ToyRepository
 import com.gepetto.toydb.utils.resolveBitmapUri
 import com.gepetto.toydb.utils.scrollHorizontallyWithMouseWheel
 import com.gepetto.toydb.utils.rememberImagePicker
+import com.gepetto.toydb.utils.systemFileSystem
+import com.gepetto.toydb.utils.isWebPlatform
+import club.gepetto.composeutils.gcCurrentTimeMillis
 import androidx.compose.material.icons.filled.Add
 import okio.FileSystem
 import okio.Path.Companion.toPath
@@ -106,11 +109,15 @@ fun MakerDetailScreen(
 
     var refreshTrigger by remember { mutableStateOf(0) }
     val allImagePaths = remember(makerImages, refreshTrigger) {
-        val list = mutableListOf<String>()
-        makerImages.forEach { filename ->
-            resolveBitmapUri(filename)?.let { list.add(it) }
+        if (isWebPlatform()) {
+            makerImages.toTypedArray()
+        } else {
+            val list = mutableListOf<String>()
+            makerImages.forEach { filename ->
+                resolveBitmapUri(filename)?.let { list.add(it) }
+            }
+            list.toTypedArray()
         }
-        list.toTypedArray()
     }
 
     val imagePicker = rememberImagePicker { selectedPath ->
@@ -123,18 +130,18 @@ fun MakerDetailScreen(
             customPath.toPath()
         } else {
             val possibleDirs = listOf("images", "../images", "ToyDb/images", "../ToyDb/images")
-            possibleDirs.map { it.toPath() }.find { FileSystem.SYSTEM.exists(it) } ?: "images".toPath()
+            possibleDirs.map { it.toPath() }.find { systemFileSystem.exists(it) } ?: "images".toPath()
         }
         
         val destPath = targetDir.div(filename)
         try {
-            if (!FileSystem.SYSTEM.exists(targetDir)) {
-                FileSystem.SYSTEM.createDirectories(targetDir)
+            if (!systemFileSystem.exists(targetDir)) {
+                systemFileSystem.createDirectories(targetDir)
             }
-            FileSystem.SYSTEM.copy(srcPath, destPath)
+            systemFileSystem.copy(srcPath, destPath)
             
-            val size = FileSystem.SYSTEM.metadataOrNull(destPath)?.size ?: 0L
-            val timestamp = System.currentTimeMillis()
+            val size = systemFileSystem.metadataOrNull(destPath)?.size ?: 0L
+            val timestamp = gcCurrentTimeMillis()
             
             val currentBitmaps = currentMaker.bitmaps.trim()
             val currentSizes = currentMaker.bitmapsSize.trim()
@@ -329,14 +336,16 @@ fun MakerDetailContent(
                         fontWeight = FontWeight.Bold,
                         color = sysTextColor()
                     )
-                    IconButton(
-                        onClick = onAddImageClick
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = stringResource(Res.string.add_manufacturer_image_desc),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
+                    if (!isWebPlatform()) {
+                        IconButton(
+                            onClick = onAddImageClick
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = stringResource(Res.string.add_manufacturer_image_desc),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     }
                 }
             }

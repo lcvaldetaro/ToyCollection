@@ -52,6 +52,7 @@ The application is built using **Compose Multiplatform** and **Kotlin Multiplatf
 ### Target Platforms
 - **Desktop (JVM 21)**: macOS (Intel and Apple Silicon DMG) and Windows (MSI).
 - **Android**: Phones and tablets (minSdk 24, compileSdk 37, targetSdk 37).
+- **Web (WasmJs)**: Modern web browsers with WebAssembly GC (Chrome, Edge, Firefox, Safari).
 
 ### Source Tree Layout
 
@@ -74,13 +75,21 @@ ToyDb/
 │   │   │   │       ├── service/    # DesktopSftpService (SSHJ implementation)
 │   │   │   │       └── utils/      # Desktop platform implementations
 │   │   │   └── resources/          # Application icons (.icns, .ico, .png)
-│   │   └── androidMain/
-│   │       ├── kotlin/com/gepetto/toydb/
-│   │       │   ├── AppMainActivity.kt # Android Activity, BouncyCastle initialization, database provisioning
-│   │       │   ├── database/       # AndroidToyDatabase (Android SQLite framework implementation)
-│   │       │   ├── service/        # AndroidSftpService (SSHJ implementation for Android)
-│   │       │   └── utils/          # Android platform implementations
-│   │       └── AndroidManifest.xml # Android permissions (Internet, Network State, Storage)
+│   │   ├── androidMain/
+│   │   │   ├── kotlin/com/gepetto/toydb/
+│   │   │   │   ├── AppMainActivity.kt # Android Activity, BouncyCastle initialization, database provisioning
+│   │   │   │   ├── database/       # AndroidToyDatabase (Android SQLite framework implementation)
+│   │   │   │   ├── service/        # AndroidSftpService (SSHJ implementation for Android)
+│   │   │   │   └── utils/          # Android platform implementations
+│   │   │   └── AndroidManifest.xml # Android permissions (Internet, Network State, Storage)
+│   │   └── wasmJsMain/
+│   │       ├── kotlin/
+│   │       │   ├── Main.kt         # WebAssembly application entry point, tab title management, ComposeViewport
+│   │       │   └── com/gepetto/toydb/
+│   │       │       ├── database/   # WasmToyDatabase (sql.js + IndexedDB snapshot persistence)
+│   │       │       ├── service/    # WebSftpService (disabled stub), ImportExportServiceWasm
+│   │       │       └── utils/      # Web platform implementations (NoFileSystem, ImageResolver, etc.)
+│   │       └── resources/          # index.html web shell
 │   ├── packaging/                  # macOS packaging scripts and background artwork
 │   ├── wix/                        # Windows WiX MSI packaging definitions
 │   └── build.gradle.kts            # Multiplatform build configuration, dependencies, and packaging tasks
@@ -98,6 +107,7 @@ The persistence layer uses a custom platform-independent database abstraction (`
 - `interface SqlCursor`: Provides `next()`, `getString(col)`, `getInt(col)`, `getDouble(col)`, and `close()`.
 - **Desktop Implementation** (`DesktopDatabase.kt`): Uses `java.sql.Connection` and `org.xerial:sqlite-jdbc`.
 - **Android Implementation** (`AndroidDatabase.kt`): Uses `android.database.sqlite.SQLiteDatabase`.
+- **Web Implementation** (`WasmDatabase.wasmJs.kt`): Uses `sql.js` (WebAssembly SQLite) with debounced automatic snapshot exports persisted to browser `IndexedDB` (`toydb_web` database).
 
 ### Schema Version & Migrations
 The database version is tracked using `PRAGMA user_version` (current: `DATABASE_VERSION = 9`).

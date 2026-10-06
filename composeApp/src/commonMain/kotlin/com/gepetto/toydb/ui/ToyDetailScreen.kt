@@ -37,6 +37,9 @@ import com.gepetto.toydb.utils.resolveBitmapUri
 import com.gepetto.toydb.utils.resolveImageUri
 import com.gepetto.toydb.utils.scrollHorizontallyWithMouseWheel
 import com.gepetto.toydb.utils.rememberImagePicker
+import com.gepetto.toydb.utils.systemFileSystem
+import com.gepetto.toydb.utils.isWebPlatform
+import club.gepetto.composeutils.gcCurrentTimeMillis
 import androidx.compose.material.icons.filled.Add
 import okio.FileSystem
 import okio.Path.Companion.toPath
@@ -69,9 +72,22 @@ fun ToyDetailScreen(
     val allImagePaths = remember(toy, refreshTrigger) {
         val list = mutableListOf<String>()
         if (toy != null) {
-            resolveImageUri(prefix, toy.refNum)?.let { list.add(it) }
-            toy.getSecondaryImages().forEach { img ->
-                resolveBitmapUri(img.filename)?.let { list.add(it) }
+            if (isWebPlatform()) {
+                val mainPic = toy.picture.trim()
+                if (mainPic.isNotEmpty()) {
+                    list.add(mainPic)
+                }
+                toy.getSecondaryImages().forEach { img ->
+                    val secPic = img.filename.trim()
+                    if (secPic.isNotEmpty()) {
+                        list.add(secPic)
+                    }
+                }
+            } else {
+                resolveImageUri(prefix, toy.refNum)?.let { list.add(it) }
+                toy.getSecondaryImages().forEach { img ->
+                    resolveBitmapUri(img.filename)?.let { list.add(it) }
+                }
             }
         }
         list.toTypedArray()
@@ -87,18 +103,18 @@ fun ToyDetailScreen(
             customPath.toPath()
         } else {
             val possibleDirs = listOf("images", "../images", "ToyDb/images", "../ToyDb/images")
-            possibleDirs.map { it.toPath() }.find { FileSystem.SYSTEM.exists(it) } ?: "images".toPath()
+            possibleDirs.map { it.toPath() }.find { systemFileSystem.exists(it) } ?: "images".toPath()
         }
         
         val destPath = targetDir.div(filename)
         try {
-            if (!FileSystem.SYSTEM.exists(targetDir)) {
-                FileSystem.SYSTEM.createDirectories(targetDir)
+            if (!systemFileSystem.exists(targetDir)) {
+                systemFileSystem.createDirectories(targetDir)
             }
-            FileSystem.SYSTEM.copy(srcPath, destPath)
+            systemFileSystem.copy(srcPath, destPath)
             
-            val size = FileSystem.SYSTEM.metadataOrNull(destPath)?.size ?: 0L
-            val timestamp = System.currentTimeMillis()
+            val size = systemFileSystem.metadataOrNull(destPath)?.size ?: 0L
+            val timestamp = gcCurrentTimeMillis()
             
             val currentBitmaps = currentToy.bitmaps.trim()
             val currentSizes = currentToy.bitmapsSize.trim()
@@ -299,14 +315,16 @@ fun ToyDetailContent(
                     fontWeight = FontWeight.Bold,
                     color = sysTextColor()
                 )
-                IconButton(
-                    onClick = onAddSecondaryImage
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = stringResource(Res.string.add_secondary_image_desc),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
+                if (!isWebPlatform()) {
+                    IconButton(
+                        onClick = onAddSecondaryImage
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = stringResource(Res.string.add_secondary_image_desc),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
             }
 

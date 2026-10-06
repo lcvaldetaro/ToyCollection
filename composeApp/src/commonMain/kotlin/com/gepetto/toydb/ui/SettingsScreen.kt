@@ -35,12 +35,14 @@ import com.gepetto.toydb.database.CategorySetting
 import com.gepetto.toydb.database.ToyDatabase
 import com.gepetto.toydb.database.ToyRepository
 import com.gepetto.toydb.service.ImportExportService
+import club.gepetto.utils.ioDispatcher
+import com.gepetto.toydb.utils.systemFileSystem
+import com.gepetto.toydb.utils.isWebPlatform
 import okio.FileSystem
 import okio.Path.Companion.toPath
 import com.gepetto.toydb.utils.selectDirectoryDialog
 import com.gepetto.toydb.utils.isDesktopPlatform
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.gepetto.toydb.service.SftpService
 import com.gepetto.toydb.service.SftpConfig
@@ -140,7 +142,7 @@ fun SettingsScreen(
         activeVerification = HostKeyVerification(hostname, port, fingerprint, deferred)
         val accepted = deferred.await()
         if (accepted) {
-            withContext(Dispatchers.IO) {
+            withContext(ioDispatcher) {
                 repository.addSftpApprovedFingerprint(fingerprint)
             }
             sftpApprovedFingerprints = repository.getSftpApprovedFingerprintsSetting() ?: ""
@@ -197,8 +199,8 @@ fun SettingsScreen(
         }
         for (path in paths) {
             try {
-                if (FileSystem.SYSTEM.exists(path)) {
-                    return FileSystem.SYSTEM.read(path) { readUtf8() }
+                if (systemFileSystem.exists(path)) {
+                    return systemFileSystem.read(path) { readUtf8() }
                 }
             } catch (e: Exception) {
                 GcLog.e("SettingsScreen", "Error reading $path: ${e.message}", e)
@@ -224,11 +226,11 @@ fun SettingsScreen(
             try {
                 // Ensure parent directory exists
                 path.parent?.let { parent ->
-                    if (!FileSystem.SYSTEM.exists(parent)) {
-                        FileSystem.SYSTEM.createDirectories(parent)
+                    if (!systemFileSystem.exists(parent)) {
+                        systemFileSystem.createDirectories(parent)
                     }
                 }
-                FileSystem.SYSTEM.write(path) { writeUtf8(content) }
+                systemFileSystem.write(path) { writeUtf8(content) }
                 return path.toString()
             } catch (e: Exception) {
                 GcLog.e("SettingsScreen", "Error writing $path: ${e.message}", e)
@@ -337,7 +339,7 @@ fun SettingsScreen(
                             repository.updateCategorySetting(newSetting)
                         } else {
                             if (categoriesList.any { it.category == newSetting.category }) {
-                                dialogErrorText = categoryExistsText.format(newSetting.category)
+                                dialogErrorText = categoryExistsText.replace("%1\$s", newSetting.category)
                                 return@Button
                             }
                             repository.addCategorySetting(newSetting)
@@ -1043,8 +1045,12 @@ fun SettingsScreen(
                                 }
                             )
                         }
-                            BaseUrlSettingsCard(
-                                baseUrl = htmlBaseUrl,
+                        if (isWebPlatform()) {
+                            WebLocalDataNotice()
+                            Spacer(modifier = Modifier.height(GcSpacing.Standard))
+                        }
+                        BaseUrlSettingsCard(
+                            baseUrl = htmlBaseUrl,
                                 onBaseUrlChange = { htmlBaseUrl = it },
                                 onSave = {
                                     repository.setBaseUrlSetting(htmlBaseUrl)
@@ -1055,6 +1061,7 @@ fun SettingsScreen(
                                         try {
                                             val syncSuccess = HtmlSyncService.syncIfNewer(db, repository)
                                             if (syncSuccess) {
+                                                categoriesList = repository.getCategorySettings()
                                                 onCategoriesChanged()
                                                 statusText = webSyncSuccessText
                                                 webSyncDialogPhase = "Success"
@@ -1069,6 +1076,223 @@ fun SettingsScreen(
                                     }
                                 }
                             )
+                            if (!isWebPlatform()) {
+                                Spacer(modifier = Modifier.height(GcSpacing.Standard))
+                                SftpSettingsCard(
+                                    host = sftpHost, onHostChange = { sftpHost = it },
+                                    port = sftpPort, onPortChange = { sftpPort = it },
+                                    username = sftpUsername, onUsernameChange = { sftpUsername = it },
+                                    authType = sftpAuthType, onAuthTypeChange = { sftpAuthType = it },
+                                    password = sftpPassword, onPasswordChange = { sftpPassword = it },
+                                    keyPath = sftpKeyPath, onKeyPathChange = { sftpKeyPath = it },
+                                    keyPassphrase = sftpKeyPassphrase, onKeyPassphraseChange = { sftpKeyPassphrase = it },
+                                    remoteDir = sftpRemoteDir, onRemoteDirChange = { sftpRemoteDir = it },
+                                    onSave = {
+                                        repository.setSftpHostSetting(sftpHost)
+                                        repository.setSftpPortSetting(sftpPort.toIntOrNull() ?: 22)
+                                        repository.setSftpUsernameSetting(sftpUsername)
+                                        repository.setSftpAuthTypeSetting(sftpAuthType)
+                                        repository.setSftpPasswordSetting(sftpPassword)
+                                        repository.setSftpKeyPathSetting(sftpKeyPath)
+                                        repository.setSftpKeyPassphraseSetting(sftpKeyPassphrase)
+                                        repository.setSftpRemoteDirSetting(sftpRemoteDir)
+                                        statusText = sftpConfigSavedText
+                                    },
+                                    onTestConnection = {
+                                        coroutineScope.launch {
+                                            if (sftpHost.trim().isEmpty() || sftpUsername.trim().isEmpty()) {
+                                                testErrorMsg = getString(Res.string.all_fields_required)
+                                                showTestErrorDialog = true
+                                                return@launch
+                                            }
+                                            isTestingSftp = true
+                                            statusText = getString(Res.string.sftp_testing_connection)
+                                            val result = sftpService.testConnection(buildSftpConfig(), onHostKeyUnverified)
+                                            isTestingSftp = false
+                                            if (result.isSuccess) {
+                                                statusText = getString(Res.string.sftp_status_test_success)
+                                                showTestSuccessDialog = true
+                                            } else {
+                                                statusText = getString(Res.string.sftp_status_test_failed, result.exceptionOrNull()?.message ?: "")
+                                                testErrorMsg = result.exceptionOrNull()?.message ?: getString(Res.string.unknown)
+                                                showTestErrorDialog = true
+                                            }
+                                        }
+                                    },
+                                    isTesting = isTestingSftp
+                                )
+                                SftpSyncActions(
+                                    onUploadClick = {
+                                        coroutineScope.launch {
+                                            if (sftpHost.trim().isEmpty() || sftpUsername.trim().isEmpty()) {
+                                                syncErrorMsg = getString(Res.string.all_fields_required)
+                                                showSyncErrorDialog = true
+                                                return@launch
+                                            }
+                                            statusText = getString(Res.string.sftp_status_calculating_upload)
+                                            isSftpSyncing = true
+                                            val result = sftpService.calculateUploadPlan(buildSftpConfig(), db, onHostKeyUnverified)
+                                            isSftpSyncing = false
+                                            if (result.isSuccess) {
+                                                excludeHtmlFiles = false
+                                                val actions = result.getOrThrow()
+                                                proposedSftpActions.clear()
+                                                proposedSftpActions.addAll(actions)
+                                                selectedSftpActions.clear()
+                                                actions.forEach { selectedSftpActions[it.filename] = true }
+                                                syncDirection = "Upload"
+                                                syncDialogPhase = "Confirm"
+                                                showSyncConfirmDialog = true
+                                            } else {
+                                                syncErrorMsg = result.exceptionOrNull()?.message ?: ""
+                                                showSyncErrorDialog = true
+                                                statusText = getString(Res.string.sftp_status_plan_failed, result.exceptionOrNull()?.message ?: "")
+                                            }
+                                        }
+                                    },
+                                    onDownloadClick = {
+                                        coroutineScope.launch {
+                                            if (sftpHost.trim().isEmpty() || sftpUsername.trim().isEmpty()) {
+                                                syncErrorMsg = getString(Res.string.all_fields_required)
+                                                showSyncErrorDialog = true
+                                                return@launch
+                                            }
+                                            statusText = getString(Res.string.sftp_status_calculating_download)
+                                            isSftpSyncing = true
+                                            val result = sftpService.calculateDownloadPlan(buildSftpConfig(), db, onHostKeyUnverified)
+                                            isSftpSyncing = false
+                                            if (result.isSuccess) {
+                                                excludeHtmlFiles = false
+                                                val actions = result.getOrThrow()
+                                                proposedSftpActions.clear()
+                                                proposedSftpActions.addAll(actions)
+                                                selectedSftpActions.clear()
+                                                actions.forEach { selectedSftpActions[it.filename] = true }
+                                                syncDirection = "Download"
+                                                syncDialogPhase = "Confirm"
+                                                showSyncConfirmDialog = true
+                                            } else {
+                                                syncErrorMsg = result.exceptionOrNull()?.message ?: ""
+                                                showSyncErrorDialog = true
+                                                statusText = getString(Res.string.sftp_status_plan_failed, result.exceptionOrNull()?.message ?: "")
+                                            }
+                                        }
+                                    },
+                                    isSyncing = isSftpSyncing || isTestingSftp,
+                                    syncProgress = sftpSyncProgress
+                                )
+                                Spacer(modifier = Modifier.height(GcSpacing.Standard))
+                                ImportExportActions(
+                                    customImportExportPath = dataPath,
+                                    db = db,
+                                    onHtmlExportComplete = { path, count ->
+                                        htmlExportPath = path
+                                        htmlExportCount = count
+                                        showHtmlExportDialog = true
+                                        statusText = htmlExportCompleteText
+                                    },
+                                    onSetStatus = { statusText = it }
+                                )
+                            }
+                        }
+
+                    // Right Column: Categories Manager
+                    Column(
+                        modifier = Modifier.weight(1.2f),
+                        verticalArrangement = Arrangement.spacedBy(GcSpacing.Standard)
+                    ) {
+                        CategoriesManager(
+                            categoriesList = categoriesList,
+                            onAddCategory = {
+                                dialogIsEditMode = false
+                                dialogCategoryKey = ""
+                                dialogCategoryLabel = ""
+                                dialogCategoryPrefix = ""
+                                dialogCategoryTitle = ""
+                                dialogCategoryIcon = "category"
+                                dialogErrorText = ""
+                                showCategoryDialog = true
+                            },
+                            onEditCategory = { cat ->
+                                dialogIsEditMode = true
+                                dialogCategoryKey = cat.category
+                                dialogCategoryLabel = cat.label
+                                dialogCategoryPrefix = cat.imagePrefix
+                                dialogCategoryTitle = cat.title
+                                dialogCategoryIcon = cat.icon
+                                dialogErrorText = ""
+                                showCategoryDialog = true
+                            },
+                            onDeleteCategory = { cat ->
+                                categoryToDelete = cat
+                                showDeleteConfirmDialog = true
+                            }
+                        )
+                    }
+                }
+            } else {
+                // Mobile layout
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(GcSpacing.Standard)
+                ) {
+                    StatusBanner(statusText)
+                    ThemeSelector(currentTheme, onThemeChanged)
+                    AppTitleSettings(
+                        title = appTitle,
+                        onTitleChange = { newTitle ->
+                            repository.setAppTitleSetting(newTitle)
+                            appTitle = newTitle
+                            onAppTitleChanged(newTitle)
+                        }
+                    )
+                    if (isDesktopPlatform()) {
+                        DataDirectorySettings(
+                            dataPath = dataPath,
+                            onSelectPath = { selectedDir ->
+                                repository.setDataPathSetting(selectedDir)
+                                com.gepetto.toydb.utils.ImageResolverConfig.imagesPath = selectedDir
+                                dataPath = selectedDir
+                            },
+                            onClearPath = {
+                                repository.setDataPathSetting(null)
+                                com.gepetto.toydb.utils.ImageResolverConfig.imagesPath = null
+                                dataPath = null
+                            }
+                        )
+                    }
+                    if (isWebPlatform()) {
+                        WebLocalDataNotice()
+                        Spacer(modifier = Modifier.height(GcSpacing.Standard))
+                    }
+                    BaseUrlSettingsCard(
+                        baseUrl = htmlBaseUrl,
+                            onBaseUrlChange = { htmlBaseUrl = it },
+                            onSave = {
+                                repository.setBaseUrlSetting(htmlBaseUrl)
+                                statusText = webSyncRunningText
+                                webSyncDialogPhase = "Progress"
+                                showWebSyncDialog = true
+                                coroutineScope.launch {
+                                    try {
+                                        val syncSuccess = HtmlSyncService.syncIfNewer(db, repository)
+                                        if (syncSuccess) {
+                                            categoriesList = repository.getCategorySettings()
+                                            onCategoriesChanged()
+                                            statusText = webSyncSuccessText
+                                            webSyncDialogPhase = "Success"
+                                        } else {
+                                            statusText = webSyncNoUpdatesText
+                                            webSyncDialogPhase = "NoUpdates"
+                                        }
+                                    } catch (e: Exception) {
+                                        statusText = webSyncErrorText
+                                        webSyncDialogPhase = "Error"
+                                    }
+                                }
+                            }
+                        )
+                        if (!isWebPlatform()) {
                             Spacer(modifier = Modifier.height(GcSpacing.Standard))
                             SftpSettingsCard(
                                 host = sftpHost, onHostChange = { sftpHost = it },
@@ -1186,214 +1410,6 @@ fun SettingsScreen(
                                 onSetStatus = { statusText = it }
                             )
                         }
-
-                    // Right Column: Categories Manager
-                    Column(
-                        modifier = Modifier.weight(1.2f),
-                        verticalArrangement = Arrangement.spacedBy(GcSpacing.Standard)
-                    ) {
-                        CategoriesManager(
-                            categoriesList = categoriesList,
-                            onAddCategory = {
-                                dialogIsEditMode = false
-                                dialogCategoryKey = ""
-                                dialogCategoryLabel = ""
-                                dialogCategoryPrefix = ""
-                                dialogCategoryTitle = ""
-                                dialogCategoryIcon = "category"
-                                dialogErrorText = ""
-                                showCategoryDialog = true
-                            },
-                            onEditCategory = { cat ->
-                                dialogIsEditMode = true
-                                dialogCategoryKey = cat.category
-                                dialogCategoryLabel = cat.label
-                                dialogCategoryPrefix = cat.imagePrefix
-                                dialogCategoryTitle = cat.title
-                                dialogCategoryIcon = cat.icon
-                                dialogErrorText = ""
-                                showCategoryDialog = true
-                            },
-                            onDeleteCategory = { cat ->
-                                categoryToDelete = cat
-                                showDeleteConfirmDialog = true
-                            }
-                        )
-                    }
-                }
-            } else {
-                // Mobile layout
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(GcSpacing.Standard)
-                ) {
-                    StatusBanner(statusText)
-                    ThemeSelector(currentTheme, onThemeChanged)
-                    AppTitleSettings(
-                        title = appTitle,
-                        onTitleChange = { newTitle ->
-                            repository.setAppTitleSetting(newTitle)
-                            appTitle = newTitle
-                            onAppTitleChanged(newTitle)
-                        }
-                    )
-                    if (isDesktopPlatform()) {
-                        DataDirectorySettings(
-                            dataPath = dataPath,
-                            onSelectPath = { selectedDir ->
-                                repository.setDataPathSetting(selectedDir)
-                                com.gepetto.toydb.utils.ImageResolverConfig.imagesPath = selectedDir
-                                dataPath = selectedDir
-                            },
-                            onClearPath = {
-                                repository.setDataPathSetting(null)
-                                com.gepetto.toydb.utils.ImageResolverConfig.imagesPath = null
-                                dataPath = null
-                            }
-                        )
-                    }
-                        BaseUrlSettingsCard(
-                            baseUrl = htmlBaseUrl,
-                            onBaseUrlChange = { htmlBaseUrl = it },
-                            onSave = {
-                                repository.setBaseUrlSetting(htmlBaseUrl)
-                                statusText = webSyncRunningText
-                                webSyncDialogPhase = "Progress"
-                                showWebSyncDialog = true
-                                coroutineScope.launch {
-                                    try {
-                                        val syncSuccess = HtmlSyncService.syncIfNewer(db, repository)
-                                        if (syncSuccess) {
-                                            onCategoriesChanged()
-                                            statusText = webSyncSuccessText
-                                            webSyncDialogPhase = "Success"
-                                        } else {
-                                            statusText = webSyncNoUpdatesText
-                                            webSyncDialogPhase = "NoUpdates"
-                                        }
-                                    } catch (e: Exception) {
-                                        statusText = webSyncErrorText
-                                        webSyncDialogPhase = "Error"
-                                    }
-                                }
-                            }
-                        )
-                        Spacer(modifier = Modifier.height(GcSpacing.Standard))
-                        SftpSettingsCard(
-                            host = sftpHost, onHostChange = { sftpHost = it },
-                            port = sftpPort, onPortChange = { sftpPort = it },
-                            username = sftpUsername, onUsernameChange = { sftpUsername = it },
-                            authType = sftpAuthType, onAuthTypeChange = { sftpAuthType = it },
-                            password = sftpPassword, onPasswordChange = { sftpPassword = it },
-                            keyPath = sftpKeyPath, onKeyPathChange = { sftpKeyPath = it },
-                            keyPassphrase = sftpKeyPassphrase, onKeyPassphraseChange = { sftpKeyPassphrase = it },
-                            remoteDir = sftpRemoteDir, onRemoteDirChange = { sftpRemoteDir = it },
-                            onSave = {
-                                repository.setSftpHostSetting(sftpHost)
-                                repository.setSftpPortSetting(sftpPort.toIntOrNull() ?: 22)
-                                repository.setSftpUsernameSetting(sftpUsername)
-                                repository.setSftpAuthTypeSetting(sftpAuthType)
-                                repository.setSftpPasswordSetting(sftpPassword)
-                                repository.setSftpKeyPathSetting(sftpKeyPath)
-                                repository.setSftpKeyPassphraseSetting(sftpKeyPassphrase)
-                                repository.setSftpRemoteDirSetting(sftpRemoteDir)
-                                statusText = sftpConfigSavedText
-                            },
-                            onTestConnection = {
-                                coroutineScope.launch {
-                                    if (sftpHost.trim().isEmpty() || sftpUsername.trim().isEmpty()) {
-                                        testErrorMsg = getString(Res.string.all_fields_required)
-                                        showTestErrorDialog = true
-                                        return@launch
-                                    }
-                                    isTestingSftp = true
-                                    statusText = getString(Res.string.sftp_testing_connection)
-                                    val result = sftpService.testConnection(buildSftpConfig(), onHostKeyUnverified)
-                                    isTestingSftp = false
-                                    if (result.isSuccess) {
-                                        statusText = getString(Res.string.sftp_status_test_success)
-                                        showTestSuccessDialog = true
-                                    } else {
-                                        statusText = getString(Res.string.sftp_status_test_failed, result.exceptionOrNull()?.message ?: "")
-                                        testErrorMsg = result.exceptionOrNull()?.message ?: getString(Res.string.unknown)
-                                        showTestErrorDialog = true
-                                    }
-                                }
-                            },
-                            isTesting = isTestingSftp
-                        )
-                        SftpSyncActions(
-                            onUploadClick = {
-                                coroutineScope.launch {
-                                    if (sftpHost.trim().isEmpty() || sftpUsername.trim().isEmpty()) {
-                                        syncErrorMsg = getString(Res.string.all_fields_required)
-                                        showSyncErrorDialog = true
-                                        return@launch
-                                    }
-                                    statusText = getString(Res.string.sftp_status_calculating_upload)
-                                    isSftpSyncing = true
-                                    val result = sftpService.calculateUploadPlan(buildSftpConfig(), db, onHostKeyUnverified)
-                                    isSftpSyncing = false
-                                    if (result.isSuccess) {
-                                        excludeHtmlFiles = false
-                                        val actions = result.getOrThrow()
-                                        proposedSftpActions.clear()
-                                        proposedSftpActions.addAll(actions)
-                                        selectedSftpActions.clear()
-                                        actions.forEach { selectedSftpActions[it.filename] = true }
-                                        syncDirection = "Upload"
-                                        syncDialogPhase = "Confirm"
-                                        showSyncConfirmDialog = true
-                                    } else {
-                                        syncErrorMsg = result.exceptionOrNull()?.message ?: ""
-                                        showSyncErrorDialog = true
-                                        statusText = getString(Res.string.sftp_status_plan_failed, result.exceptionOrNull()?.message ?: "")
-                                    }
-                                }
-                            },
-                            onDownloadClick = {
-                                coroutineScope.launch {
-                                    if (sftpHost.trim().isEmpty() || sftpUsername.trim().isEmpty()) {
-                                        syncErrorMsg = getString(Res.string.all_fields_required)
-                                        showSyncErrorDialog = true
-                                        return@launch
-                                    }
-                                    statusText = getString(Res.string.sftp_status_calculating_download)
-                                    isSftpSyncing = true
-                                    val result = sftpService.calculateDownloadPlan(buildSftpConfig(), db, onHostKeyUnverified)
-                                    isSftpSyncing = false
-                                    if (result.isSuccess) {
-                                        excludeHtmlFiles = false
-                                        val actions = result.getOrThrow()
-                                        proposedSftpActions.clear()
-                                        proposedSftpActions.addAll(actions)
-                                        selectedSftpActions.clear()
-                                        actions.forEach { selectedSftpActions[it.filename] = true }
-                                        syncDirection = "Download"
-                                        syncDialogPhase = "Confirm"
-                                        showSyncConfirmDialog = true
-                                    } else {
-                                        syncErrorMsg = result.exceptionOrNull()?.message ?: ""
-                                        showSyncErrorDialog = true
-                                        statusText = getString(Res.string.sftp_status_plan_failed, result.exceptionOrNull()?.message ?: "")
-                                    }
-                                }
-                            },
-                            isSyncing = isSftpSyncing || isTestingSftp,
-                            syncProgress = sftpSyncProgress
-                        )
-                        Spacer(modifier = Modifier.height(GcSpacing.Standard))
-                        ImportExportActions(
-                            customImportExportPath = dataPath,
-                            db = db,
-                            onHtmlExportComplete = { path, count ->
-                                htmlExportPath = path
-                                htmlExportCount = count
-                                showHtmlExportDialog = true
-                                statusText = htmlExportCompleteText
-                            },
-                            onSetStatus = { statusText = it }
-                        )
                         Spacer(modifier = Modifier.height(GcSpacing.Standard))
                         CategoriesManager(
                         categoriesList = categoriesList,
@@ -1594,7 +1610,7 @@ fun ImportExportActions(
                         isExportingHtml = true
                         onSetStatus("Generating HTML pages to $selectedDir...")
                         try {
-                            val generatedCount = withContext(Dispatchers.IO) {
+                            val generatedCount = withContext(ioDispatcher) {
                                 ImportExportService.exportHtml(db, selectedDir)
                             }
                             isExportingHtml = false
@@ -2092,4 +2108,31 @@ fun CategoriesManagerPreview() {
         )
     }
 }
+
+@Composable
+private fun WebLocalDataNotice(modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = sysBackgroundColor()),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+    ) {
+        Column(modifier = Modifier.padding(GcSpacing.Standard)) {
+            Text(
+                text = stringResource(Res.string.web_local_data_notice),
+                fontSize = 14.sp,
+                color = sysTextColor()
+            )
+        }
+    }
+}
+
+@PreviewLightDark
+@Preview(name = "Landscape", widthDp = 800, heightDp = 480)
+@Composable
+private fun WebLocalDataNoticePreview() {
+    GcTheme {
+        WebLocalDataNotice()
+    }
+}
+
 

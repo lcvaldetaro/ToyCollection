@@ -1,47 +1,41 @@
 package com.gepetto.toydb.service
 
 import club.gepetto.GcLog
+import club.gepetto.composeutils.createPlatformHttpClient
 import com.gepetto.toydb.database.ToyDatabase
 import com.gepetto.toydb.database.ToyRepository
+import com.gepetto.toydb.utils.JsonDateParser
 import io.ktor.client.*
-import io.ktor.client.engine.okhttp.*
+import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
+import io.ktor.http.HttpHeaders
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import org.kotlincrypto.hash.sha2.SHA256
 
 object HtmlSyncService {
     private const val TAG = "HtmlSyncService"
     
-    private val client = HttpClient(OkHttp)
+    // D13: the browser must not answer the sync requests from its HTTP cache (ISSUE-20).
+    private val client = createPlatformHttpClient {
+        defaultRequest { header(HttpHeaders.CacheControl, "no-cache") }
+    }
     
     private val json = Json {
         ignoreUnknownKeys = true
         coerceInputValues = true
     }
 
-    fun parseJsonDate(dateStr: String): Long {
-        return try {
-            val formatter = java.text.SimpleDateFormat("MMMM d, yyyy", java.util.Locale.US).apply {
-                timeZone = java.util.TimeZone.getTimeZone("UTC")
-            }
-            formatter.parse(dateStr)?.time ?: 0L
-        } catch (e: Exception) {
-            0L
-        }
-    }
+    fun parseJsonDate(dateStr: String): Long = JsonDateParser.parse(dateStr)
 
     fun calculateHash(content: String): String {
-        return try {
-            val digest = java.security.MessageDigest.getInstance("SHA-256")
-            val hashBytes = digest.digest(content.encodeToByteArray())
-            hashBytes.joinToString("") { "%02x".format(it) }
-        } catch (e: Exception) {
-            content.hashCode().toString()
-        }
+        val hashBytes = SHA256().digest(content.encodeToByteArray())
+        return hashBytes.joinToString("") { it.toUByte().toString(16).padStart(2, '0') }
     }
     
     suspend fun syncIfNewer(db: ToyDatabase, repository: ToyRepository): Boolean {
@@ -232,9 +226,11 @@ object HtmlSyncService {
                 
                 GcLog.i(TAG, "HTML Startup Sync completed successfully.")
                 return@withContext true
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
+                if (e is CancellationException) throw e
                 GcLog.e(TAG, "Error performing HTML startup sync: ${e.message}", e)
-                throw e
+                // Ktor's JS engine throws JsError, which is a Throwable but not an Exception.
+                throw if (e is Exception) e else Exception(e.message, e)
             }
         }
     }

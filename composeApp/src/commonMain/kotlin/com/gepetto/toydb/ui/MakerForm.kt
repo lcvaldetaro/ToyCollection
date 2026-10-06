@@ -15,6 +15,7 @@ import club.gepetto.composeutils.sysBackgroundColor
 import club.gepetto.composeutils.sysTextColor
 import com.gepetto.toydb.database.Maker
 import com.gepetto.toydb.database.ToyRepository
+import com.gepetto.toydb.utils.isWebPlatform
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import org.jetbrains.compose.resources.stringResource
@@ -86,9 +87,11 @@ fun MakerForm(
                     singleLine = true
                 )
             }
-            Spacer(modifier = Modifier.width(GcSpacing.Small))
-            IconButton(onClick = { showRenameDialog = true }) {
-                Icon(Icons.Default.Edit, contentDescription = "Edit Filenames")
+            if (!isWebPlatform()) {
+                Spacer(modifier = Modifier.width(GcSpacing.Small))
+                IconButton(onClick = { showRenameDialog = true }) {
+                    Icon(Icons.Default.Edit, contentDescription = "Edit Filenames")
+                }
             }
         }
 

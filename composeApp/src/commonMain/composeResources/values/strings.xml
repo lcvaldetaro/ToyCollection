@@ -300,4 +300,5 @@ All rights reserved.</string>
     <string name="rename_maker_confirm_message">Renaming \'%1$s\' to \'%2$s\' will also update %3$d associated toy(s). Do you want to proceed?</string>
     <string name="rename_maker_confirm_button">Rename</string>
     <string name="maker_already_exists">A manufacturer named \'%1$s\' already exists.</string>
+    <string name="web_local_data_notice">Web version: your changes are saved only in this browser. A manual sync replaces your local data when the server has newer data.</string>
 </resources>

@@ -7,6 +7,7 @@ import com.gepetto.toydb.database.ToyDatabase
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import com.gepetto.toydb.CommonConfig
+import com.gepetto.toydb.utils.systemFileSystem
 import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toPath
@@ -143,7 +144,7 @@ object ImportExportService {
             customPath.toPath()
         } else {
             val possibleDirs = listOf("images", "../images", "ToyDb/images", "../ToyDb/images")
-            possibleDirs.map { it.toPath() }.find { FileSystem.SYSTEM.exists(it) } ?: "images".toPath()
+            possibleDirs.map { it.toPath() }.find { systemFileSystem.exists(it) } ?: "images".toPath()
         }
 
         val filenames = incomingBitmaps.split(" ").filter { it.trim().isNotEmpty() }
@@ -157,7 +158,7 @@ object ImportExportService {
         filenames.forEachIndexed { index, filename ->
             val trimmedFilename = filename.trim()
             val file = targetDir.div(trimmedFilename)
-            val metadata = FileSystem.SYSTEM.metadataOrNull(file)
+            val metadata = systemFileSystem.metadataOrNull(file)
             if (metadata != null && metadata.isRegularFile) {
                 val actualSize = metadata.size ?: 0L
                 val actualTimestamp = metadata.lastModifiedAtMillis ?: 0L
@@ -227,7 +228,7 @@ object ImportExportService {
                 customPath.toPath()
             } else {
                 val possibleDirs = listOf("images", "../images", "ToyDb/images", "../ToyDb/images")
-                possibleDirs.map { it.toPath() }.find { FileSystem.SYSTEM.exists(it) } ?: "images".toPath()
+                possibleDirs.map { it.toPath() }.find { systemFileSystem.exists(it) } ?: "images".toPath()
             }
 
             var finalPicture = ""
@@ -238,7 +239,7 @@ object ImportExportService {
             val incomingPicture = c.picture.trim()
             if (incomingPicture.isNotEmpty()) {
                 val file = targetDir.div(incomingPicture)
-                val metadata = FileSystem.SYSTEM.metadataOrNull(file)
+                val metadata = systemFileSystem.metadataOrNull(file)
                 if (metadata != null && metadata.isRegularFile) {
                     finalPicture = incomingPicture
                     finalPicSize = (metadata.size ?: 0L).toInt()
@@ -527,7 +528,7 @@ object ImportExportService {
         )
         
         var totalUpdated = 0
-        val fs = FileSystem.SYSTEM
+        val fs = systemFileSystem
         
         for ((category, filename) in categoryFiles) {
             val path = exportDirectory.toPath().div(filename)
@@ -670,7 +671,7 @@ object ImportExportService {
         
         val dateStr = getCurrentDateString()
         var totalFilesGenerated = 0
-        val fs = FileSystem.SYSTEM
+        val fs = systemFileSystem
         val targetDir = exportDirectory.toPath()
         val imagesDir = getImagesPath(db)?.toPath()
         
