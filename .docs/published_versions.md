@@ -6,5 +6,3 @@
 224
 ## Desktop Windows
 224
-## Web
-224

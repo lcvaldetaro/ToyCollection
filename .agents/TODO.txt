@@ -1,8 +1,14 @@
+HARD:
+[ ]-ios conversion
 [ ]-have a "file manager to manipulate a toy's image files"
+
+SIMPLE:
 [ ]-simplify the settings
 [ ]-ability to export/import the DB and images to a zip, and save it / read it / the same way Race Director does
+
 [x]-change hte default URL to http://valdetaro.com/database
 [x]-on dashboard, the collection cards should have icons on the top right - equivalent to Toy collection
 [x]-change icon to the same as Toy collection
 [x]-change package to "com.gepetto.slotcarscollection"
 [x]-create tabbed info page
+[ ]-creation of web version (see .agents/WEB_PORT_PLAN.md)
