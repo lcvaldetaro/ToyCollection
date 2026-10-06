@@ -5,8 +5,8 @@
 > **Workspace**: `/Users/luizvaldetaro/valdetaro`
 > **Document Location**: `ToyCollection/.agents/WEB_PORT_PLAN.md`
 > **Current Phase**: Phase 0 (not started). No project source file has been changed yet.
-> **Last Updated**: 2026-10-06 (Rev 5: review against `HEAD` `161b028`; InfoScreen double-spacer fix; defensive webpack config; headless path note)
-> **Code baseline**: ToyCollection commit `1891463` (branch `main`). Source code is unchanged up to `HEAD` `161b028` (later commits change documents only). versionCode 232, versionName 3.0.32, Kotlin 2.4.20, Compose Multiplatform 1.12.1, gepetto-utils 2.1.2.
+> **Last Updated**: 2026-10-06 (Rev 6: review against `HEAD` `328449f`; sql.js error conversion; Web logging; Dashboard counts; headless mode removed; hosting and documentation corrections)
+> **Code baseline**: ToyCollection commit `1891463` (branch `main`). Source code is unchanged up to `HEAD` `328449f` (later commits change documents only). gepetto-utils 2.1.2 is unchanged since it was published. versionCode 232, versionName 3.0.32, Kotlin 2.4.20, Compose Multiplatform 1.12.1, gepetto-utils 2.1.2.
 
 ---
 
@@ -38,10 +38,10 @@ Execution rules (from the AGENTS.md files):
 - **Never commit, push or stage.** The owner inspects all changes (workspace rule 1).
 - **Stay in scope.** Suggest extra work in section 5, Phase 9 (backlog). Do not do it without approval.
 - Use `./gradlew` for all Gradle commands. Never use `assemble` (rule 9 and 14).
-- **Gradle in Sandboxed Environments**: When running `./gradlew` in automated agent environments with sandboxing, loopback TCP network access to the Gradle daemon process (`127.0.0.1`) requires sandbox bypass (`BypassSandbox: true`). The first wasm build and `kotlinWasmUpgradeYarnLock` also download Node.js and npm packages, so they need network access.
+- **Gradle in a sandbox**: `./gradlew` connects to the Gradle daemon over loopback TCP (`127.0.0.1`). If your agent sandbox blocks this connection, run Gradle outside the sandbox (use the setting of your agent tool). The first wasm build and `kotlinWasmUpgradeYarnLock` also download Node.js and npm packages, so they need network access.
 - Every new user-visible string goes in `composeResources/values*/strings.xml` in all 6 languages: en, pt, de, es, fr, it (rule 6).
 - New composables need `@PreviewLightDark` and a landscape `@Preview`, wrapped in `GcTheme {}` (rule 4).
-- Use `GcLog` for logs. Do not use `println` (rule 3).
+- Use `GcLog` for logs. Do not use `println` (rule 3). In new code, use `GcLog.e(throwable, "Tag: message")` or `GcLog.d("Tag: message")`. `GcLog` has no tag parameter: the form `GcLog.e(TAG, "message", e)` prints only the tag (ISSUE-27).
 - Add dependencies AND versions (including npm package versions) to `gradle/libs.versions.toml` only. Do not write a version number in a build file (rule 8).
 - Tests use `kotlin.test` (rule 5). If an existing test fails, assume your change caused it (rule 0 and 15).
 - Write documents in Simplified Technical English (rule 16): short sentences, active voice.
@@ -94,6 +94,7 @@ Gepetto's Toy Database Manager is a Kotlin Multiplatform app (Compose Multiplatf
 
 - Edits stay in one browser. There is no way to publish them (no SFTP, no export on Web v1).
 - A manual sync replaces local data **only** when the server data is newer, its hash differs, or the local `toys` table is empty (`HtmlSyncService.syncIfNewer`). If the server data did not change, local edits stay.
+- The app saves edits to the browser about 1 second after the last change. The save when the tab closes is best effort, so edits made in the last second before the tab closes can be lost.
 
 ---
 
@@ -109,18 +110,19 @@ On 2026-10-06 a throw-away copy of ToyCollection (outside the repo) was changed 
 **Verified (run in a browser, dev build served by a static server):**
 - sql.js starts, the packaged `default_toydb.db` loads, migrations run (`checkUpgrade`), and the UI shows (Home, Dashboard, Settings, Explorer).
 - First-load sync: it ran (empty `toys`). It failed with a CORS error because the page was on `localhost` (see ISSUE-10). With the error normalization in Task 5.4 the app stayed alive.
-- Manual sync (Settings, Web Synchronization, Save) against a local copy of `ToyCollection/json/` imported 1,567 toys. The dialog said "Web synchronization completed".
+- Manual sync (Settings, Web Synchronization, Save) against a local copy of `ToyCollection/json/` worked. The Dashboard showed 1,567 toys. The dialog said "Web synchronization completed".
 - After a full page reload the Dashboard showed the same data (1,567 toys, totals from SQL `SUM` and `GROUP BY`). The IndexedDB snapshot was 614,400 bytes. No startup sync ran on the second load.
 - Settings on Web shows App Title, Web Synchronization and Categories. The SFTP, import/export and data-directory sections are hidden.
 - Toy images build the URL `baseUrl + filename` (the local test server had no images, so the requests returned 404 as expected).
-- Note (Rev 4): the local `ToyCollection/json/` folder now holds **1,649** toys (carlist 1,443, tralist 68, stalist 113, plalist 17, mislist 8). The prototype count (1,567) came from an older copy. In Phase 7, compare the Dashboard with the counts of the data you serve, not with a fixed number.
+- Note (Rev 6, replaces the Rev 4 note): the local `ToyCollection/json/` folder holds **1,649** toys (carlist 1,443, tralist 68, stalist 113, plalist 17, mislist 8). The Dashboard count of **1,567 is correct**. `ToyRepository.getDashboardStats` counts only toys with an empty `traded` field, and 82 slot cars have a `traded` value (1,649 − 82 = 1,567). The Explorer shows all toys, including traded toys. See Task 7.2 for the expected values (ISSUE-28).
 
 **Not verified (do these in Phase 7):**
 - Real images from `gepetto.club`, and the CORS headers of `gepetto.club` (not reachable from the review environment).
 - `wasmJsBrowserDevelopmentRun` (the dev server with live reload). The prototype used `wasmJsBrowserDevelopmentExecutableDistribution` plus `python3 -m http.server`.
 - Firefox and Safari. Mobile viewport.
 - Two tabs open at the same time (see ISSUE-15).
-- Desktop headless runs (`--headless-import-export`). Only compilation was checked.
+- Desktop headless runs (`--headless-import-export`). Do not run them: they change the real Desktop database (Task 2.11, ISSUE-29). Only compilation was checked.
+- Console output of `GcLog` on Web. The prototype did not plant a log tree, so `GcLog` wrote nothing (ISSUE-27).
 
 ---
 
@@ -244,7 +246,7 @@ config.plugins.push(
 
 ### 4.2 Changes in `commonMain` (Desktop and Android stay unchanged, except D9 and D13)
 
-Line numbers are for commit `1891463` (still valid at `HEAD` `b54abfe`, checked in Rev 4 within ±2 lines). Use symbol names if lines moved.
+Line numbers are for commit `1891463` (still valid at `HEAD` `328449f`; Rev 6 checked each one and found exact matches). Use symbol names if lines moved.
 
 | File (`composeApp/src/commonMain/kotlin/com/gepetto/toydb/...`) | Change |
 | :--- | :--- |
@@ -252,7 +254,7 @@ Line numbers are for commit `1891463` (still valid at `HEAD` `b54abfe`, checked 
 | **`utils/JsonDateParser.kt`** (new) | Pure Kotlin parser for `"October 4, 2026"` (US English, UTC). Returns 0 when invalid. See Appendix A.2. |
 | **`service/HtmlSyncService.kt`** | (a) `private val client = createPlatformHttpClient { defaultRequest { header(HttpHeaders.CacheControl, "no-cache") } }` (decision D13; imports `club.gepetto.composeutils.createPlatformHttpClient`, `io.ktor.client.plugins.defaultRequest`, `io.ktor.client.request.header`, `io.ktor.http.HttpHeaders`); remove `import io.ktor.client.engine.okhttp.*`. (b) `parseJsonDate` calls `JsonDateParser.parse`. (c) `calculateHash` uses `SHA256().digest(...)` and `toUByte().toString(16).padStart(2, '0')`. (d) In `syncIfNewer`, replace the final `catch (e: Exception)` with the `Throwable` version in Appendix A.3 (ISSUE-09). |
 | **`ui/SyncImage.kt`** | (a) `htmlHttpClient = createPlatformHttpClient()`; remove okhttp import. (b) `System.getProperty("user.home")` becomes `userHomeDirectory()`. (c) `FileSystem.SYSTEM` becomes `systemFileSystem`. (d) At the top of `SyncImage`, add `if (isWebPlatform()) { WebSyncImage(...); return }`. Add the private `WebSyncImage` composable (Appendix A.4). It never guesses a file name (decision D10). |
-| **`ui/SettingsScreen.kt`** | (a) `FileSystem.SYSTEM` becomes `systemFileSystem` (≈ lines 200, 201, 227, 228, 231). (b) `Dispatchers.IO` becomes `club.gepetto.utils.ioDispatcher` (≈ 143 and 1597). (c) Line ≈ 340: `categoryExistsText.format(newSetting.category)` becomes `categoryExistsText.replace("%1\$s", newSetting.category)`. (d) Wrap each call of `SftpSettingsCard`, `SftpSyncActions` and `ImportExportActions` in `if (!isWebPlatform()) { ... }`. There are two layouts, so 6 call sites (≈ 1073, 1116, 1177 and 1282, 1325, 1386). Also put the `Spacer` lines just before `SftpSettingsCard` and `ImportExportActions` (≈ 1072, 1176 and 1281, 1385) inside the same `if` blocks, so no empty gaps stay on Web. Do not touch the `@Preview` call at ≈ 2061. `DataDirectorySettings` is already inside `if (isDesktopPlatform())`. (e) Decision D9, **all targets**: in both sync completion blocks (≈ 1058 and 1267, inside `if (syncSuccess)`), add `categoriesList = repository.getCategorySettings()` next to `onCategoriesChanged()`. (f) Add the `WebLocalDataNotice` composable (Task 5.6). |
+| **`ui/SettingsScreen.kt`** | (a) `FileSystem.SYSTEM` becomes `systemFileSystem` (≈ lines 200, 201, 227, 228, 231). (b) `Dispatchers.IO` becomes `club.gepetto.utils.ioDispatcher` (≈ 143 and 1597). (c) Line ≈ 340: `categoryExistsText.format(newSetting.category)` becomes `categoryExistsText.replace("%1\$s", newSetting.category)`. (d) Hide `SftpSettingsCard`, `SftpSyncActions` and `ImportExportActions` with one `if (!isWebPlatform()) { ... }` block in each layout (2 blocks in total). Each block starts at the `Spacer` just after `BaseUrlSettingsCard` (≈ 1072 wide layout, ≈ 1281 narrow layout) and ends after the closing parenthesis of the `ImportExportActions(...)` call (≈ 1187 wide, ≈ 1395 narrow). The block contains 2 `Spacer` lines (≈ 1072 and 1176, ≈ 1281 and 1385) and the 3 calls. In the narrow layout, keep the `Spacer` before `CategoriesManager` (≈ 1396) outside the block. Do not touch the `@Preview` call at ≈ 2061. `DataDirectorySettings` is already inside `if (isDesktopPlatform())`. (e) Decision D9, **all targets**: in both sync completion blocks (≈ 1058 and 1267, inside `if (syncSuccess)`), add `categoriesList = repository.getCategorySettings()` next to `onCategoriesChanged()`. (f) Add the `WebLocalDataNotice` composable (Task 5.6). |
 | **`ui/ToyDbNavigation.kt`** | (a) `FileSystem.SYSTEM` becomes `systemFileSystem` (in `copyMakerImages`, ≈ 65-94). (b) Add parameter `runStartupSync: Boolean = true` (after `onAppTitleChanged`, before `modifier`). The Desktop call (`Main.kt` line 92) and the Android call (`AppMainActivity.kt` line 75) use named or leading arguments, so they need no change. (c) In the `LaunchedEffect(repository)` block (≈ 150) change `launch(club.gepetto.utils.ioDispatcher) {` to `if (runStartupSync) launch(club.gepetto.utils.ioDispatcher) {`. |
 | **`ui/ToyForm.kt`** | `FileSystem.SYSTEM` becomes `systemFileSystem` (≈ 112-163). `System.currentTimeMillis()` becomes `gcCurrentTimeMillis()` (≈ 136; import `club.gepetto.composeutils.gcCurrentTimeMillis`). Hide the rename icon (≈ 259) and the image upload button (≈ 237) with `if (!isWebPlatform())`. |
 | **`ui/ToyDetailScreen.kt`** | (a) `FileSystem.SYSTEM` becomes `systemFileSystem` (≈ 90-100). (b) `System.currentTimeMillis()` becomes `gcCurrentTimeMillis()` (≈ 101). (c) Hide the "add secondary image" button (≈ 302) on Web. (d) In `allImagePaths` (≈ 69-78): when `isWebPlatform()`, add `toy.picture.trim()` only when it is not empty (decision D10: no `"$prefix${toy.refNum}.jpg"` guess), then add the trimmed, non-empty secondary image file names. This gives the `files` array for full-screen carousel navigation on Web (ISSUE-17). |
@@ -279,7 +281,7 @@ Do **not** change `ui/DashboardScreen.kt`. Its `String.format("%.2f", …)` call
 | `wasmJsMain` | `ui/PlatformScrollbar.wasmJs.kt` | No-op for `PlatformScrollbar` and `PlatformGridScrollbar`. |
 | `wasmJsMain` | `service/ImportExportServiceWasm.kt` | `getCurrentDateString()` uses deterministic JS `Date` formatting. |
 | `wasmJsMain` | `service/WebSftpService.kt` | Class `WebSftpService : SftpService` with `isSupported = false`. Every method returns `Result.failure(UnsupportedOperationException)`. |
-| `wasmJsMain` | `database/SqlJs.wasmJs.kt`, `database/IndexedDb.wasmJs.kt`, `database/WasmDatabase.wasmJs.kt` | The web database. See 4.4. |
+| `wasmJsMain` | `database/SqlJs.wasmJs.kt`, `database/IndexedDb.wasmJs.kt`, `database/WasmDatabase.wasmJs.kt` | The web database, including `SqlJsException`. See 4.4. |
 | `wasmJsMain` | `Main.kt` | Entry point. See 4.5. |
 | `wasmJsMain` | `resources/index.html` | HTML shell. See 4.5. |
 
@@ -291,15 +293,16 @@ Rules for the implementation (code in Appendix A):
 2. **Asynchronous open.** `createDatabase()` is synchronous, but sql.js start-up, `Res.readBytes` and the IndexedDB read are asynchronous. `WasmToyDatabase.open()` is a `suspend` function. `main()` calls it in a coroutine and calls `ComposeViewport` afterwards. The wasm `createDatabase` actual only throws.
 3. **First run.** If IndexedDB has no snapshot, load `files/default_toydb.db` from Compose resources. Then run `checkUpgrade(database)`. Then `DELETE FROM toys` and `DELETE FROM app_settings WHERE key LIKE 'html_sync_imported_%'` (the same as the desktop `Main.kt` does on first install). Then save the snapshot at once.
 4. **Existing snapshot.** Open it. Run `checkUpgrade`. If the snapshot cannot be opened, log the error and start from the default database. If IndexedDB itself fails (blocked, quota, private mode), log the error with `GcLog.e` and continue without a snapshot (Rev 4). The session then works in memory only.
-5. **Saving.** Each `execute()` marks the database "dirty" and (re)starts a 1-second timer (debounce). When the timer ends, export the database (`db.export()`) and store it in IndexedDB (database `toydb_web`, store `kv`, key `database_snapshot`). Also save when the page becomes hidden (`visibilitychange`) and on `pagehide`. Do NOT save on every statement: one sync is about 2,000 `execute()` calls (1,649 toy inserts plus makers, categories and metadata).
-6. **Cursor case-insensitivity (ISSUE-18).** JDBC (Desktop) and Android cursors match column names without case. `WasmSqlCursor.cell` must do the same: `columns.indexOfFirst { it.equals(name, ignoreCase = true) }`. The repository reads names like `COUNT(*)`, `SUM(value)` and `MAX(ref_num)`. sql.js returns them as written, so they match today; the case-insensitive match keeps parity if a query changes spelling.
+5. **Saving.** Each `execute()` marks the database "dirty" and (re)starts a 1-second timer (debounce). When the timer ends, export the database (`db.export()`) and store it in IndexedDB (database `toydb_web`, store `kv`, key `database_snapshot`). Also save when the page becomes hidden (`visibilitychange`) and on `pagehide`. Do NOT save on every statement: one sync is about 2,000 `execute()` calls (1,649 toy inserts plus makers, categories and metadata). Each IndexedDB read or write closes its connection when it is done (Appendix A.8).
+6. **Cursor case-insensitivity (ISSUE-18, preventive).** The JDBC cursor (Desktop) matches column names without case. `WasmSqlCursor.cell` does the same: `columns.indexOfFirst { it.equals(name, ignoreCase = true) }`. The repository reads names like `COUNT(*)`, `SUM(value)` and `MAX(ref_num)`. sql.js returns them as written, so they match today. The case-insensitive match keeps them correct if a query changes the spelling.
 7. **Parameters.** When `bindArgs` is empty, pass `null` to `sql.js` (an empty array `[]` is truthy in JS and triggers `stmt.bind([])`). `null`, `Int`, `Long`, `Double`, `Boolean` (1 or 0) and `String` map to JS values. Anything else uses `toString()`.
-8. **No explicit transactions** exist in `ToyRepository` or `HtmlSyncService` today. Do not add any in v1.
+8. **No explicit transactions** exist in `ToyRepository` or `HtmlSyncService` today. Do not add any in v1. Note: sql.js `export()` closes and opens the database again. This ends an open transaction. A later change that adds transactions (Phase 9) must make sure that `flush()` never runs while a transaction is open.
 9. **Blocking.** Sync runs on the main thread on wasm (`ioDispatcher` is `Dispatchers.Default`). The UI can freeze for about one second during an import. This is accepted for v1.
+10. **Error type (ISSUE-26).** On Kotlin/Wasm, an error that sql.js throws arrives as `kotlin.js.JsException`. `JsException` extends `Throwable`, not `Exception`. `ToyRepository` (23 `catch` blocks), `checkUpgrade` and `HtmlSyncService.saveMetadataSetting` catch only `Exception`. On Desktop, JDBC throws `SQLException` (an `Exception`), so the app logs the error and continues. `WasmToyDatabase.execute` and `query` MUST catch `Throwable` from sql.js and throw `SqlJsException` (a subclass of `Exception`) instead (Appendix A.9). Without this, an SQL error escapes the shared `catch` blocks. In a coroutine it can stop the UI, the same as ISSUE-09.
 
 ### 4.5 Entry point, HTML shell and sync behavior
 
-**`Main.kt`** (Appendix A.10): set the Coil loader, open the database in a coroutine, initialize `gCsetImagesBaseUrl` from stored settings, set the initial tab title `kotlinx.browser.document.title = repository.getAppTitleSetting()` (Rev 4: `onAppTitleChanged` runs only when the user edits the title in Settings; Desktop sets its window title from the same setting at start), compute `needsInitialSync = database.toysCount() == 0` (decision D2), then call `ComposeViewport(viewportContainerId = "compose-App")` with `ToyDbNavigation(database, WebSftpService(), onAppTitleChanged = { title -> kotlinx.browser.document.title = title }, runStartupSync = needsInitialSync)`. Wrap the start sequence in `try/catch (e: Throwable)` and log with `GcLog.e` (Rev 4). `kotlinx.browser` resolves because `kotlinx-browser` is an API dependency of Compose `ui-wasm-js` (checked in Rev 4).
+**`Main.kt`** (Appendix A.10): plant the log tree with `GcLog.plant(GcLog.DebugTree())` (the same as Android `AppMainActivity`; ISSUE-27), set the Coil loader, open the database in a coroutine, initialize `gCsetImagesBaseUrl` from stored settings, set the initial tab title `kotlinx.browser.document.title = repository.getAppTitleSetting()` (Rev 4: `onAppTitleChanged` runs only when the user edits the title in Settings; Desktop sets its window title from the same setting at start), compute `needsInitialSync = database.toysCount() == 0` (decision D2), then call `ComposeViewport(viewportContainerId = "compose-App")` with `ToyDbNavigation(database, WebSftpService(), onAppTitleChanged = { title -> kotlinx.browser.document.title = title }, runStartupSync = needsInitialSync)`. Wrap the start sequence in `try/catch (e: Throwable)` and log with `GcLog.e(e, "WebMain: ...")` (Rev 4, Rev 6). `kotlinx.browser` resolves because `kotlinx-browser` is an API dependency of Compose `ui-wasm-js` (checked in Rev 4).
 
 **Real signature**: `ToyDbNavigation(db: ToyDatabase, sftpService: SftpService, onAppTitleChanged: ((String) -> Unit)? = null, runStartupSync: Boolean = true, modifier: Modifier = Modifier)`. It creates its own `ToyRepository`.
 
@@ -309,7 +312,9 @@ Rules for the implementation (code in Appendix A):
 - First load: `toys` is empty, so `runStartupSync = true`. If it fails (offline, CORS), the app stays alive and the collection is empty. The next load tries again (the table is still empty).
 - Later loads: `runStartupSync = false`. No automatic sync.
 - Manual sync: Settings, Web Synchronization, Save. This calls `HtmlSyncService.syncIfNewer`. It replaces all local data only when the server data is newer, its hash differs, or the local `toys` table is empty (see section 1). Requests send `Cache-Control: no-cache` (D13), so the browser cache cannot hide new server data.
-- **Error handling (ISSUE-09).** Ktor's JS engine throws `JsError`, which is a `Throwable` but not an `Exception`. The existing `catch (e: Exception)` blocks do not catch it. Without a fix, an uncaught error in the first-load sync **blanks the whole app**. `HtmlSyncService.syncIfNewer` must convert any non-`Exception` `Throwable` into an `Exception` (code in Appendix A.3). The callers (`ToyDbNavigation`, `SettingsScreen`) then work without change.
+- **Error handling (ISSUE-09).** Ktor's JS engine throws `JsError`, which is a `Throwable` but not an `Exception`. The existing `catch (e: Exception)` blocks do not catch it. Without a fix, an uncaught error in the first-load sync **blanks the whole app**. `HtmlSyncService.syncIfNewer` must convert any non-`Exception` `Throwable` into an `Exception` (code in Appendix A.3). The callers (`ToyDbNavigation`, `SettingsScreen`) then work without change. Errors from sql.js have the same problem everywhere else. `WasmToyDatabase` converts them (section 4.4, rule 10).
+
+**Logging on Web (ISSUE-27).** `GcLog` writes nothing until a log tree is planted (`if (FOREST.isEmpty()) return` in the library). Today only Android plants a tree. On wasm, `GcLog.DebugTree` writes with `println`, which goes to the browser console. Use `GcLog.e(e, "Tag: message")` in new code. The existing shared code calls `GcLog.e(TAG, "message", e)`. `GcLog` has no tag parameter, so this form prints only the tag (for example `[ERROR/GcLogWeb] HtmlSyncService`). Do not change the existing calls in this plan (out of scope).
 
 ### 4.6 What the user sees on Web v1
 
@@ -318,7 +323,8 @@ Rules for the implementation (code in Appendix A):
 | Home, Dashboard, Explorer, Makers | Same as Desktop. |
 | Info Screen | Same as Desktop, except the "SFTP Server Setup Guide" button on the Backup tab is hidden (D8). The Backup tab text stays. |
 | Add, edit, delete toys, makers, categories | Works. Saved in the browser. |
-| Toy and maker images | Shown from the server. Toys with a blank `picture` show the fallback image, as on Desktop (D10). |
+| Toy and maker images | Shown from the server. Toys with a blank `picture` show the fallback image, as on Desktop (D10). If the server has no file for a name that is not blank (HTTP 404), Web shows an empty frame. Desktop shows the fallback image after its download fails. Accepted for v1 (ISSUE-30, Phase 9). |
+| Save of edits | About 1 second after the last change. The save on tab close is best effort: edits from the last second before the tab closes can be lost. |
 | Image upload, image file rename | Hidden. |
 | Settings: App title, theme, categories, Web Synchronization | Shown. |
 | Settings: data directory, SFTP, JSON import/export, HTML export | Hidden. |
@@ -329,6 +335,8 @@ Rules for the implementation (code in Appendix A):
 - **Dev test method (verified):** build with `./gradlew :composeApp:wasmJsBrowserDevelopmentExecutableDistribution`. Copy `ToyCollection/json/*.json` into `composeApp/build/dist/wasmJs/developmentExecutable/database/`. Serve that folder, for example `python3 -m http.server 8081`. Open `http://localhost:8081/index.html`. In Settings set the Base URL to `http://localhost:8081/database/` and press Save.
 - **CORS.** From `localhost` the browser blocks `https://gepetto.club/database/...` (no `Access-Control-Allow-Origin` header). This is why Task 7 uses a local copy of the data. Optional: add a webpack dev-server proxy in `composeApp/webpack.config.d/devServer.js` (not tested): `config.devServer.proxy = [{ context: ['/database'], target: 'https://gepetto.club', changeOrigin: true }];` and use Base URL `http://localhost:8080/database/`.
 - **Production:** host the content of `composeApp/build/dist/wasmJs/productionExecutable/` at `https://gepetto.club/database/web/`. The server MUST send `.wasm` files as `application/wasm`. Enable gzip or brotli (the total is about 17 MB uncompressed). The page and the data are on the same origin, so CORS is not needed.
+- **Trailing slash (ISSUE-31).** All file references are relative: `composeApp.js` in `index.html`, the `.wasm` files, `composeResources/`, and the sql.js `locateFile` result. The page works only at `https://gepetto.club/database/web/` (with the slash). At `https://gepetto.club/database/web` the browser asks for the files in `/database/` and the page does not load. The server MUST redirect `/database/web` to `/database/web/`. Most servers do this by default for a real folder. Test it in Task 8.2.
+- **Cache after a deploy.** `index.html` and `composeApp.js` keep the same names in each build. Serve them with `Cache-Control: no-cache`, so that browsers get the new version after a deploy.
 - **Host name (D14).** Use only `https://gepetto.club`. The owner does not use `www`. The page and the data are on the same origin, so no redirect and no CORS headers are needed.
 - **Base URL scheme.** The Base URL must be `https`. A page served over `https` cannot read `http` data (mixed content). The code default is `https://gepetto.club/database/` (`ToyRepository.DEFAULT_BASE_URL`). `TODO.txt` still mentions `http://valdetaro.com/database`: the code is the authority.
 - **Browser support.** Kotlin/Wasm needs a recent browser with WebAssembly GC (Chrome and Edge 119+, Firefox 120+, Safari 18.2+).
@@ -359,12 +367,12 @@ Run the gate that each phase names. All gates MUST pass. From Phase 4 on the gat
 - [ ] **2.5** Replace `FileSystem.SYSTEM` in: `SettingsScreen`, `ToyForm`, `ToyDetailScreen`, `MakerDetailScreen`, `ToyDbNavigation`, `ImageRenameDialog`, `ImportExportService`. Check with `grep -rn "FileSystem.SYSTEM" composeApp/src/commonMain`: no result.
 - [ ] **2.6** Replace `System.currentTimeMillis()` (3 files), `Dispatchers.IO` (2 places), `.format(...)` (SettingsScreen), `java.util.Locale` (InfoScreen). Check with `grep -rnE "(^|[^A-Za-z])System\.|java\.|javax\.|Dispatchers\.IO|engine\.okhttp|\.format\(" composeApp/src/commonMain`. Expected result: only the `DashboardScreen.kt` lines that call its private common `String.format` helper (about lines 115, 119, 202, 203). Do not change them (section 4.2 note). The Rev 3 pattern `System\.` also matched `FileSystem.` and `PlatformFileSystem.` (ISSUE-22).
 - [ ] **2.7** Add the `runStartupSync` parameter to `ToyDbNavigation`.
-- [ ] **2.8** Hide the Settings sections (`SftpSettingsCard`, `SftpSyncActions`, `ImportExportActions`) on Web with `if (!isWebPlatform())`. Put the `Spacer` that follows each section inside the same `if` block, so no empty gap stays. In `InfoScreen` (`BackupTabContent`) hide the "SFTP Server Setup Guide" button and its following `Spacer(20.dp)` inside `if (!isWebPlatform()) { ... }` so no empty 36dp gap stays; the Backup tab and its text stay (D8).
+- [ ] **2.8** Hide the Settings sections (`SftpSettingsCard`, `SftpSyncActions`, `ImportExportActions`) on Web. In each layout, use one `if (!isWebPlatform()) { ... }` block. It starts at the `Spacer` just after `BaseUrlSettingsCard` and ends after the `ImportExportActions(...)` call (section 4.2, `SettingsScreen` item (d)). The 2 `Spacer` lines come before `SftpSettingsCard` and before `ImportExportActions`, so they go inside the block. No empty gap stays. In `InfoScreen` (`BackupTabContent`) hide the "SFTP Server Setup Guide" button and its following `Spacer(20.dp)` inside `if (!isWebPlatform()) { ... }` so no empty 36dp gap stays; the Backup tab and its text stay (D8).
 - [ ] **2.8b** In `SettingsScreen`, after a successful manual web sync, reload the categories list next to the `onCategoriesChanged()` call (D9). Do this on all targets (no `isWebPlatform()` check).
 - [ ] **2.9** Hide the rename icons (`ToyForm`, `MakerForm`) and the three image-upload buttons on Web.
 - [ ] **2.9b** Update `allImagePaths` in `MakerDetailScreen.kt` and `ToyDetailScreen.kt` so image filenames are preserved directly on Web (ISSUE-17). Do not guess a filename for a toy with a blank `picture` (D10): skip blank names.
 - [ ] **2.10** Run `./gradlew :composeApp:compileKotlinDesktop :composeApp:compileDebugKotlinAndroid`. Pass.
-- [ ] **2.11** (Optional, ask the owner first: the command writes files to the data directory) Run the Desktop headless check `./gradlew :composeApp:run --args="--headless-import-export"` and compare the result with a run before the change. (Note: Desktop `Main.kt` references `File("ToyDb/json")`; when run from root `ToyCollection/`, ensure mock directory path matches or verify via tests in Phase 6).
+- [ ] **2.11** Do NOT run the Desktop headless mode (`--headless-import-export`). It is not a safe check (ISSUE-29). It opens the real Desktop database (`getAppDataDir("ToyDatabaseManager")/toydb.db`, on macOS `~/Library/Application Support/ToyDatabaseManager/toydb.db`). It deletes all toys and makers. It imports the JSON files from the `data_path` setting, or from `~/valdetaro/ToyCollection/ToyDb/json` (this folder does not exist). Then it writes over the JSON files. The Phase 6 tests (6.2b, 6.3) show that the changed date and hash code gives the same results on Desktop. Tick this box when you have read this note.
 
 ### Phase 3: Web platform actuals (section 4.3)
 - [ ] **3.1** Create `wasmJsMain/.../utils/PlatformSupport.wasmJs.kt`.
@@ -374,18 +382,18 @@ Run the gate that each phase names. All gates MUST pass. From Phase 4 on the gat
 ### Phase 4: Web database (section 4.4)
 - [ ] **4.1** Create `SqlJs.wasmJs.kt` (external declarations with nullable params for parameterless queries).
 - [ ] **4.2** Create `IndexedDb.wasmJs.kt`.
-- [ ] **4.3** Create `WasmDatabase.wasmJs.kt` (`WasmToyDatabase`, case-insensitive `WasmSqlCursor`, `createDatabase` actual).
+- [ ] **4.3** Create `WasmDatabase.wasmJs.kt` (`WasmToyDatabase`, `SqlJsException` and the `sqlCall` wrapper in `execute` and `query` (section 4.4, rule 10), case-insensitive `WasmSqlCursor`, `createDatabase` actual).
 - [ ] **4.4** Run GATE. All three compile.
 
 ### Phase 5: Web shell and behavior (section 4.5)
-- [ ] **5.1** Create the real `wasmJsMain/kotlin/Main.kt` (Appendix A.10): initial tab title from `repository.getAppTitleSetting()`, tab title sync, base URL initialization, `try/catch (e: Throwable)` with `GcLog.e`. In `WasmToyDatabase.open()` a failed IndexedDB read logs an error and continues without a snapshot (Appendix A.9).
+- [ ] **5.1** Create the real `wasmJsMain/kotlin/Main.kt` (Appendix A.10): `GcLog.plant(GcLog.DebugTree())` as the first line (ISSUE-27), initial tab title from `repository.getAppTitleSetting()`, tab title sync, base URL initialization, `try/catch (e: Throwable)` with `GcLog.e(e, ...)`. In `WasmToyDatabase.open()` a failed IndexedDB read logs an error and continues without a snapshot (Appendix A.9).
 - [ ] **5.2** Create `wasmJsMain/resources/index.html` (Appendix A.11). The `composeApp.js` script is at the end of `<body>`.
 - [ ] **5.3** Run GATE, then `./gradlew :composeApp:wasmJsBrowserDevelopmentExecutableDistribution`. Check that `composeApp/build/dist/wasmJs/developmentExecutable/` contains `index.html`, `composeApp.js` and `sql-wasm-browser.wasm`.
 - [ ] **5.4** Make sure `HtmlSyncService.syncIfNewer` has the `Throwable` normalization (Task 2.3). Test it: with the page on `localhost` and the default Base URL, the first-load sync fails with a CORS error, and the app still shows the Home screen.
 - [ ] **5.5** Check `SettingsScreen` on Web (Task 2.8): the three sections are hidden and no empty gap stays. Check Task 2.8b: the categories list reloads after a manual web sync (all targets, D9).
 - [ ] **5.6** Add the web notice string `web_local_data_notice` in all 6 `strings.xml` files:
   - **values/strings.xml**: `Web version: your changes are saved only in this browser. A manual sync replaces your local data when the server has newer data.`
-  - **values-pt/strings.xml**: `Versão Web: as suas alterações são guardadas apenas neste navegador. Uma sincronização manual substitui os seus dados locais quando o servidor tiver dados mais recentes.`
+  - **values-pt/strings.xml** (Brazilian Portuguese, the same as the other `values-pt` strings: "Salvar", "Arquivo", "você"): `Versão Web: suas alterações são salvas somente neste navegador. Uma sincronização manual substitui seus dados locais quando o servidor tiver dados mais recentes.`
   - **values-de/strings.xml**: `Web-Version: Ihre Änderungen werden nur in diesem Browser gespeichert. Eine manuelle Synchronisierung ersetzt Ihre lokalen Daten, wenn der Server neuere Daten hat.`
   - **values-es/strings.xml**: `Versión web: sus cambios se guardan solo en este navegador. Una sincronización manual reemplaza sus datos locales cuando el servidor tiene datos más recientes.`
   - **values-fr/strings.xml**: `Version Web : vos modifications sont enregistrées uniquement dans ce navigateur. Une synchronisation manuelle remplace vos données locales lorsque le serveur a des données plus récentes.`
@@ -401,14 +409,14 @@ Run the gate that each phase names. All gates MUST pass. From Phase 4 on the gat
 - [ ] **6.4** Run `./gradlew :composeApp:desktopTest`.
 
 ### Phase 7: Browser verification (manual; use the method in 4.7)
-- [ ] **7.1** First load: clear site data. Open the page. Home shows; the Dashboard shows 0 toys; the console shows a handled sync error (CORS) and no uncaught error.
-- [ ] **7.2** Set the Base URL to the local data URL, press Save. The dialog says "Web synchronization completed". The Dashboard toy counts are equal to the counts in the JSON files you serve (section 2 note).
+- [ ] **7.1** First load: clear site data. Open the page. Home shows; the Dashboard shows 0 toys. The console shows the browser CORS message, then `[ERROR/GcLogWeb] HtmlSyncService` and `[ERROR/GcLogWeb] ToyDbNavigation` (the existing calls print only the tag, ISSUE-27). The console shows no "Uncaught" error.
+- [ ] **7.2** Set the Base URL to the local data URL, press Save. The dialog says "Web synchronization completed". The Dashboard counts only toys with an empty `traded` field (section 2 note, ISSUE-28). For the current `ToyCollection/json/` folder, the Dashboard shows: slot 1,361, train 68, static 113, kit 17, misc 8 (total 1,567). The Explorer shows all toys, including traded toys (slot 1,443). If you serve different data, count the toys with an empty `traded` field.
 - [ ] **7.2b** Check D13 (ISSUE-20): in the network tab the JSON requests send `Cache-Control: no-cache`. Change one value in a served JSON file and its date, press Save. The change shows in the app.
 - [ ] **7.3** Reload. The Dashboard shows the same counts. Check that no sync ran (network tab).
 - [ ] **7.4** Add a toy, edit a toy, rename a maker (with the confirmation dialog), add and delete a category. Wait 2 seconds. Reload. All changes are still there.
 - [ ] **7.5** Press Save again with the same data. The dialog says there are no updates. Local edits are still there.
 - [ ] **7.6** Settings shows no SFTP, no import/export and no data-directory section, and no empty gaps. The web notice shows. The image upload and rename buttons are hidden in the toy and maker screens. Info: the Backup tab shows, the "SFTP Server Setup Guide" button is hidden (D8). The browser tab title is the app title from Settings at start.
-- [ ] **7.7** Explorer: search and filter work. Open a toy: the full-screen image popup opens and pages through images. Open a maker: the maker images gallery row is displayed and rendered. Open a toy with a blank `picture` (for example a slot car with `hasPicture = 'n'`): the fallback image shows and the network tab has no image request for it (D10).
+- [ ] **7.7** Explorer: search and filter work. Open a toy: the full-screen image popup opens and pages through images. Open a maker: the maker images gallery row is displayed and rendered. Open a toy with a blank `picture` (for example a slot car with `hasPicture = 'n'`): the fallback image shows and the network tab has no image request for it (D10). A name that is not blank but has no file on the server shows an empty frame (accepted, ISSUE-30).
 - [ ] **7.8** With the real server (`https://gepetto.club/database/`, same origin, or a CORS-enabled server): images load. Record the result.
 - [ ] **7.9** Check a narrow (mobile) viewport and light and dark themes.
 - [ ] **7.10** Open the app in Firefox and Safari. Record any problem in section 7.
@@ -416,12 +424,12 @@ Run the gate that each phase names. All gates MUST pass. From Phase 4 on the gat
 
 ### Phase 8: Production build and hosting notes
 - [ ] **8.1** Run `./gradlew :composeApp:wasmJsBrowserDistribution`. Check `composeApp/build/dist/wasmJs/productionExecutable/` (index.html, composeApp.js, two `.wasm` files, `sql-wasm-browser.wasm`, `composeResources/`).
-- [ ] **8.2** Serve that folder from a sub-path (for example `/database/web/`) and test that it loads.
-- [ ] **8.3** Write the deployment steps in `README.md` (MIME type for `.wasm`, compression, folder `https://gepetto.club/database/web/`, host name `gepetto.club` only (D14)). Also change the README line `* **Targets**: Desktop (macOS, Windows).` to `* **Targets**: Desktop (macOS, Windows), Android, Web.`. Do not upload anything: the owner does it.
+- [ ] **8.2** Serve that folder from a sub-path (for example `/database/web/`) and test that it loads. Also open the URL without the trailing slash (`/database/web`). The server must redirect it to `/database/web/` (ISSUE-31). Record the result of each URL.
+- [ ] **8.3** Write the deployment steps in `README.md` (MIME type for `.wasm`, compression, folder `https://gepetto.club/database/web/`, redirect from `/database/web` to `/database/web/`, `Cache-Control: no-cache` for `index.html` and `composeApp.js`, host name `gepetto.club` only (D14)). Also change the README line `* **Targets**: Desktop (macOS, Windows).` to `* **Targets**: Desktop (macOS, Windows), Android, Web.`. Do not upload anything: the owner does it.
 - [ ] **8.4** Update these documents:
   - `HOW_IT_WORKS.md` (targets, source tree, Web limits).
   - `.agents/TODO.txt` (tick the web line).
-  - `.docs/published_versions.md`: replace "Not available yet" in the Web section with a placeholder row for the version and `webVersionCode`. The owner fills in the date after the deploy.
+  - `.docs/published_versions.md`: do NOT change it. The file has no dates. In LapCounter and RaceDirector, the Web section holds only the plain versionCode (for example `283`). After the deploy, the owner replaces "Not available yet" with the versionCode (`232`). Tell the owner.
   - `~/valdetaro/.agents/AGENTS.md` (workspace file, D12): add Web to the Toy Collection targets line (about line 29).
 - [ ] **8.5** Run ASSEMBLE (section 0). All three targets build.
 
@@ -434,8 +442,9 @@ Run the gate that each phase names. All gates MUST pass. From Phase 4 on the gat
 - Hide the whole Info Backup tab on Web (D8 follow-up).
 - Guard against two tabs that write the same snapshot.
 - Loading indicator and browser-support notice in `index.html`.
-- Wrap the import in one transaction (also helps Desktop and Android).
+- Wrap the import in one transaction (also helps Desktop and Android). On Web, `flush()` must not run while the transaction is open, because sql.js `export()` ends it (section 4.4, rule 8).
 - Run the sync in a Web Worker so the UI does not freeze.
+- Show the fallback image on Web when the server has no file for an image name (ISSUE-30).
 
 ---
 
@@ -448,6 +457,7 @@ Run the gate that each phase names. All gates MUST pass. From Phase 4 on the gat
 | 2026-10-06 | 3 | Antigravity (review) | Reviewed plan against commit `1891463` and full codebase. **Fixed:** (1) `MakerDetailScreen` and `ToyDetailScreen` image galleries on Web (`allImagePaths` direct filename assignment, ISSUE-17). (2) `WasmSqlCursor` case-sensitive column lookup bug on SQL aggregate functions (`COUNT(*)`, `SUM(value)`, `MAX(ref_num)`, ISSUE-18). (3) Hide SFTP setup guide button in `InfoScreen` on Web (ISSUE-19). (4) Safe `null` parameter passing in `SqlJsDatabase.exec`/`run` for parameterless statements. (5) Full multilingual translations for `web_local_data_notice` in all 6 languages (Task 5.6). (6) Browser tab title synchronization (`document.title`) and `gCsetImagesBaseUrl` in `Main.kt`. (7) Sandbox bypass guidance for `./gradlew` daemon loopback sockets. |
 | 2026-10-06 | 4 | Claude (review) | Reviewed against `HEAD b54abfe` (source same as `1891463`). **Owner decisions:** D8 (Info: hide only the SFTP button), D9 (reload categories after manual sync, all targets), D10 (no image-name guess for blank `picture`), D11 (`webVersionCode = vCode * 10 + 6`), D12 (update workspace `AGENTS.md`). **Design decision:** D13 (`Cache-Control: no-cache` on sync requests, ISSUE-20). **Added:** ASSEMBLE command (rule 9) and Tasks 5.7, 8.5; catalog entries `copyWebpackPlugin` and `kotlin-test` (no versions in Gradle files); Task 2.8b; Task 6.2b date parity test; Task 7.2b; initial tab title and start-up `try/catch` in `Main.kt` (ISSUE-24, ISSUE-25); IndexedDB read failure fallback (A.9); `www` and apex origin note (ISSUE-21), closed by D14 (`gepetto.club` only); document updates in 8.3 and 8.4. **Corrected:** 4.2 line references; Info button text; Task 2.6 grep (ISSUE-22); `WebSyncImage` blank-name handling (ISSUE-23); spacers in hidden Settings sections; `index.html` script position; exact Feb 29 2024 value in 6.2; data counts note (1,649 toys). |
 | 2026-10-06 | 5 | Antigravity (review) | Reviewed against `HEAD 161b028`. **Fixed:** (1) In `InfoScreen.kt` (`BackupTabContent`), wrap trailing `Spacer(20.dp)` with the SFTP button inside `if (!isWebPlatform()) { ... }` so no empty 36dp gap stays before the divider. (2) Defensive `config.plugins = config.plugins || []` initialization in `webpack.config.d/sqljs.js`. (3) Task 2.11 note on desktop mock data path context. |
+| 2026-10-06 | 6 | Claude (review) | Reviewed against `HEAD 328449f`. Source and gepetto-utils 2.1.2 are unchanged since the baseline. All 4.2 line numbers match. **Added:** `SqlJsException` and the `sqlCall` wrapper in `WasmToyDatabase` (4.4 rule 10, A.9, ISSUE-26); `GcLog.plant(GcLog.DebugTree())` in `Main.kt` and the `GcLog.e(e, "...")` form in new code (4.5, A.9, A.10, ISSUE-27); IndexedDB connections close after each call (A.8); `export()` transaction note (4.4 rule 8, Phase 9); best-effort save on tab close (1, 4.6); trailing-slash redirect and cache headers (4.7, 8.2, 8.3, ISSUE-31); missing-image difference (4.6, 7.7, Phase 9, ISSUE-30). **Corrected:** Dashboard counts exclude traded toys, so 1,567 is correct (section 2, Task 7.2, ISSUE-28); Task 2.11 replaced: headless mode changes the real Desktop database and the Rev 5 path note was wrong (ISSUE-29); Task 2.8 and 4.2 (d): one `if` block per layout, the spacers come before the hidden cards; Task 5.6 Portuguese text is now Brazilian Portuguese; Task 8.4: do not change `published_versions.md`; ISSUE-18 is preventive (only JDBC ignores case); Task 7.1 expected console output; tool-neutral sandbox note. |
 
 ---
 
@@ -472,20 +482,28 @@ Run the gate that each phase names. All gates MUST pass. From Phase 4 on the gat
 | **ISSUE-15** | 2026-10-06 | `WasmToyDatabase` | Two tabs can overwrite each other's snapshot. | Last writer wins in IndexedDB. | **Open (accepted risk).** Backlog item. |
 | **ISSUE-16** | 2026-10-06 | `WasmSqlCursor` | A REAL value `5.0` reads as `"5"` with `getString`. | JS numbers do not keep integer or real type. | **Open (accepted).** Check in Phase 7 that prices show correctly. |
 | **ISSUE-17** | 2026-10-06 | `MakerDetailScreen`, `ToyDetailScreen` | Maker images row is hidden on Web; toy secondary images cannot be paged in full-screen popup. | `allImagePaths` resolved via `resolveBitmapUri()` which returns `null` on Web. `MakerDetailScreen` line ≈ 344 checks `if (allImagePaths.isNotEmpty())`. | **Open.** Fix: Task 2.9b (assign filenames directly to `allImagePaths` on Web; skip blank names, no guess, D10). |
-| **ISSUE-18** | 2026-10-06 | `WasmSqlCursor` | Aggregate queries (`COUNT(*)`, `SUM(value)`, `MAX(ref_num)`) can return `null`, causing 0 counts and constant startup sync. | `columns.indexOf(name)` is case-sensitive. The JDBC and Android cursors find columns without case sensitivity, and the shared code depends on this. | **Open.** Fix: Task 4.3 (case-insensitive column matching in `WasmSqlCursor.cell`, for parity with JDBC and Android). |
+| **ISSUE-18** | 2026-10-06 | `WasmSqlCursor` | Preventive (Rev 6). No failure today: sql.js returns aggregate column names (`COUNT(*)`, `SUM(value)`, `MAX(ref_num)`) as written, so a case-sensitive lookup finds them. A query with a different spelling would return `null` (0 counts). | `columns.indexOf(name)` is case-sensitive. The JDBC cursor (Desktop) finds columns without case. | **Open.** Fix: Task 4.3 (case-insensitive column matching in `WasmSqlCursor.cell`, for parity with JDBC). |
 | **ISSUE-19** | 2026-10-06 | `InfoScreen.kt` | The Info Backup tab shows the "SFTP Server Setup Guide" button on Web. It opens a feature that Web does not support. | Commit `1891463` added the tabbed Info screen with this button. | **Open.** Fix: Task 2.8 (hide only the button with `if (!isWebPlatform())`; the tab stays, D8). |
 | **ISSUE-20** | 2026-10-06 | `HtmlSyncService` | A manual sync can read old JSON files from the browser HTTP cache and report "no updates". | The browser caches `GET` responses. Desktop and Android (OkHttp without cache) do not. | **Open.** Fix: D13 (`Cache-Control: no-cache` request header, Task 2.3, check in Task 7.2b). |
 | **ISSUE-21** | 2026-10-06 | Hosting | A page on `https://www.gepetto.club` could not read data from `https://gepetto.club/database/`. | `www` and `gepetto.club` are different origins (CORS). | **Closed (D14).** The owner uses only `https://gepetto.club`. No `www` support is needed. |
 | **ISSUE-22** | 2026-10-06 | Plan, Task 2.6 | The Rev 3 check `grep "System\."` never gives "no result". | The pattern also matches `FileSystem.` and `PlatformFileSystem.`. It also missed `javax.`, `engine.okhttp` and `.format(`. | **Fixed in plan (Rev 4).** New pattern and expected result in Task 2.6. |
 | **ISSUE-23** | 2026-10-06 | Plan, `WebSyncImage` | The Rev 3 code would request a guessed `"$prefix$refNum.jpg"` for toys with a blank `picture` (116 slot cars, all `hasPicture = 'n'`), which gives 404 requests. | The guess does not match Desktop, which shows the fallback image. | **Fixed in plan (Rev 4).** D10: no guess; Appendix A.4 and Task 2.9b. Check in Task 7.7. |
 | **ISSUE-24** | 2026-10-06 | Plan, `Main.kt` | The browser tab title is not the app title at start. | `onAppTitleChanged` runs only when the user edits the title in Settings. | **Fixed in plan (Rev 4).** `Main.kt` sets `document.title` at start (Appendix A.10). |
-| **ISSUE-25** | 2026-10-06 | `Main.kt`, `WasmToyDatabase` | An error in the start sequence (for example IndexedDB blocked in private mode) gives a blank page. | Uncaught `Throwable` before `ComposeViewport`. | **Mitigated in plan (Rev 4).** IndexedDB read failure continues without a snapshot (A.9); start sequence in `try/catch` with `GcLog.e` (A.10). A visible message is in the Phase 9 backlog. |
+| **ISSUE-25** | 2026-10-06 | `Main.kt`, `WasmToyDatabase` | An error in the start sequence (for example IndexedDB blocked in private mode) gives a blank page. | Uncaught `Throwable` before `ComposeViewport`. | **Mitigated in plan (Rev 4).** IndexedDB read failure continues without a snapshot (A.9); start sequence in `try/catch` with `GcLog.e` (A.10). A visible message is in the Phase 9 backlog. The log line shows in the console only with the ISSUE-27 fix. |
+| **ISSUE-26** | 2026-10-06 | `WasmToyDatabase` | An SQL error on Web escapes the `catch (e: Exception)` blocks in `ToyRepository`, `checkUpgrade` and `HtmlSyncService.saveMetadataSetting`. In a coroutine it can stop the UI. On Desktop the same error is logged and the app continues. | Kotlin/Wasm gives JS errors as `kotlin.js.JsException`, which extends `Throwable`, not `Exception` (checked in the Kotlin 2.4.20 wasm stdlib). | **Open.** Fix: Task 4.3 (`SqlJsException` and `sqlCall`, section 4.4 rule 10, Appendix A.9). |
+| **ISSUE-27** | 2026-10-06 | `Main.kt`, `GcLog` | On Web, no `GcLog` output shows in the browser console. Task 7.1 cannot pass. | `GcLog` returns at once when no tree is planted (`if (FOREST.isEmpty()) return`). Only Android plants a tree. Also, `GcLog` has no tag parameter: `GcLog.e(TAG, "message", e)` uses `TAG` as the format string and prints only the tag. | **Open.** Fix: Task 5.1 (`GcLog.plant(GcLog.DebugTree())` in `Main.kt`); new code uses `GcLog.e(e, "Tag: message")` (A.9, A.10). The existing tag-first calls stay (out of scope; separate task). |
+| **ISSUE-28** | 2026-10-06 | Plan, Task 7.2 | The Rev 4 plan expected the Dashboard to show the toy count of the JSON files (1,649). It shows 1,567. | `getDashboardStats` counts only toys with an empty `traded` field. 82 slot cars are traded. | **Fixed in plan (Rev 6).** Section 2 note and Task 7.2 give the expected values per category. |
+| **ISSUE-29** | 2026-10-06 | Plan, Task 2.11 | Rev 5 said Desktop `Main.kt` reads `File("ToyDb/json")`. It does not. The headless command deletes all toys and makers in the real Desktop database and writes over the JSON files. | `runHeadlessImportExport` uses the real database in `getAppDataDir("ToyDatabaseManager")` and the `data_path` setting (fallback `~/valdetaro/ToyCollection/ToyDb/json`, which does not exist). | **Fixed in plan (Rev 6).** Task 2.11 now says: do not run it. Phase 6 tests cover Desktop parity. |
+| **ISSUE-30** | 2026-10-06 | `WebSyncImage`, `GcImage` | On Web, an image name that is not blank but has no file on the server shows an empty frame. Desktop shows the fallback image. | Desktop `SyncImage` shows `fallbackBitmap` after a failed download. On Web, `GcImage` loads the URL with Coil and has no fallback for a `PlatformBitmap`. | **Open (accepted for v1).** Check in Task 7.7. Phase 9 backlog item. |
+| **ISSUE-31** | 2026-10-06 | Hosting | At `https://gepetto.club/database/web` (no trailing slash) the page does not load. | All file references are relative, so the browser asks for them in `/database/`. | **Open (hosting).** The server redirects to `/database/web/` (section 4.7). Check in Task 8.2. |
 
 ---
 
 ## 8. Appendix A: verified code
 
 These files are verified for Kotlin 2.4.20 and Compose Multiplatform 1.12.1. Keep the behavior. You may change names and style to fit the project.
+
+Rev 6 changed A.8 (connections close), A.9 (`SqlJsException`, `sqlCall`, log calls) and A.10 (`GcLog.plant`, log call). The Rev 6 changes were checked against the library and stdlib sources, but they were not compiled. If one of them does not compile, log it in section 7 and fix it.
 
 ### A.1 `commonMain/.../utils/PlatformSupport.kt`
 
@@ -859,14 +877,16 @@ import kotlin.js.JsAny
 import kotlin.js.Promise
 import org.khronos.webgl.Uint8Array
 
+// Rev 6: each call closes its connection when the transaction ends.
 @JsFun("""(key) => new Promise((resolve, reject) => {
     const open = indexedDB.open('toydb_web', 1);
     open.onupgradeneeded = () => open.result.createObjectStore('kv');
     open.onerror = () => reject(open.error);
     open.onsuccess = () => {
-        const req = open.result.transaction('kv', 'readonly').objectStore('kv').get(key);
-        req.onsuccess = () => resolve(req.result === undefined ? null : req.result);
-        req.onerror = () => reject(req.error);
+        const db = open.result;
+        const req = db.transaction('kv', 'readonly').objectStore('kv').get(key);
+        req.onsuccess = () => { db.close(); resolve(req.result === undefined ? null : req.result); };
+        req.onerror = () => { db.close(); reject(req.error); };
     };
 })""")
 external fun idbGet(key: String): Promise<Uint8Array?>
@@ -876,10 +896,12 @@ external fun idbGet(key: String): Promise<Uint8Array?>
     open.onupgradeneeded = () => open.result.createObjectStore('kv');
     open.onerror = () => reject(open.error);
     open.onsuccess = () => {
-        const tx = open.result.transaction('kv', 'readwrite');
+        const db = open.result;
+        const tx = db.transaction('kv', 'readwrite');
         tx.objectStore('kv').put(value, key);
-        tx.oncomplete = () => resolve(null);
-        tx.onerror = () => reject(tx.error);
+        tx.oncomplete = () => { db.close(); resolve(null); };
+        tx.onerror = () => { db.close(); reject(tx.error); };
+        tx.onabort = () => { db.close(); reject(tx.error); };
     };
 })""")
 external fun idbPut(key: String, value: Uint8Array): Promise<JsAny?>
@@ -912,6 +934,18 @@ import toydb.composeapp.generated.resources.Res
 private const val SNAPSHOT_KEY = "database_snapshot"
 private const val SAVE_DELAY_MS = 1000L
 private const val TAG_WASM = "WasmToyDatabase"
+
+/**
+ * ISSUE-26 (Rev 6): sql.js errors reach Kotlin as JsException, which is a Throwable but not an Exception.
+ * The shared code (ToyRepository, checkUpgrade) catches Exception only, the same as JDBC's SQLException on Desktop.
+ */
+class SqlJsException(message: String?, cause: Throwable?) : Exception(message, cause)
+
+private inline fun <T> sqlCall(sql: String, block: () -> T): T = try {
+    block()
+} catch (e: Throwable) {
+    throw if (e is Exception) e else SqlJsException("${e.message} [${sql.take(80)}]", e)
+}
 
 class WasmSqlCursor(private val columns: List<String>, private val rows: List<List<Any?>>) : SqlCursor {
     private var index = -1
@@ -967,12 +1001,12 @@ class WasmToyDatabase private constructor(private val db: SqlJsDatabase) : ToyDa
     }
 
     override fun execute(sql: String, bindArgs: List<Any?>) {
-        db.run(sql, bindArgs.toJsParams())
+        sqlCall(sql) { db.run(sql, bindArgs.toJsParams()) }
         markDirty()
     }
 
     override fun query(sql: String, bindArgs: List<String>): SqlCursor {
-        val results = db.exec(sql, bindArgs.toJsParams())
+        val results = sqlCall(sql) { db.exec(sql, bindArgs.toJsParams()) }
         if (results.length == 0) return WasmSqlCursor(emptyList(), emptyList())
         val first = results[0]!!
         val columns = List(first.columns.length) { first.columns[it].toString() }
@@ -1006,7 +1040,7 @@ class WasmToyDatabase private constructor(private val db: SqlJsDatabase) : ToyDa
             idbPut(SNAPSHOT_KEY, db.export()).await<JsAny?>()
         } catch (e: Throwable) {
             dirty = true
-            GcLog.e(TAG_WASM, "Failed to persist database snapshot: ${e.message}")
+            GcLog.e(e, "$TAG_WASM: failed to persist database snapshot: ${e.message}")
         }
     }
 
@@ -1029,12 +1063,12 @@ class WasmToyDatabase private constructor(private val db: SqlJsDatabase) : ToyDa
             val snapshot = try {
                 idbGet(SNAPSHOT_KEY).await<org.khronos.webgl.Uint8Array?>()
             } catch (e: Throwable) {
-                GcLog.e(TAG_WASM, "Cannot read the stored snapshot, starting from default database: ${e.message}")
+                GcLog.e(e, "$TAG_WASM: cannot read the stored snapshot, starting from default database: ${e.message}")
                 null
             }
             if (snapshot != null) {
                 try { raw = newSqlJsDatabase(sql, snapshot) } catch (e: Throwable) {
-                    GcLog.e(TAG_WASM, "Stored snapshot is unreadable, starting from default database: ${e.message}")
+                    GcLog.e(e, "$TAG_WASM: stored snapshot is unreadable, starting from default database: ${e.message}")
                 }
             }
             val isInitialInstall = raw == null
@@ -1083,6 +1117,8 @@ private const val TAG_MAIN = "WebMain"
 
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
+    // ISSUE-27 (Rev 6): GcLog writes nothing until a tree is planted. On wasm, DebugTree prints to the browser console.
+    GcLog.plant(GcLog.DebugTree())
     SingletonImageLoader.setSafe { ImageLoader.Builder(PlatformContext.INSTANCE).build() }
     MainScope().launch {
         try {
@@ -1115,7 +1151,8 @@ fun main() {
         } catch (e: Throwable) {
             if (e is CancellationException) throw e
             // ISSUE-25: log the start-up error. A visible message is a Phase 9 backlog item.
-            GcLog.e(TAG_MAIN, "Web start-up failed: ${e.message}", e)
+            // ISSUE-27: GcLog has no tag parameter, so put the tag in the message and pass the throwable first.
+            GcLog.e(e, "$TAG_MAIN: web start-up failed: ${e.message}")
         }
     }
 }
