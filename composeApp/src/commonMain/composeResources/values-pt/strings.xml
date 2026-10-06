@@ -78,6 +78,11 @@
     <string name="failed_load_about">Falha ao carregar as informações do aplicativo.</string>
     <string name="failed_load_privacy">Falha ao carregar a política de privacidade.</string>
     <string name="failed_load_sftp_guide">Falha ao carregar o guia de configuração do servidor SFTP.</string>
+    <string name="failed_load_terms">Falha ao carregar os termos de uso.</string>
+    <string name="info_tab_about">Sobre</string>
+    <string name="info_tab_backup">Backup</string>
+    <string name="info_tab_privacy">Política de Privacidade</string>
+    <string name="info_tab_terms">Termos de Uso</string>
     <string name="filename_prefix_label">Prefixo de Nome de Arquivo (ex. leg)*</string>
     <string name="filename_prefix_placeholder">ex. leg</string>
     <string name="finish_setup_btn">Concluir Configuração e Iniciar</string>

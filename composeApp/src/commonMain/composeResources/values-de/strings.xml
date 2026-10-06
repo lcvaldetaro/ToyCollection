@@ -78,6 +78,11 @@
     <string name="failed_load_about">Anwendungsinformationen konnten nicht geladen werden.</string>
     <string name="failed_load_privacy">Datenschutzerklärung konnte nicht geladen werden.</string>
     <string name="failed_load_sftp_guide">SFTP-Server Einrichtungsleitfaden konnte nicht geladen werden.</string>
+    <string name="failed_load_terms">Nutzungsbedingungen konnten nicht geladen werden.</string>
+    <string name="info_tab_about">Über</string>
+    <string name="info_tab_backup">Sicherung</string>
+    <string name="info_tab_privacy">Datenschutzerklärung</string>
+    <string name="info_tab_terms">Nutzungsbedingungen</string>
     <string name="filename_prefix_label">Dateinamenpräfix (z.B. leg)*</string>
     <string name="filename_prefix_placeholder">z.B. leg</string>
     <string name="finish_setup_btn">Einrichtung abschließen &amp; Starten</string>

@@ -78,6 +78,11 @@
     <string name="failed_load_about">Échec du chargement des informations sur l\'application.</string>
     <string name="failed_load_privacy">Échec du chargement de la politique de confidentialité.</string>
     <string name="failed_load_sftp_guide">Échec du chargement du guide de configuration du serveur SFTP.</string>
+    <string name="failed_load_terms">Échec du chargement des conditions d’utilisation.</string>
+    <string name="info_tab_about">À propos</string>
+    <string name="info_tab_backup">Sauvegarde</string>
+    <string name="info_tab_privacy">Politique de confidentialité</string>
+    <string name="info_tab_terms">Conditions d’utilisation</string>
     <string name="filename_prefix_label">Préfixe de Fichier (ex. leg)*</string>
     <string name="filename_prefix_placeholder">ex. leg</string>
     <string name="finish_setup_btn">Terminer la Configuration &amp; Démarrer</string>

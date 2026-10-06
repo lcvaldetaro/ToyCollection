@@ -78,6 +78,11 @@
     <string name="failed_load_about">Failed to load application information.</string>
     <string name="failed_load_privacy">Failed to load privacy policy.</string>
     <string name="failed_load_sftp_guide">Failed to load SFTP server setup guide.</string>
+    <string name="failed_load_terms">Failed to load terms of use.</string>
+    <string name="info_tab_about">About</string>
+    <string name="info_tab_backup">Backup</string>
+    <string name="info_tab_privacy">Privacy Policy</string>
+    <string name="info_tab_terms">Terms of Use</string>
     <string name="filename_prefix_label">Filename Prefix (e.g. leg)*</string>
     <string name="filename_prefix_placeholder">e.g. leg</string>
     <string name="finish_setup_btn">Finish Setup &amp; Start</string>

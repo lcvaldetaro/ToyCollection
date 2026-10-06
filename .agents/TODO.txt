@@ -5,3 +5,4 @@
 [x]-on dashboard, the collection cards should have icons on the top right - equivalent to Toy collection
 [x]-change icon to the same as Toy collection
 [x]-change package to "com.gepetto.slotcarscollection"
+[x]-create tabbed info page
