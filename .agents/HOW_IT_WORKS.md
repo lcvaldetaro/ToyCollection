@@ -426,11 +426,11 @@ Navigation uses `androidx.navigation3` and `club.gepetto.composeutils.navigation
 - **Dynamic Category Buttons**: Dynamically injects navigation items for all categories registered in table `category_settings`, matching icons via `getIconByName()`.
 
 ### Settings Screen Tabs (`ui/SettingsScreen.kt`)
-The **SettingsScreen** organizes configuration into four tabs (`SettingsTab`):
-- **General**: Theme selection (Light/Dark/System), custom collection title, and data storage path (Desktop).
-- **Backup & Restore**: Full collection archive (`.zip`) backup and restoration.
-- **Server Sync**: Web server URL configuration, static website catalog page creation, SFTP server credentials, connection test, and differential cloud synchronization.
-- **Categories**: Dynamic toy categories manager (add, edit, and delete categories, image prefixes, navigation labels, and icons).
+The **SettingsScreen** organizes configuration into four tabs (`SettingsTab`), each modularized into its own dedicated UI file:
+- **General** (`ui/GeneralSettingsTab.kt`): Theme selection (Light/Dark/System), custom collection title, and data storage path (Desktop).
+- **Backup & Restore** (`ui/BackupRestoreCard.kt`): Full collection archive (`.zip`) backup and restoration.
+- **Server Sync** (`ui/ServerSyncSettingsTab.kt`): Web server URL configuration, static website catalog page creation, SFTP server credentials, connection test, and differential cloud synchronization.
+- **Categories** (`ui/CategoriesSettingsTab.kt`): Dynamic toy categories manager (add, edit, and delete categories, image prefixes, navigation labels, and icons).
 
 The screen header includes a help button that navigates directly to the equivalent help tab on the **InfoScreen** for the currently selected settings tab.
 

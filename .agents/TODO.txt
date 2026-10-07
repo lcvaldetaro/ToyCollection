@@ -7,6 +7,9 @@ SIMPLE:
 [ ]-desktop must check if there is a new version to download
 [ ]-web version backaup/restore
 
+BUGS:
+[ ]-Web version can't web sync from either http://valdetaro.com/database/ or https://gepetto.club/database/
+
 [x]-change hte default URL to http://valdetaro.com/database
 [x]-on dashboard, the collection cards should have icons on the top right - equivalent to Toy collection
 [x]-change icon to the same as Toy collection
@@ -18,3 +21,4 @@ SIMPLE:
 [x]-create help tab for "backup and restore"
 [x]-create help tab for categories
 [x]-simplify the settings / break into categories with tabs / "Theme" (or a better name, because for example, we plan to introduce the ability to change locale) | "Server Sync" | "Categories" | "Backup and Restore"
+[x]-break up settingscreen.kt
