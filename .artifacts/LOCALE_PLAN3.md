@@ -25,12 +25,13 @@
 | 2026-10-07 | Antigravity | Phase 10: Audited all top navigation and screen icons/labels across all 6 languages. Added localized category short labels (nav_cat_*) and full display labels (cat_label_*) across en, pt, es, fr, it, de. Added CategoryLocalization.kt with rememberCategoryShortLabelResolver and rememberCategoryLabelResolver. Updated ToyDbNavigation.kt, DashboardScreen.kt, ExplorerScreen.kt, HomeDestination.kt, ToyForm.kt, MakerForm.kt, and SyncImage.kt to use localized strings and multilingual keyword resolution for icon vectors and drawables. Added CategoryLocalizationTest suite (4 tests passing). All Desktop, Android, and WasmJS targets compile cleanly. | strings.xml, CategoryLocalization.kt, ToyDbNavigation.kt, DashboardScreen.kt, ExplorerScreen.kt, HomeDestination.kt, ToyForm.kt, MakerForm.kt, SyncImage.kt, CategoryLocalizationTest.kt | Complete & Verified |
 | 2026-10-07 | Antigravity | Phase 11: Completed comprehensive localization audit across the entire codebase. Verified 0 hardcoded user-facing strings in UI, 100% parity across all 6 string resource files (350 keys each), and 100% parity across all 48 user-facing markdown documentation files (8 topics x 6 languages). Added 5 localized keys (`password_show`, `password_hide`, `select_private_key_file`, `select_image_dialog_title`, `unknown_error`) across all 6 languages. Fixed `ToyForm.kt` hardcoded string check for multiline fields, localized `SftpSetupScreen.kt` with dynamic language resolution, and replaced hardcoded desktop dialog title in `ImageResolver.kt`. | strings.xml (6 files), SftpSetupScreen.kt, ToyForm.kt, ServerSyncSettingsTab.kt, BackupRestoreCard.kt, ImageResolver.kt, files/*_sftp_setup.md | Complete & Verified |
 | 2026-10-07 | Antigravity | Phase 12: Updated General Settings documentation across all 6 languages (`*_general.md` and fallback `general.md`) to include explicit instructions and feature description for the Language selection dropdown on Settings / General. Verified builds and test suites. | files/*_general.md, files/general.md | Complete & Verified |
+| 2026-10-07 | Antigravity | Phase 13: Eliminated all 6 legacy un-prefixed duplicate markdown documentation files (`about.md`, `backup_restore.md`, `categories.md`, `general.md`, `server_sync.md`, `sftp_setup.md`). Simplified markdown loading in `InfoScreen.kt` and `SftpSetupScreen.kt` to directly fallback to `en_*.md`. Updated `../.agents/HOW_IT_WORKS.md`. Verified full build and all test suites passing with 0 errors. | files/ (*.md), InfoScreen.kt, SftpSetupScreen.kt, HOW_IT_WORKS.md | Complete & Verified |
 
 ### 1.2 Bug & Issue Tracker (Living Record)
 
 | Issue ID | Platform / Component | Symptom / Description | Root Cause | Workaround / Fix | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **ISSUE-01** | Android / Gradle Build | Android builds may miss localized string files (`values-pt`, `values-es`, etc.). | `prepareAndroidResources` task in `build.gradle.kts` uses `include("values/**")` which omits hyphenated folders. | Changed include glob to `include("values*/**")` in `build.gradle.kts`. | Resolved |
+| **ISSUE-01** | Android / Gradle Build | Android builds may miss localized string files (`values-pt`, `values-es`, etc.). | `prepareAndroidResources` task in `../build.gradle.kts` uses `include("values/**")` which omits hyphenated folders. | Changed include glob to `include("values*/**")` in `../build.gradle.kts`. | Resolved |
 | **ISSUE-02** | Common / InfoScreen | Markdown documentation language was cached and did not react to user locale changes. | `InfoScreen.kt` calculated `currentLang` inside a static `remember { ... }` block without listening to language selection. | Passed `selectedLanguage` into `InfoScreen` and keyed `currentLang = remember(effectiveLang)` to reload markdown dynamically. | Resolved |
 | **ISSUE-03** | Common / UI Navigation | Category navigation buttons on top bar and category cards remained in English when switched to Portuguese (or other languages). | Short labels were hardcoded in `ToyDbNavigation.kt` (`"slot" -> "Slots"`, `"train" -> "Trains"`, etc.) and category cards displayed raw SQLite seeded labels. | Created `CategoryLocalization.kt` to map built-in category IDs to localized resources across all 6 languages with fallback for custom categories. Enhanced `getIconByName` and `getCollectionDrawableResource` with multilingual keywords. | Resolved |
 | **ISSUE-04** | Common / ToyForm | Comment and work fields collapsed into single-line fields when UI was switched away from English. | `singleLine = label != "General Comments" && !label.contains("Work")` was an English-specific hardcoded string comparison. | Added explicit `singleLine: Boolean = true` parameter to `FormField` and set `singleLine = false` explicitly on comments/work fields. | Resolved |
@@ -572,7 +573,7 @@ Verify:
 3. Fallback logic resolves unknown codes correctly.
 
 #### 9.2 Repository Setting Test
-**Target File**: `composeApp/src/desktopTest/kotlin/com/gepetto/toydb/database/ToyRepositoryLanguageTest.kt`
+**Target File**: `../composeApp/src/desktopTest/kotlin/com/gepetto/toydb/database/ToyRepositoryLanguageTest.kt`
 Verify:
 1. `getLanguageSetting()` defaults to `""`.
 2. `setLanguageSetting("pt")` persists and returns `"pt"`.
@@ -607,7 +608,7 @@ Verify:
 
 #### 11.1 Audit Scope & Methodology
 1. **Verification of No Hardcoded Strings**:
-   - Automated AST / regex scan across all UI Composable functions in `composeApp/src/commonMain/kotlin/com/gepetto/toydb/ui/` and platform entry points for hardcoded `Text("")`, `contentDescription = ""`, dialog titles, button labels, placeholders, and error messages.
+   - Automated AST / regex scan across all UI Composable functions in `../composeApp/src/commonMain/kotlin/com/gepetto/toydb/ui` and platform entry points for hardcoded `Text("")`, `contentDescription = ""`, dialog titles, button labels, placeholders, and error messages.
    - Fixed hardcoded string check in `ToyForm.kt` (`label != "General Comments" && !label.contains("Work")`) by adding an explicit parameter `singleLine: Boolean = true` to `FormField`.
    - Localized password visibility toggle descriptions (`password_show`, `password_hide`) and file picker title (`select_private_key_file`) in `ServerSyncSettingsTab.kt`.
    - Localized `"Unknown error"` fallback in `BackupRestoreCard.kt` (`unknown_error`).
@@ -674,5 +675,6 @@ Always execute gradle commands via `./gradlew` from `ToyCollection/`. Follow AGE
 - [x] **Phase 10**: Audited top screen icons and labels across all 6 languages; added localized category resources, CategoryLocalization helper, multilingual icon and drawable resolution, and unit tests.
 - [x] **Phase 11**: Full codebase localization audit completed: 0 hardcoded user-facing strings across all UI, 100% resource key parity across all 6 languages (350 keys each), and 100% markdown documentation parity across all 6 languages (48 files across 8 topics).
 - [x] **Phase 12**: Updated General Settings documentation across all 6 languages to include the Language option on Settings / General.
-- [x] **Verification**: `./gradlew :composeApp:compileKotlinDesktop :composeApp:compileDebugKotlinAndroid :composeApp:compileKotlinWasmJs :composeApp:desktopTest` executed cleanly with 0 errors.
+- [x] **Phase 13**: Eliminated 6 legacy un-prefixed duplicate markdown files; streamlined loaders in `InfoScreen.kt` and `SftpSetupScreen.kt` to directly fallback to `en_*.md`.
+- [x] **Verification**: `./gradlew :composeApp:compileKotlinDesktop :composeApp:compileDebugKotlinAndroid :composeApp:compileKotlinWasmJs :composeApp:desktopTest :composeApp:testDebugUnitTest` executed cleanly with 0 errors.
 - [x] **TODO Checklist**: `ToyCollection/.agents/TODO.txt` item `[ ]-ability to change language locale` updated.

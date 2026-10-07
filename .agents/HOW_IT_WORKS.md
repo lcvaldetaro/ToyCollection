@@ -427,7 +427,7 @@ Navigation uses `androidx.navigation3` and `club.gepetto.composeutils.navigation
 
 ### Settings Screen Tabs (`ui/SettingsScreen.kt`)
 The **SettingsScreen** organizes configuration into four tabs (`SettingsTab`), each modularized into its own dedicated UI file:
-- **General** (`ui/GeneralSettingsTab.kt`): Theme selection (Light/Dark/System), custom collection title, and data storage path (Desktop).
+- **General** (`ui/GeneralSettingsTab.kt`): Theme selection (Light/Dark/System), application language selection, custom collection title, and data storage path (Desktop).
 - **Backup & Restore** (`ui/BackupRestoreCard.kt`): Full collection archive (`.zip`) backup and restoration.
 - **Server Sync** (`ui/ServerSyncSettingsTab.kt`): Web server URL configuration, static website catalog page creation, SFTP server credentials, connection test, and differential cloud synchronization.
 - **Categories** (`ui/CategoriesSettingsTab.kt`): Dynamic toy categories manager (add, edit, and delete categories, image prefixes, navigation labels, and icons).
@@ -435,14 +435,14 @@ The **SettingsScreen** organizes configuration into four tabs (`SettingsTab`), e
 The screen header includes a help button that navigates directly to the equivalent help tab on the **InfoScreen** for the currently selected settings tab.
 
 ### Info Screen Tabs (`ui/InfoScreen.kt`)
-The **InfoScreen** provides succinct, plain-language documentation without technical jargon across seven tabs (`InfoTopic`):
-- **About**: System summary, key capabilities, and application metadata (`about.md`).
-- **General**: Help for theme colors, collection title, and storage directory (`general.md`).
-- **Backup & Restore**: Help for full collection `.zip` backup and restoration (`backup_restore.md`).
-- **Server Sync**: Help for web page creation, web server URL, cloud synchronization, and server credentials (`server_sync.md`), with an expandable button to view the complete SFTP server setup guide (`sftp_setup.md`).
-- **Categories**: Help for adding, editing, and organizing custom toy categories and image prefixes (`categories.md`).
-- **Privacy Policy**: Data collection disclosures and privacy guarantees (`privacypolicy.md`).
-- **Terms of Use**: Software license terms and liability limitations (`terms.md`).
+The **InfoScreen** provides succinct, plain-language documentation without technical jargon across seven tabs (`InfoTopic`), dynamically loaded from localized markdown files (`{lang}_{topic}.md`):
+- **About**: System summary, key capabilities, and application metadata (`{lang}_about.md`).
+- **General**: Help for theme colors, application language, collection title, and storage directory (`{lang}_general.md`).
+- **Backup & Restore**: Help for full collection `.zip` backup and restoration (`{lang}_backup_restore.md`).
+- **Server Sync**: Help for web page creation, web server URL, cloud synchronization, and server credentials (`{lang}_server_sync.md`), with an expandable button to view the complete SFTP server setup guide (`{lang}_sftp_setup.md`).
+- **Categories**: Help for adding, editing, and organizing custom toy categories and image prefixes (`{lang}_categories.md`).
+- **Privacy Policy**: Data collection disclosures and privacy guarantees (`{lang}_privacypolicy.md`).
+- **Terms of Use**: Software license terms and liability limitations (`{lang}_terms.md`).
 
 #### Platform-Specific Documentation Filtering (`filterPlatformContent`)
 To maintain concise, clean documentation that reflects only what the active platform actually uses, `InfoScreen.kt` parses markdown through `filterPlatformContent(content)`. Markdown files can use platform tags:

@@ -49,11 +49,7 @@ fun SftpSetupScreen(
                 try {
                     Res.readBytes("files/${currentLang}_sftp_setup.md").decodeToString()
                 } catch (_: Exception) {
-                    try {
-                        Res.readBytes("files/en_sftp_setup.md").decodeToString()
-                    } catch (_: Exception) {
-                        Res.readBytes("files/sftp_setup.md").decodeToString()
-                    }
+                    Res.readBytes("files/en_sftp_setup.md").decodeToString()
                 }
             }
             setupMarkdown = content

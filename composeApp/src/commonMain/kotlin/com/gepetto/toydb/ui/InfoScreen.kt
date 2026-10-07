@@ -106,11 +106,7 @@ fun InfoScreen(
                 try {
                     Res.readBytes("files/${currentLang}_${baseName}.md").decodeToString()
                 } catch (_: Exception) {
-                    try {
-                        Res.readBytes("files/en_${baseName}.md").decodeToString()
-                    } catch (_: Exception) {
-                        Res.readBytes("files/${baseName}.md").decodeToString()
-                    }
+                    Res.readBytes("files/en_${baseName}.md").decodeToString()
                 }
             }
             topicContent = filterPlatformContent(rawContent)
