@@ -425,6 +425,13 @@ Navigation uses `androidx.navigation3` and `club.gepetto.composeutils.navigation
 - **Landscape / Desktop Orientation**: Renders a vertical navigation rail.
 - **Dynamic Category Buttons**: Dynamically injects navigation items for all categories registered in table `category_settings`, matching icons via `getIconByName()`.
 
+### Settings Screen Tabs (`ui/SettingsScreen.kt`)
+The **SettingsScreen** organizes configuration into four tabs (`SettingsTab`):
+- **General**: Theme selection (Light/Dark/System), custom collection title, data storage path (Desktop), and application info shortcut.
+- **Backup & Restore**: Full collection archive (`.zip`) backup and restoration, and static website catalog creation.
+- **Server Sync**: Remote Web synchronization Base URL, SFTP server credentials, connection test, and differential cloud synchronization.
+- **Categories**: Dynamic toy categories manager (add, edit, and delete categories, image prefixes, navigation labels, and icons).
+
 ### Info Screen Tabs (`ui/InfoScreen.kt`)
 The **InfoScreen** provides documentation and legal disclosures using a tabbed layout:
 - **About**: System summary, key capabilities, and application metadata (`about.md`).
@@ -481,19 +488,19 @@ The application prompts the user on first launch to configure a data directory f
 5. On confirmation, the database updates the maker and cascades changes across all referencing toys.
 
 ### 3. Creating Website Pages
-1. Navigate to **Settings** (`Destination.Settings`).
+1. Navigate to **Settings** (`Destination.Settings`) and select the **Backup & Restore** tab.
 2. Under **Create Website Pages**, click **Create Pages**.
 3. The service parses any existing `.lst` files to backfill missing metadata.
 4. The service generates `{prefix}maker.html`, brand pages, and individual toy HTML detail pages in the target data directory.
 
 ### 4. Synchronizing with Cloud Storage
-1. In **Settings**, configure SFTP credentials (host, port, username, authentication method, remote directory).
+1. In **Settings**, select the **Server Sync** tab and configure SFTP credentials (host, port, username, authentication method, remote directory).
 2. Click **Test SFTP Connection** to verify connectivity and approve host key fingerprints.
 3. Click **Upload to Cloud** or **Download from Cloud**.
 4. Review the selective synchronization plan modal and confirm the file transfer.
 
 ### 5. Backing Up and Restoring Your Collection
-1. Navigate to **Settings** (`Destination.Settings`).
+1. Navigate to **Settings** (`Destination.Settings`) and select the **Backup & Restore** tab.
 2. Under **Backup & Restore**:
    - To create a backup: click or tap **Back Up Collection**. Choose a destination file (on Android, the app writes directly to `Downloads/toy_collection_backup.zip`).
    - To restore a backup: click or tap **Restore Collection**. Confirm the warning dialog, then select the backup `.zip` file.
