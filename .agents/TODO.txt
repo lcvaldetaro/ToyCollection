@@ -3,7 +3,6 @@ HARD:
 [ ]-have a "file manager to manipulate a toy's image files"
 
 SIMPLE:
-[ ]-ability to export/import the DB and images to a zip, and save it / read it / the same way Race Director does
 [ ]-change info tab "Backup" to "Server Sync"
 [ ]-create help tab for "backup and restore"
 [ ]-create help tab for categories
@@ -16,3 +15,4 @@ SIMPLE:
 [x]-change package to "com.gepetto.slotcarscollection"
 [x]-create tabbed info page
 [x]-creation of web version (see .agents/WEB_PORT_PLAN.md)
+[ ]-ability to export/import the DB and images to a zip, and save it / read it / the same way Race Director does (see .agents/IMPORT_EXPORT_PLAN.md)

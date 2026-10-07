@@ -42,11 +42,11 @@ Execution rules (from the AGENTS.md files):
 - Every new user-visible string goes in `composeResources/values*/strings.xml` in all 6 languages: en, pt, de, es, fr, it (rule 6).
 - New composables need `@PreviewLightDark` and a landscape `@Preview`, wrapped in `GcTheme {}` (rule 4).
 - Use `GcLog` for logs. Do not use `println` (rule 3). In new code, use `GcLog.e(throwable, "Tag: message")` or `GcLog.d("Tag: message")`. `GcLog` has no tag parameter: the form `GcLog.e(TAG, "message", e)` prints only the tag (ISSUE-27).
-- Add dependencies AND versions (including npm package versions) to `gradle/libs.versions.toml` only. Do not write a version number in a build file (rule 8).
+- Add dependencies AND versions (including npm package versions) to `../gradle/libs.versions.toml` only. Do not write a version number in a build file (rule 8).
 - Tests use `kotlin.test` (rule 5). If an existing test fails, assume your change caused it (rule 0 and 15).
 - Write documents in Simplified Technical English (rule 16): short sentences, active voice.
 - Desktop and Android MUST still compile and behave the same after every phase. The only approved exceptions are the Desktop/Android-visible changes listed in decisions D9 and D13.
-- **Coordination with `TODO.txt`.** The open items "simplify the settings / break into tabs" and "change info tab Backup to Server Sync" move code in `SettingsScreen.kt` and `InfoScreen.kt`. If they are done before this plan, find the code by symbol name, not by line number.
+- **Coordination with `../.agents/TODO.txt`.** The open items "simplify the settings / break into tabs" and "change info tab Backup to Server Sync" move code in `SettingsScreen.kt` and `InfoScreen.kt`. If they are done before this plan, find the code by symbol name, not by line number.
 
 **Gate command** (run from `ToyCollection/`; called "GATE" below):
 
@@ -144,7 +144,7 @@ Library support (gepetto-utils 2.1.2 ships `wasm-js` artifacts for `gepetto-util
 
 ### 4.1 Gradle and version catalog
 
-**`gradle/libs.versions.toml`** — add:
+**`../gradle/libs.versions.toml`** — add:
 
 ```toml
 [versions]
@@ -159,7 +159,7 @@ jetbrains-compose-ui-tooling-preview = { module = "org.jetbrains.compose.ui:ui-t
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 ```
 
-**`composeApp/build.gradle.kts`** — change:
+**`../composeApp/build.gradle.kts`** — change:
 
 ```kotlin
 // In the existing generateCommonConfig task (decision D11), add one line to the generated object,
@@ -221,11 +221,11 @@ kotlin {
 Notes:
 - The `ExperimentalWasmDsl` opt-in is optional (the build works without it). The legacy apps use it. Keep it for consistency.
 - Gradle downloads the npm packages (`sql.js`, `copy-webpack-plugin`) during the build. This is expected.
-- After the npm dependencies change, run `./gradlew kotlinWasmUpgradeYarnLock`. Without it the build fails with "Lock file was changed" (ISSUE-11). **Commit `kotlin-js-store/wasm/yarn.lock`** (the owner commits; the agent does not). Do NOT add `kotlin-js-store/` to `.gitignore`. `ToyCollectionLegacy` commits it too.
+- After the npm dependencies change, run `./gradlew kotlinWasmUpgradeYarnLock`. Without it the build fails with "Lock file was changed" (ISSUE-11). **Commit `../kotlin-js-store/wasm/yarn.lock`** (the owner commits; the agent does not). Do NOT add `../kotlin-js-store` to `../.gitignore`. `ToyCollectionLegacy` commits it too.
 - `webVersionCode` (Rev 4, decision D11) is back: `CommonConfig.webVersionCode = versionCode * 10 + 6` (232 gives 2326). It is for consistency with the other apps. `InfoScreen` keeps `CommonConfig.versionCode` on all targets. Do not change any other code to read it.
 - `ktor-client-js` is optional: the Ktor `Js` engine is also in `ktor-client-core` for wasmJs. Keep it; it is harmless and makes the engine explicit.
 
-**`composeApp/webpack.config.d/sqljs.js`** (new file). webpack does not emit the sql.js `.wasm` file by itself (ISSUE-12):
+**`../composeApp/webpack.config.d/sqljs.js`** (new file). webpack does not emit the sql.js `.wasm` file by itself (ISSUE-12):
 
 ```javascript
 // Emit the sql.js WebAssembly binary next to composeApp.js (sql.js loads it by file name at run time).
@@ -332,13 +332,13 @@ Rules for the implementation (code in Appendix A):
 
 ### 4.7 Dev server, CORS and hosting
 
-- **Dev test method (verified):** build with `./gradlew :composeApp:wasmJsBrowserDevelopmentExecutableDistribution`. Copy `ToyCollection/json/*.json` into `composeApp/build/dist/wasmJs/developmentExecutable/database/`. Serve that folder, for example `python3 -m http.server 8081`. Open `http://localhost:8081/index.html`. In Settings set the Base URL to `http://localhost:8081/database/` and press Save.
+- **Dev test method (verified):** build with `./gradlew :composeApp:wasmJsBrowserDevelopmentExecutableDistribution`. Copy `ToyCollection/json/*.json` into `../composeApp/build/dist/wasmJs/developmentExecutable/database`. Serve that folder, for example `python3 -m http.server 8081`. Open `http://localhost:8081/index.html`. In Settings set the Base URL to `http://localhost:8081/database/` and press Save.
 - **CORS.** From `localhost` the browser blocks `https://gepetto.club/database/...` (no `Access-Control-Allow-Origin` header). This is why Task 7 uses a local copy of the data. Optional: add a webpack dev-server proxy in `composeApp/webpack.config.d/devServer.js` (not tested): `config.devServer.proxy = [{ context: ['/database'], target: 'https://gepetto.club', changeOrigin: true }];` and use Base URL `http://localhost:8080/database/`.
-- **Production:** host the content of `composeApp/build/dist/wasmJs/productionExecutable/` at `https://gepetto.club/database/web/`. The server MUST send `.wasm` files as `application/wasm`. Enable gzip or brotli (the total is about 17 MB uncompressed). The page and the data are on the same origin, so CORS is not needed.
+- **Production:** host the content of `../composeApp/build/dist/wasmJs/productionExecutable` at `https://gepetto.club/database/web/`. The server MUST send `.wasm` files as `application/wasm`. Enable gzip or brotli (the total is about 17 MB uncompressed). The page and the data are on the same origin, so CORS is not needed.
 - **Trailing slash (ISSUE-31).** All file references are relative: `composeApp.js` in `index.html`, the `.wasm` files, `composeResources/`, and the sql.js `locateFile` result. The page works only at `https://gepetto.club/database/web/` (with the slash). At `https://gepetto.club/database/web` the browser asks for the files in `/database/` and the page does not load. The server MUST redirect `/database/web` to `/database/web/`. Most servers do this by default for a real folder. Test it in Task 8.2.
 - **Cache after a deploy.** `index.html` and `composeApp.js` keep the same names in each build. Serve them with `Cache-Control: no-cache`, so that browsers get the new version after a deploy.
 - **Host name (D14).** Use only `https://gepetto.club`. The owner does not use `www`. The page and the data are on the same origin, so no redirect and no CORS headers are needed.
-- **Base URL scheme.** The Base URL must be `https`. A page served over `https` cannot read `http` data (mixed content). The code default is `https://gepetto.club/database/` (`ToyRepository.DEFAULT_BASE_URL`). `TODO.txt` still mentions `http://valdetaro.com/database`: the code is the authority.
+- **Base URL scheme.** The Base URL must be `https`. A page served over `https` cannot read `http` data (mixed content). The code default is `https://gepetto.club/database/` (`ToyRepository.DEFAULT_BASE_URL`). `../.agents/TODO.txt` still mentions `http://valdetaro.com/database`: the code is the authority.
 - **Browser support.** Kotlin/Wasm needs a recent browser with WebAssembly GC (Chrome and Edge 119+, Firefox 120+, Safari 18.2+).
 
 ---
@@ -353,10 +353,10 @@ Run the gate that each phase names. All gates MUST pass. From Phase 4 on the gat
 - [x] **0.3** Confirm Node and a modern Chrome are available (Gradle installs its own Node for the build). Do not build the companion apps (not needed).
 
 ### Phase 1: Gradle and catalog (section 4.1)
-- [x] **1.1** Edit `gradle/libs.versions.toml` (3 versions, 4 libraries, including `copyWebpackPlugin` and `kotlin-test`).
-- [x] **1.2** Edit `composeApp/build.gradle.kts` (wasmJs target, move okhttp, preview dependency, new dependencies, `commonTest` dependency, `webVersionCode` in `generateCommonConfig` (D11)).
-- [x] **1.3** Create `composeApp/webpack.config.d/sqljs.js`.
-- [x] **1.4** Run `./gradlew kotlinWasmUpgradeYarnLock`. Check that `kotlin-js-store/wasm/yarn.lock` exists. Tell the owner to commit it.
+- [x] **1.1** Edit `../gradle/libs.versions.toml` (3 versions, 4 libraries, including `copyWebpackPlugin` and `kotlin-test`).
+- [x] **1.2** Edit `../composeApp/build.gradle.kts` (wasmJs target, move okhttp, preview dependency, new dependencies, `commonTest` dependency, `webVersionCode` in `generateCommonConfig` (D11)).
+- [x] **1.3** Create `../composeApp/webpack.config.d/sqljs.js`.
+- [x] **1.4** Run `./gradlew kotlinWasmUpgradeYarnLock`. Check that `../kotlin-js-store/wasm/yarn.lock` exists. Tell the owner to commit it.
 - [x] **1.5** No gate in this phase. `commonMain` still imports OkHttp until Phase 2, so compile errors are expected. Go to Phase 2.
 
 ### Phase 2: Decouple `commonMain` (section 4.2)
@@ -388,7 +388,7 @@ Run the gate that each phase names. All gates MUST pass. From Phase 4 on the gat
 ### Phase 5: Web shell and behavior (section 4.5)
 - [x] **5.1** Create the real `wasmJsMain/kotlin/Main.kt` (Appendix A.10): `GcLog.plant(GcLog.DebugTree())` as the first line (ISSUE-27), initial tab title from `repository.getAppTitleSetting()`, tab title sync, base URL initialization, `try/catch (e: Throwable)` with `GcLog.e(e, ...)`. In `WasmToyDatabase.open()` a failed IndexedDB read logs an error and continues without a snapshot (Appendix A.9).
 - [x] **5.2** Create `wasmJsMain/resources/index.html` (Appendix A.11). The `composeApp.js` script is at the end of `<body>`.
-- [x] **5.3** Run GATE, then `./gradlew :composeApp:wasmJsBrowserDevelopmentExecutableDistribution`. Check that `composeApp/build/dist/wasmJs/developmentExecutable/` contains `index.html`, `composeApp.js` and `sql-wasm-browser.wasm`.
+- [x] **5.3** Run GATE, then `./gradlew :composeApp:wasmJsBrowserDevelopmentExecutableDistribution`. Check that `../composeApp/build/dist/wasmJs/developmentExecutable` contains `index.html`, `composeApp.js` and `sql-wasm-browser.wasm`.
 - [x] **5.4** Make sure `HtmlSyncService.syncIfNewer` has the `Throwable` normalization (Task 2.3). Test it: with the page on `localhost` and the default Base URL, the first-load sync fails with a CORS error, and the app still shows the Home screen.
 - [x] **5.5** Check `SettingsScreen` on Web (Task 2.8): the three sections are hidden and no empty gap stays. Check Task 2.8b: the categories list reloads after a manual web sync (all targets, D9).
 - [x] **5.6** Add the web notice string `web_local_data_notice` in all 6 `strings.xml` files:
@@ -398,7 +398,7 @@ Run the gate that each phase names. All gates MUST pass. From Phase 4 on the gat
   - **values-es/strings.xml**: `Versión web: sus cambios se guardan solo en este navegador. Una sincronización manual reemplaza sus datos locales cuando el servidor tiene datos más recientes.`
   - **values-fr/strings.xml**: `Version Web : vos modifications sont enregistrées uniquement dans ce navigateur. Une synchronisation manuelle remplace vos données locales lorsque le serveur a des données plus récentes.`
   - **values-it/strings.xml**: `Versione Web: le modifiche vengono salvate solo in questo browser. Una sincronizzazione manuale sostituisce i dati locali quando il server dispone di dati più recenti.`
-  Create a private composable `WebLocalDataNotice()` in `SettingsScreen.kt`. It shows the text with the theme colors (`sysForegroundColor` / `sysTextColor`, the same as the other Settings cards). Add previews for it (`@PreviewLightDark` and a landscape preview, inside `GcTheme {}`, rule for previews in `AGENTS.md`). Show it above `BaseUrlSettingsCard` (both layouts) only when `isWebPlatform()`.
+  Create a private composable `WebLocalDataNotice()` in `SettingsScreen.kt`. It shows the text with the theme colors (`sysForegroundColor` / `sysTextColor`, the same as the other Settings cards). Add previews for it (`@PreviewLightDark` and a landscape preview, inside `GcTheme {}`, rule for previews in `../.agents/AGENTS.md`). Show it above `BaseUrlSettingsCard` (both layouts) only when `isWebPlatform()`.
 - [x] **5.7** Run ASSEMBLE (section 0). All three targets build.
 
 ### Phase 6: Tests (rule 5)
@@ -423,13 +423,13 @@ Run the gate that each phase names. All gates MUST pass. From Phase 4 on the gat
 - [ ] **7.11** Measure: time to first screen, and the time of a full sync, on a normal laptop. Record both.
 
 ### Phase 8: Production build and hosting notes
-- [x] **8.1** Run `./gradlew :composeApp:wasmJsBrowserDistribution`. Check `composeApp/build/dist/wasmJs/productionExecutable/` (index.html, composeApp.js, two `.wasm` files, `sql-wasm-browser.wasm`, `composeResources/`).
+- [x] **8.1** Run `./gradlew :composeApp:wasmJsBrowserDistribution`. Check `../composeApp/build/dist/wasmJs/productionExecutable` (index.html, composeApp.js, two `.wasm` files, `sql-wasm-browser.wasm`, `composeResources/`).
 - [ ] **8.2** Serve that folder from a sub-path (for example `/database/web/`) and test that it loads. Also open the URL without the trailing slash (`/database/web`). The server must redirect it to `/database/web/` (ISSUE-31). Record the result of each URL.
-- [x] **8.3** Write the deployment steps in `README.md` (MIME type for `.wasm`, compression, folder `https://gepetto.club/database/web/`, redirect from `/database/web` to `/database/web/`, `Cache-Control: no-cache` for `index.html` and `composeApp.js`, host name `gepetto.club` only (D14)). Also change the README line `* **Targets**: Desktop (macOS, Windows).` to `* **Targets**: Desktop (macOS, Windows), Android, Web.`. Do not upload anything: the owner does it.
+- [x] **8.3** Write the deployment steps in `../README.md` (MIME type for `.wasm`, compression, folder `https://gepetto.club/database/web/`, redirect from `/database/web` to `/database/web/`, `Cache-Control: no-cache` for `index.html` and `composeApp.js`, host name `gepetto.club` only (D14)). Also change the README line `* **Targets**: Desktop (macOS, Windows).` to `* **Targets**: Desktop (macOS, Windows), Android, Web.`. Do not upload anything: the owner does it.
 - [x] **8.4** Update these documents:
-  - `HOW_IT_WORKS.md` (targets, source tree, Web limits).
-  - `.agents/TODO.txt` (tick the web line).
-  - `.docs/published_versions.md`: do NOT change it. The file has no dates. In LapCounter and RaceDirector, the Web section holds only the plain versionCode (for example `283`). After the deploy, the owner replaces "Not available yet" with the versionCode (`232`). Tell the owner.
+  - `../.agents/HOW_IT_WORKS.md` (targets, source tree, Web limits).
+  - `../.agents/TODO.txt` (tick the web line).
+  - `../.docs/published_versions.md`: do NOT change it. The file has no dates. In LapCounter and RaceDirector, the Web section holds only the plain versionCode (for example `283`). After the deploy, the owner replaces "Not available yet" with the versionCode (`232`). Tell the owner.
   - `~/valdetaro/.agents/AGENTS.md` (workspace file, D12): add Web to the Toy Collection targets line (about line 29).
 - [x] **8.5** Run ASSEMBLE (section 0). All three targets build.
 
@@ -455,7 +455,7 @@ Run the gate that each phase names. All gates MUST pass. From Phase 4 on the gat
 | 2026-10-06 | 1 | Antigravity | First version of the plan. |
 | 2026-10-06 | 2 | Claude (review) | Reviewed against code and library. Added owner decisions D1 and D2; design decisions D3-D7; list of `commonMain` breaks; webpack and npm steps for sql.js; Kotlin/Wasm interop rules; verified code (Appendix A); tests; browser verification list; hosting notes. Corrected `ToyDbNavigation` signature; image URL strategy; removed duplicate `createPlatformHttpClient`. |
 | 2026-10-06 | 3 | Antigravity (review) | Reviewed plan against commit `1891463` and full codebase. **Fixed:** (1) `MakerDetailScreen` and `ToyDetailScreen` image galleries on Web (`allImagePaths` direct filename assignment, ISSUE-17). (2) `WasmSqlCursor` case-sensitive column lookup bug on SQL aggregate functions (`COUNT(*)`, `SUM(value)`, `MAX(ref_num)`, ISSUE-18). (3) Hide SFTP setup guide button in `InfoScreen` on Web (ISSUE-19). (4) Safe `null` parameter passing in `SqlJsDatabase.exec`/`run` for parameterless statements. (5) Full multilingual translations for `web_local_data_notice` in all 6 languages (Task 5.6). (6) Browser tab title synchronization (`document.title`) and `gCsetImagesBaseUrl` in `Main.kt`. (7) Sandbox bypass guidance for `./gradlew` daemon loopback sockets. |
-| 2026-10-06 | 4 | Claude (review) | Reviewed against `HEAD b54abfe` (source same as `1891463`). **Owner decisions:** D8 (Info: hide only the SFTP button), D9 (reload categories after manual sync, all targets), D10 (no image-name guess for blank `picture`), D11 (`webVersionCode = vCode * 10 + 6`), D12 (update workspace `AGENTS.md`). **Design decision:** D13 (`Cache-Control: no-cache` on sync requests, ISSUE-20). **Added:** ASSEMBLE command (rule 9) and Tasks 5.7, 8.5; catalog entries `copyWebpackPlugin` and `kotlin-test` (no versions in Gradle files); Task 2.8b; Task 6.2b date parity test; Task 7.2b; initial tab title and start-up `try/catch` in `Main.kt` (ISSUE-24, ISSUE-25); IndexedDB read failure fallback (A.9); `www` and apex origin note (ISSUE-21), closed by D14 (`gepetto.club` only); document updates in 8.3 and 8.4. **Corrected:** 4.2 line references; Info button text; Task 2.6 grep (ISSUE-22); `WebSyncImage` blank-name handling (ISSUE-23); spacers in hidden Settings sections; `index.html` script position; exact Feb 29 2024 value in 6.2; data counts note (1,649 toys). |
+| 2026-10-06 | 4 | Claude (review) | Reviewed against `HEAD b54abfe` (source same as `1891463`). **Owner decisions:** D8 (Info: hide only the SFTP button), D9 (reload categories after manual sync, all targets), D10 (no image-name guess for blank `picture`), D11 (`webVersionCode = vCode * 10 + 6`), D12 (update workspace `../.agents/AGENTS.md`). **Design decision:** D13 (`Cache-Control: no-cache` on sync requests, ISSUE-20). **Added:** ASSEMBLE command (rule 9) and Tasks 5.7, 8.5; catalog entries `copyWebpackPlugin` and `kotlin-test` (no versions in Gradle files); Task 2.8b; Task 6.2b date parity test; Task 7.2b; initial tab title and start-up `try/catch` in `Main.kt` (ISSUE-24, ISSUE-25); IndexedDB read failure fallback (A.9); `www` and apex origin note (ISSUE-21), closed by D14 (`gepetto.club` only); document updates in 8.3 and 8.4. **Corrected:** 4.2 line references; Info button text; Task 2.6 grep (ISSUE-22); `WebSyncImage` blank-name handling (ISSUE-23); spacers in hidden Settings sections; `index.html` script position; exact Feb 29 2024 value in 6.2; data counts note (1,649 toys). |
 | 2026-10-06 | 5 | Antigravity (review) | Reviewed against `HEAD 161b028`. **Fixed:** (1) In `InfoScreen.kt` (`BackupTabContent`), wrap trailing `Spacer(20.dp)` with the SFTP button inside `if (!isWebPlatform()) { ... }` so no empty 36dp gap stays before the divider. (2) Defensive `config.plugins = config.plugins || []` initialization in `webpack.config.d/sqljs.js`. (3) Task 2.11 note on desktop mock data path context. |
 | 2026-10-06 | 6 | Claude (review) | Reviewed against `HEAD 328449f`. Source and gepetto-utils 2.1.2 are unchanged since the baseline. All 4.2 line numbers match. **Added:** `SqlJsException` and the `sqlCall` wrapper in `WasmToyDatabase` (4.4 rule 10, A.9, ISSUE-26); `GcLog.plant(GcLog.DebugTree())` in `Main.kt` and the `GcLog.e(e, "...")` form in new code (4.5, A.9, A.10, ISSUE-27); IndexedDB connections close after each call (A.8); `export()` transaction note (4.4 rule 8, Phase 9); best-effort save on tab close (1, 4.6); trailing-slash redirect and cache headers (4.7, 8.2, 8.3, ISSUE-31); missing-image difference (4.6, 7.7, Phase 9, ISSUE-30). **Corrected:** Dashboard counts exclude traded toys, so 1,567 is correct (section 2, Task 7.2, ISSUE-28); Task 2.11 replaced: headless mode changes the real Desktop database and the Rev 5 path note was wrong (ISSUE-29); Task 2.8 and 4.2 (d): one `if` block per layout, the spacers come before the hidden cards; Task 5.6 Portuguese text is now Brazilian Portuguese; Task 8.4: do not change `published_versions.md`; ISSUE-18 is preventive (only JDBC ignores case); Task 7.1 expected console output; tool-neutral sandbox note. |
 | 2026-10-06 | 7 | Antigravity (review & exec) | Reviewed against `HEAD f2195ef`. Verified all line numbers, method signatures, symbols, and dependencies across all source sets. Began Phase 0 preflight and implementation. |
@@ -466,17 +466,17 @@ Run the gate that each phase names. All gates MUST pass. From Phase 4 on the gat
 
 | ID | Date | Component | Symptom | Root cause | Status / resolution |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **ISSUE-01** | 2026-10-06 | `build.gradle.kts` | `libs.ktor.client.okhttp` in `commonMain` fails on wasm. | OkHttp is JVM-only. | **Open.** Fix: Task 1.2. Verified by prototype. |
+| **ISSUE-01** | 2026-10-06 | `../build.gradle.kts` | `libs.ktor.client.okhttp` in `commonMain` fails on wasm. | OkHttp is JVM-only. | **Open.** Fix: Task 1.2. Verified by prototype. |
 | **ISSUE-02** | 2026-10-06 | `database` | No `ToyDatabase` for wasm. | Desktop uses JDBC, Android uses the framework SQLite. | **Open.** Fix: Phase 4 (D3). Verified by prototype. |
 | **ISSUE-03** | 2026-10-06 | `commonMain` | `okio.FileSystem.SYSTEM`, `System.getProperty`, `System.currentTimeMillis`, `Dispatchers.IO`, `String.format` do not exist on wasm. | `commonMain` compiled only because both targets are JVM. 10 existing files fail on wasm (Rev 4 count): `HtmlSyncService`, `ImportExportService`, `SyncImage`, `SettingsScreen`, `ToyDbNavigation`, `ToyForm`, `ToyDetailScreen`, `MakerDetailScreen`, `ImageRenameDialog`, `InfoScreen`. | **Open.** Fix: Phase 2 (table in 4.2). |
 | **ISSUE-04** | 2026-10-06 | `HtmlSyncService.kt` | Uses `SimpleDateFormat`, `TimeZone`, `MessageDigest`, `"%02x".format`. | Java classes in `commonMain`. | **Open.** Fix: Task 2.2 and 2.3 (D6). Verified by prototype. |
 | **ISSUE-05** | 2026-10-06 | `SftpService` | SFTP needs raw TCP sockets. | Browser sandbox. | **Open.** Fix: `WebSftpService` stub and hidden UI (D1). |
 | **ISSUE-06** | 2026-10-06 | `ImportExportService`, UI | Okio has no system file system on wasm. | No disk in the browser. | **Open.** Fix: `systemFileSystem` stub (Task 2.5, 3.1). Import/export is out of scope on Web (D1). |
-| **ISSUE-07** | 2026-10-06 | `build.gradle.kts` | "KMP Dependencies Resolution Failure": `androidx.compose.ui:ui-tooling-preview` has no wasm variant. | `libs.androidx.ui.tooling.preview` is in `commonMain`. | **Open.** Fix: Task 1.2 (use `org.jetbrains.compose.ui:ui-tooling-preview`). |
+| **ISSUE-07** | 2026-10-06 | `../build.gradle.kts` | "KMP Dependencies Resolution Failure": `androidx.compose.ui:ui-tooling-preview` has no wasm variant. | `libs.androidx.ui.tooling.preview` is in `commonMain`. | **Open.** Fix: Task 1.2 (use `org.jetbrains.compose.ui:ui-tooling-preview`). |
 | **ISSUE-08** | 2026-10-06 | `SettingsScreen.kt` | `Unresolved reference 'IO'`. | `Dispatchers.IO` does not exist on wasm. Use `club.gepetto.utils.ioDispatcher`. | **Open.** Fix: Task 2.6. |
 | **ISSUE-09** | 2026-10-06 | `HtmlSyncService`, `ToyDbNavigation` | A failed first-load sync (CORS or offline) **blanks the whole app**. Console: `Uncaught Error: Fail to fetch`. | Ktor JS throws `JsError`, a `Throwable` that is not an `Exception`. The `catch (e: Exception)` blocks miss it. | **Open.** Fix: Task 2.3 and 5.4 (normalize in `syncIfNewer`). Verified by prototype: the app stays alive. |
 | **ISSUE-10** | 2026-10-06 | Dev setup | From `localhost`, requests to `https://gepetto.club/database/...` fail: "No 'Access-Control-Allow-Origin' header". | Cross-origin request without CORS headers. | **Open (dev only).** Fix: use local data (4.7). Production uses the same origin (D7). |
-| **ISSUE-11** | 2026-10-06 | Gradle | After adding npm dependencies: `Lock file was changed. Run the kotlinWasmUpgradeYarnLock task`. | Kotlin/Wasm keeps `kotlin-js-store/wasm/yarn.lock`. | **Open.** Fix: Task 1.4. Commit the lock file. |
+| **ISSUE-11** | 2026-10-06 | Gradle | After adding npm dependencies: `Lock file was changed. Run the kotlinWasmUpgradeYarnLock task`. | Kotlin/Wasm keeps `../kotlin-js-store/wasm/yarn.lock`. | **Open.** Fix: Task 1.4. Commit the lock file. |
 | **ISSUE-12** | 2026-10-06 | webpack | The sql.js `.wasm` file is not in the output. | sql.js loads it by URL at run time; webpack does not see it. | **Open.** Fix: Task 1.3 (`CopyWebpackPlugin`). Verified by prototype. |
 | **ISSUE-13** | 2026-10-06 | `SyncImage`, `GcImage` | Rev 1 would return full URLs from `resolveImageUri`. `GcImage` then builds `base + "https://..."`. | `PlatformFile.exists()` is always `false` on wasm, so `GcImage` prepends the base URL by itself. | **Open.** Fix: `WebSyncImage` (Task 2.4, D4). Verified for URL building. |
 | **ISSUE-14** | 2026-10-06 | `ToyDbNavigation` | The startup sync would replace local edits on every load. | `syncIfNewer` imports again whenever the server data is newer. | **Open.** Fix: `runStartupSync` (Task 2.7, D2). |
