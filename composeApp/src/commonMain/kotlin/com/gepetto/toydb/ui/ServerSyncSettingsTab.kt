@@ -775,7 +775,10 @@ fun ServerSyncSettingsTab(
                 isSyncing = isSftpSyncing,
                 syncProgress = sftpSyncProgress
             )
-            SyncWarningBanner()
+            if (isSftpSyncing) {
+                Spacer(modifier = Modifier.height(GcSpacing.Standard))
+                SyncWarningBanner()
+            }
         }
     }
 }
