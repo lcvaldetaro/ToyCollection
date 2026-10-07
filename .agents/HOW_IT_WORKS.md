@@ -427,9 +427,9 @@ Navigation uses `androidx.navigation3` and `club.gepetto.composeutils.navigation
 
 ### Settings Screen Tabs (`ui/SettingsScreen.kt`)
 The **SettingsScreen** organizes configuration into four tabs (`SettingsTab`):
-- **General**: Theme selection (Light/Dark/System), custom collection title, data storage path (Desktop), and application info shortcut.
-- **Backup & Restore**: Full collection archive (`.zip`) backup and restoration, and static website catalog creation.
-- **Server Sync**: Remote Web synchronization Base URL, SFTP server credentials, connection test, and differential cloud synchronization.
+- **General**: Theme selection (Light/Dark/System), custom collection title, and data storage path (Desktop).
+- **Backup & Restore**: Full collection archive (`.zip`) backup and restoration.
+- **Server Sync**: Web server URL configuration, static website catalog page creation, SFTP server credentials, connection test, and differential cloud synchronization.
 - **Categories**: Dynamic toy categories manager (add, edit, and delete categories, image prefixes, navigation labels, and icons).
 
 The screen header includes a help button that navigates directly to the equivalent help tab on the **InfoScreen** for the currently selected settings tab.
@@ -437,9 +437,9 @@ The screen header includes a help button that navigates directly to the equivale
 ### Info Screen Tabs (`ui/InfoScreen.kt`)
 The **InfoScreen** provides succinct, plain-language documentation without technical jargon across seven tabs (`InfoTopic`):
 - **About**: System summary, key capabilities, and application metadata (`about.md`).
-- **General**: Help for theme colors, collection title, storage directory, and app details (`general.md`).
-- **Backup & Restore**: Help for full collection `.zip` backup, restoration, and web page generation (`backup_restore.md`).
-- **Server Sync**: Help for cloud synchronization and server credentials (`server_sync.md`), with an expandable button to view the complete SFTP server setup guide (`sftp_setup.md`).
+- **General**: Help for theme colors, collection title, and storage directory (`general.md`).
+- **Backup & Restore**: Help for full collection `.zip` backup and restoration (`backup_restore.md`).
+- **Server Sync**: Help for web page creation, web server URL, cloud synchronization, and server credentials (`server_sync.md`), with an expandable button to view the complete SFTP server setup guide (`sftp_setup.md`).
 - **Categories**: Help for adding, editing, and organizing custom toy categories and image prefixes (`categories.md`).
 - **Privacy Policy**: Data collection disclosures and privacy guarantees (`privacypolicy.md`).
 - **Terms of Use**: Software license terms and liability limitations (`terms.md`).
@@ -493,7 +493,7 @@ The application prompts the user on first launch to configure a data directory f
 5. On confirmation, the database updates the maker and cascades changes across all referencing toys.
 
 ### 3. Creating Website Pages
-1. Navigate to **Settings** (`Destination.Settings`) and select the **Backup & Restore** tab.
+1. Navigate to **Settings** (`Destination.Settings`) and select the **Server Sync** tab.
 2. Under **Create Website Pages**, click **Create Pages**.
 3. The service parses any existing `.lst` files to backfill missing metadata.
 4. The service generates `{prefix}maker.html`, brand pages, and individual toy HTML detail pages in the target data directory.

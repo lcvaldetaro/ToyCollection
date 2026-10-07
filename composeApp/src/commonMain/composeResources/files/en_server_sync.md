@@ -1,12 +1,27 @@
-Synchronize your collection across multiple devices using a private server.
+Publish your collection and synchronize data across devices using a private server.
 
-### Sync Features
-- **Upload to Cloud**: Sends new and updated toys, makers, and photos to your server.
-- **Download from Cloud**: Retrieves updates from your server to this device.
-- **Test Connection**: Verifies that the app can connect to your server before transferring files.
+### 1. Web Page Creation
+- **What it is for**: Converts your collection from the app database into web pages (`.html`) in your data storage folder.
+- **How it works**: Tap **Create Pages** to build the catalog files. Once created, this app uploads these pages to your server using SFTP.
 
-### Settings
-- **Server Address & Port**: The internet address and port number (usually 22) of your server.
-- **Username & Password**: Your login credentials for the server.
-- **Remote Folder**: The folder on the server where collection files are stored.
-- **Website Base URL**: Optional web address where your catalog website is hosted.
+### 2. Web Server URL
+- **What it means**: The internet address (such as `http://myserver.com/database`) where your collection files and photos are hosted.
+- **How this app uses it**:
+  - **Loading Photos**: When the app runs on a device that does not have photo files stored locally, the app uses this URL to download and display toy photos.
+  - **Checking Updates**: When you tap **Save & Check Web Updates**, the app checks this URL for newer catalog files and updates your collection without needing server passwords.
+
+### 3. SFTP Information & Credentials
+- **What it means**: SFTP (Secure File Transfer Protocol) is the private connection this app uses to transfer files to and from your server storage disk.
+- **How this app uses it**:
+  - **Upload to Cloud**: The app connects through SFTP to upload your database, photos, and web pages to your server.
+  - **Download from Cloud**: The app connects through SFTP to download database updates and photos from your server into this device.
+  - **Test Connection**: The app verifies your server settings before transferring files.
+- **Settings**:
+  - **Server Address & Port**: The network address and port (usually 22) of your server.
+  - **Username & Password / Key**: Your credentials to authenticate this app on the server.
+  - **Remote Folder**: The folder path on the server where the app stores and retrieves collection files.
+
+### 4. Cloud Synchronization Actions
+- **Test SFTP Connection**: Confirms your device can connect to your server before transferring files.
+- **Upload to Cloud**: Scans local files and sends newly added or changed toys, makers, photos, and web pages to your server.
+- **Download from Cloud**: Scans the server and downloads updates to keep this device in sync.

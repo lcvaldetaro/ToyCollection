@@ -1141,7 +1141,6 @@ fun SettingsScreen(
                                         if (isWebPlatform()) {
                                             WebLocalDataNotice()
                                         }
-                                        AppInfoSettings(onNavigate = { onNavigate(Destination.Info("about")) })
                                     }
                                 }
 
@@ -1162,18 +1161,6 @@ fun SettingsScreen(
                                                     htmlBaseUrl = repository.getBaseUrlSetting() ?: ""
                                                     dataPath = repository.getDataPathSetting()
                                                     onCollectionRestored()
-                                                },
-                                                onSetStatus = { statusText = it }
-                                            )
-                                            Spacer(modifier = Modifier.height(GcSpacing.Standard))
-                                            WebsitePagesActions(
-                                                customImportExportPath = dataPath,
-                                                db = db,
-                                                onHtmlExportComplete = { path, count ->
-                                                    htmlExportPath = path
-                                                    htmlExportCount = count
-                                                    showHtmlExportDialog = true
-                                                    statusText = htmlExportCompleteText
                                                 },
                                                 onSetStatus = { statusText = it }
                                             )
@@ -1239,6 +1226,18 @@ fun SettingsScreen(
                                             }
                                         )
                                         if (!isWebPlatform()) {
+                                            Spacer(modifier = Modifier.height(GcSpacing.Standard))
+                                            WebsitePagesActions(
+                                                customImportExportPath = dataPath,
+                                                db = db,
+                                                onHtmlExportComplete = { path, count ->
+                                                    htmlExportPath = path
+                                                    htmlExportCount = count
+                                                    showHtmlExportDialog = true
+                                                    statusText = htmlExportCompleteText
+                                                },
+                                                onSetStatus = { statusText = it }
+                                            )
                                             Spacer(modifier = Modifier.height(GcSpacing.Standard))
                                             SftpSettingsCard(
                                                 host = sftpHost, onHostChange = { sftpHost = it },
@@ -1391,35 +1390,6 @@ fun SettingsScreen(
                     state = lazyListState,
                     modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight()
                 )
-            }
-        }
-    }
-}
-
-@Composable
-fun AppInfoSettings(onNavigate: () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = sysBackgroundColor()),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
-    ) {
-        Column(modifier = Modifier.padding(GcSpacing.Standard)) {
-            Text(stringResource(Res.string.about_info_title), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = sysTextColor())
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = stringResource(Res.string.about_info_desc),
-                fontSize = 12.sp,
-                color = sysTextColor().copy(alpha = 0.6f)
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            Button(
-                onClick = onNavigate,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                )
-            ) {
-                Text(stringResource(Res.string.view_info_screen_btn))
             }
         }
     }
