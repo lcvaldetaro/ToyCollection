@@ -1,6 +1,6 @@
 # Toy Collection: Backup & Restore Implementation Plan
 
-**Target Document**: `ToyCollection/.agents/IMPORT_EXPORT_PLAN.md` (file name kept so existing links in `TODO.txt` stay valid)
+**Target Document**: `ToyCollection/.agents/IMPORT_EXPORT_PLAN.md` (file name kept so existing links in `../.agents/TODO.txt` stay valid)
 **Document Version**: 2.5.0
 **Target Module**: `:composeApp`
 **Target Platforms**: Desktop (macOS, Windows), Android. Web: compile-only stubs, feature hidden.
@@ -106,7 +106,7 @@ Obey `~/valdetaro/.agents/AGENTS.md` and `ToyCollection/.agents/AGENTS.md`. The 
 6. **Toys without a category:** toys whose `toy_type` is not in `category_settings` are not in the backup, because toys are exported one category at a time. Back Up logs their count with `GcLog.w`.
 7. **Categories only on the server (D7):** the web sync checks a marker for each category in the **server's** `category_settings.json` (`HtmlSyncService.kt:121-163`). If the server has a category that the backup does not have, that category has no marker, and the startup sync replaces the restored collection.
 
-Record all seven in `HOW_IT_WORKS.md` (Phase 7).
+Record all seven in `../.agents/HOW_IT_WORKS.md` (Phase 7).
 
 ---
 
@@ -137,11 +137,11 @@ The executing agent depends on these facts. Check them before Phase 2.
 | After a full data change, lists refresh only when `syncTrigger` changes. Settings only has `onCategoriesChanged`, which reloads categories. The Settings entry is `entry<Destination.Settings>` at line 489. | `ui/ToyDbNavigation.kt:139, 159, 419-429, 489-507` |
 | Desktop already has a LOAD file dialog: `selectFileDialog(title, allowedExtensions)`. Use it for restore. | `desktopMain/.../utils/ImageResolver.kt` |
 | `GcAppInfo.application_Context` is **not** set in this app today. | `androidMain/.../AppMainActivity.kt` |
-| `AndroidManifest.xml` has only `INTERNET`. minSdk 24, targetSdk 37. | `androidMain/AndroidManifest.xml`, `gradle/libs.versions.toml` |
+| `AndroidManifest.xml` has only `INTERNET`. minSdk 24, targetSdk 37. | `androidMain/AndroidManifest.xml`, `../gradle/libs.versions.toml` |
 | No ViewModels exist in the app. | — |
 | Gradle tasks confirmed: `:composeApp:desktopTest`, `:composeApp:compileKotlinDesktop`, `:composeApp:compileDebugKotlinAndroid`, `:composeApp:compileKotlinWasmJs`, `:composeApp:assembleDebug`. (`testDesktopUnitTest` does **not** exist.) Gradle talks to its daemon through loopback sockets. If your agent runs shell commands in a sandbox that blocks them, run Gradle outside the sandbox. (Re-checked 2026-10-07: the task list ran with no special settings.) | `./gradlew :composeApp:tasks --all` |
 | The SFTP guide shown in the Info tab is `composeResources/files/sftp_setup.md` (English only). There are **no** `{lang}_sftp_setup.md` files; `InfoScreen` tries them and falls back to `sftp_setup.md`. `SftpSetupScreen` reads `sftp_setup.md` directly. | `ui/InfoScreen.kt:73-88`, `ui/SftpSetupScreen.kt:32` |
-| `SCHEMA.md` does not list `app_settings` keys. | `SCHEMA.md` |
+| `../SCHEMA.md` does not list `app_settings` keys. | `../SCHEMA.md` |
 | The Settings category dialog rejects a duplicate category id only. Two categories can have the same `image_prefix` (D14). | `ui/SettingsScreen.kt:342` |
 | `exportToys` writes `value` and `amount_paid` with `formatDouble`: 2 decimals, and an empty string for 0 or less (known limitation 5). | `ImportExportService.kt:369-371, 488-496` |
 | On Android the data folder (`filesDir/data`) has only the photos that `SyncImage` downloaded when a toy was shown (D15). | `ui/SyncImage.kt:157-184`, `AppMainActivity.kt:59-70` |
@@ -717,7 +717,7 @@ Reuse existing keys `ok` and `cancel`. Do not add keys for "Import"/"Export".
 
 ### 9.1 Unit Tests
 
-File: `composeApp/src/desktopTest/kotlin/com/gepetto/toydb/service/BackupRestoreServiceTest.kt` (`kotlin.test`, class PascalCase, methods `testXxx`).
+File: `../composeApp/src/desktopTest/kotlin/com/gepetto/toydb/service/BackupRestoreServiceTest.kt` (`kotlin.test`, class PascalCase, methods `testXxx`).
 Use `DesktopToyDatabase` on a DB file inside `java.nio.file.Files.createTempDirectory(...)`, and a photos folder in the same temp directory. Call `ToyRepository(db).setDataPathSetting(photosDir.toString())` in the setup.
 
 General rules for all tests:
@@ -821,7 +821,7 @@ Run existing tests too (`JsonDateParserParityTest`, `JsonDateParserTest`, `HtmlS
   - [x] Section 9.2 commands all pass (see the sandbox note in 9.2).
   - [x] Section 9.3 manual checks (desktop at minimum; Android on emulator when available).
 - [x] **Phase 7 — Documentation** (use ASD-STE100 Simplified Technical English)
-  - [x] `.agents/HOW_IT_WORKS.md`:
+  - [x] `../.agents/HOW_IT_WORKS.md`:
     - §1: add a "Backup & Restore" capability; rename "Static Website Publisher" text to "Create Website Pages".
     - §2: add the `platform/` folder and new files to the source tree; note the manifest storage permissions.
     - §3: add `transaction(block)` to the `ToyDatabase` description.
@@ -831,13 +831,13 @@ Run existing tests too (`JsonDateParserParityTest`, `JsonDateParserTest`, `HtmlS
     - §7: the navigation diagram labels are already correct (`SettingsScreen` "Backup/Restore", `InfoScreen` "App info & user guide"); do not change them. The Info tab list does not exist yet: **add** it (About, Server Sync, Privacy Policy, Terms of Use).
     - §9: flow 3 is out of date (it says "Database Operations" / "Export HTML Web Pages"); change it to **Settings → Create Website Pages → Create Pages**. Add flow "Backing Up and Restoring Your Collection".
     - §11: add `:composeApp:desktopTest`, `:composeApp:compileKotlinWasmJs` and `:composeApp:assembleDebug`.
-  - [x] `README.md`: add a "Backup & Restore" key feature; change "importing and exporting ... JSON" wording to plain words.
+  - [x] `../README.md`: add a "Backup & Restore" key feature; change "importing and exporting ... JSON" wording to plain words.
   - [x] User-visible About files `composeResources/files/about.md` and `{en,de,es,fr,it,pt}_about.md`: replace the "Portability" bullet with:
     - `**Backup & Restore**: Save a copy of your whole collection, including photos, in one file. Restore it on this device or on another device.`
     - `**Website Pages**: Create website pages that show your collection.`
     Translate both bullets into each language file. Note: `about.md` and `en_about.md` are not the same (`en_about.md` has an extra "Cloud & Network Synchronization" bullet). Edit each file on its own; do not copy one over the other.
-  - [x] `SCHEMA.md`: no change needed. It does not list `app_settings` keys (checked 2026-10-07).
-  - [x] `.agents/TODO.txt`: mark `[x]` on the backup item and on "change info tab "Backup" to "Server Sync"".
+  - [x] `../SCHEMA.md`: no change needed. It does not list `app_settings` keys (checked 2026-10-07).
+  - [x] `../.agents/TODO.txt`: mark `[x]` on the backup item and on "change info tab "Backup" to "Server Sync"".
   - [x] User-visible guide `composeResources/files/sftp_setup.md` (English only): if the text calls this tab "Backup", change it to "Server Sync". Change line 11 bullet from "**Automatic Backup**" to "**Automatic Sync**" (ISSUE-01 approved). Change line 3 "to synchronize and back up your Toy Database" to "to synchronize your Toy Database" (D8, 7.8).
   - [x] This plan: Sections 10, 11, 12.
 
@@ -850,7 +850,7 @@ Run existing tests too (`JsonDateParserParityTest`, `JsonDateParserTest`, `HtmlS
 | 2026-10-07 | 1.0.0 | Antigravity Agent | Initial plan. |
 | 2026-10-07 | 2.0.0 | Claude (Opus 5.5) review | Reviewed against current code. Streaming design (no in-memory archive, ~1.5 GB photos); settings filter (no SFTP secrets or local paths in backups); DB transaction API; required restore order and photo timestamps (SyncImage); reuse existing JSON names (`carmaker.json`, `{prefix}list.json`), removed `toys.json`; `manifest.json`; unsafe entry names; Android permissions for API ≤ 28; full refresh after restore (`syncTrigger`); corrected Gradle tasks; user-friendly naming "Backup & Restore" (D1) and "Create Website Pages" (D2); complete strings in 6 languages; documentation phase. |
 | 2026-10-07 | 2.1.0 | Claude (Opus 5.5) review | Added D8: Info tab "Backup" (SFTP guide) renamed to "Server Sync" (Section 7.8, string, checklist, docs, ISSUE-01). |
-| 2026-10-07 | 2.2.0 | Claude (Opus 5.5) review | Reviewed again (code not changed since v2.1.0). Correctness: exact photo times in new `photos.json` (D12); R12, no `java.nio.file`/`FileTime` on Android API 24–25; Android "(1)" file name handled (shared MediaStore query, real name in the dialog); test 2 assertion corrected; main photo lookup without `resolveImageUri`; `images_path` set to the data directory before import; Coil caches cleared after restore. Decisions: D7 changed (restore writes sync markers from the backup JSON), D9 `CollectionWriteLock` with `HtmlSyncService`, D10 Android free-space check (`restore_no_space`), D11 desktop Back Up needs a data directory. Accuracy: Section 4 facts (settings keys, default categories, line numbers, `sftp_setup.md` English only, `SCHEMA.md`), R1 (no app name in new strings), stricter validation, new tests, `assembleDebug`, more manual checks, 4 known limitations. |
+| 2026-10-07 | 2.2.0 | Claude (Opus 5.5) review | Reviewed again (code not changed since v2.1.0). Correctness: exact photo times in new `photos.json` (D12); R12, no `java.nio.file`/`FileTime` on Android API 24–25; Android "(1)" file name handled (shared MediaStore query, real name in the dialog); test 2 assertion corrected; main photo lookup without `resolveImageUri`; `images_path` set to the data directory before import; Coil caches cleared after restore. Decisions: D7 changed (restore writes sync markers from the backup JSON), D9 `CollectionWriteLock` with `HtmlSyncService`, D10 Android free-space check (`restore_no_space`), D11 desktop Back Up needs a data directory. Accuracy: Section 4 facts (settings keys, default categories, line numbers, `sftp_setup.md` English only, `../SCHEMA.md`), R1 (no app name in new strings), stricter validation, new tests, `assembleDebug`, more manual checks, 4 known limitations. |
 | 2026-10-07 | 2.3.0 | Antigravity Agent review | Code audit & accuracy update: Documented HtmlSyncService `!hasToys` forced sync edge case; updated SettingsScreen line references (1056-1090) post-SSL commit 15dcd7a; clarified UI thread requirement for rememberStoragePermissionRequest; specified `File(archive.toString())` and non-fatal setLastModified handling; added 4-pattern fallback category JSON resolution on restore; added dataPath refresh in SettingsScreen on restore; noted BypassSandbox requirement for Gradle daemon; resolved ISSUE-01 (user approved updating backup_sync_title to "Server Synchronization", backup_sync_description to refer to server synchronization, and sftp_setup.md bullet to "**Automatic Sync**"). |
 | 2026-10-07 | 2.4.0 | Claude (Opus 5.5) review | Reviewed against the code at `6886efc`: no code changed after the plan (newest code commit `8d3ca5c`, 2026-10-06); all Section 4 facts still true; RaceDirector `FileExportHelper` and gepetto-utils 2.1.2 unchanged; Gradle task names re-checked. Approved by the user: **New decisions** D13 (Back Up holds `CollectionWriteLock` while it reads: `prepareBackup` + `writeBackup(content, …)`), D14 (`manifest.categoryFiles`, unique category file names, Section 5.6), D15 (`backup_missing_photos` in the "Backup Complete" dialog), D16 (toy form tab `tab_restoration` → "Restoration", Section 7.10), D17 (web sync clean import in `db.transaction`, Section 6.9). **Correctness**: manifest fields without default values + `backupJson` with `encodeDefaults` (a missing `format` now fails); `readBackup` maps every error to `InvalidBackupException` and has a serializer table; restore path check compares okio `Path` values. **Robustness**: unsafe names also reject `:` and control characters; Back Up needs an existing data folder (D11); `.partial` cleanup and rename retries in `extractPhotos`; Android API 24–28 free-space check (D10); case-insensitive photo dedupe and actual disk name for rule 2b; `countPhotos` removed; `saveBackup` `write` is `suspend` and runs only after a destination is chosen. **UI**: `isWorking`, no progress dialog behind native dialogs, progress written directly from the callback, status banner texts, dialogs composable with previews. **Docs/accuracy**: known limitations 5–7 (money rounding, toys without a category, server-only categories); line numbers (`Main.kt:144-191`, `ToyForm.kt:107`, `127-135`); new Section 4 facts; agent-neutral Gradle sandbox note; §7.1 website pages layout note; HOW_IT_WORKS §6 line and §7 Info tab list; `sftp_setup.md` line 3 (D8); D7 text without math notation. **Tests**: 4 and 6 extended; new tests 11–16. |
 | 2026-10-07 | 2.5.0 | Antigravity Agent review | Code audit & accuracy review against current codebase across Desktop, Android, and Wasm: (1) Fixed GcLog usage rule R4 and calls (GcLog automatically computes stack tag; passing two strings drops message without %s, use single string prefix GcLog.w("Tag: message")); (2) Added Kotlin 2.x @file:OptIn(kotlin.experimental.ExperimentalMultiplatform::class) to BackupFileHelper and BackupArchive expect/actual objects; (3) Added safe rollback try-catch in Wasm and Desktop transaction implementations, restoring previous autoCommit; (4) Added ImageResolverConfig.imagesPath refresh to onCollectionRestored in ToyDbNavigation; (5) Mandated stream closure in finally before partial file delete/rename for Windows NTFS file locking safety; (6) Verified all 27 new strings and 13 changed strings in 6 languages. |

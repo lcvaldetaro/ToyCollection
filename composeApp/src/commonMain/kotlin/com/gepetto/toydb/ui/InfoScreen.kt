@@ -19,6 +19,7 @@ import club.gepetto.composeutils.GcTheme
 import club.gepetto.composeutils.sysBackgroundColor
 import club.gepetto.composeutils.sysForegroundColor
 import com.gepetto.toydb.CommonConfig
+import com.gepetto.toydb.utils.isDesktopPlatform
 import com.gepetto.toydb.utils.isWebPlatform
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -95,7 +96,7 @@ fun InfoScreen(
             InfoTopic.TERMS -> "terms"
         }
         try {
-            topicContent = withContext(Dispatchers.Default) {
+            val rawContent = withContext(Dispatchers.Default) {
                 try {
                     Res.readBytes("files/${currentLang}_${baseName}.md").decodeToString()
                 } catch (_: Exception) {
@@ -106,6 +107,7 @@ fun InfoScreen(
                     }
                 }
             }
+            topicContent = filterPlatformContent(rawContent)
         } catch (e: Exception) {
             GcLog.e("InfoScreen", "Failed to load ${baseName}.md: ${e.message}", e)
             topicContent = when (currentTopic) {
@@ -378,3 +380,34 @@ fun InfoScreenPreview() {
         InfoScreen()
     }
 }
+
+internal fun filterPlatformContent(
+    content: String,
+    isDesktop: Boolean = isDesktopPlatform(),
+    isWeb: Boolean = isWebPlatform()
+): String {
+    val isAndroid = !isDesktop && !isWeb
+    val platformMap = mapOf(
+        "desktop" to isDesktop,
+        "!desktop" to !isDesktop,
+        "web" to isWeb,
+        "!web" to !isWeb,
+        "android" to isAndroid,
+        "!android" to !isAndroid
+    )
+
+    val pattern = Regex("""(?:^[ \t]*)?<!--\s*(!?[a-zA-Z]+)\s*-->[ \t]*(?:\r?\n)?([\s\S]*?)(?:^[ \t]*)?<!--\s*/\1\s*-->[ \t]*(?:\r?\n)?""", RegexOption.MULTILINE)
+    var prev: String? = null
+    var curr = content
+    while (prev != curr) {
+        prev = curr
+        curr = pattern.replace(curr) { matchResult ->
+            val tag = matchResult.groupValues[1].lowercase()
+            val inner = matchResult.groupValues[2]
+            val active = platformMap[tag] ?: true
+            if (active) inner else ""
+        }
+    }
+    return curr.replace(Regex("""\n{3,}"""), "\n\n").trim()
+}
+

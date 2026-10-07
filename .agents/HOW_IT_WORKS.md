@@ -444,6 +444,13 @@ The **InfoScreen** provides succinct, plain-language documentation without techn
 - **Privacy Policy**: Data collection disclosures and privacy guarantees (`privacypolicy.md`).
 - **Terms of Use**: Software license terms and liability limitations (`terms.md`).
 
+#### Platform-Specific Documentation Filtering (`filterPlatformContent`)
+To maintain concise, clean documentation that reflects only what the active platform actually uses, `InfoScreen.kt` parses markdown through `filterPlatformContent(content)`. Markdown files can use platform tags:
+- `<!-- desktop -->` / `<!-- !desktop -->`: Included only on Desktop (e.g., custom data storage folder selection, private SSH key authentication).
+- `<!-- web -->` / `<!-- !web -->`: Tailored for Web (e.g., explains browser local storage instead of file archive backup/restore; hides SFTP configuration, web page creation, and setup guides).
+- `<!-- android -->` / `<!-- !android -->`: Included only on Android (e.g., password-only SFTP credentials).
+The filtering is applied dynamically across all supported languages (`en`, `de`, `es`, `fr`, `it`, `pt`).
+
 ### Localization
 String resources are fully localized across six languages under `composeApp/src/commonMain/composeResources/`:
 - `values/strings.xml` (English - default)
