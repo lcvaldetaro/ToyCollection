@@ -23,13 +23,40 @@ import toydb.composeapp.generated.resources.*
 @Composable
 fun SftpSetupScreen(
     onBack: () -> Unit,
+    selectedLanguage: String = "",
     modifier: Modifier = Modifier
 ) {
     var setupMarkdown by remember { mutableStateOf("") }
 
-    LaunchedEffect(Unit) {
+    val effectiveLang = remember(selectedLanguage) {
+        if (selectedLanguage.isNotEmpty()) {
+            selectedLanguage
+        } else {
+            com.gepetto.toydb.platform.LocaleHelper.getSystemLanguageCode()
+        }
+    }
+
+    val currentLang = remember(effectiveLang) {
+        when (effectiveLang.lowercase().take(2)) {
+            "pt", "es", "it", "de", "fr" -> effectiveLang.lowercase().take(2)
+            else -> "en"
+        }
+    }
+
+    LaunchedEffect(currentLang) {
         try {
-            setupMarkdown = Res.readBytes("files/sftp_setup.md").decodeToString()
+            val content = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                try {
+                    Res.readBytes("files/${currentLang}_sftp_setup.md").decodeToString()
+                } catch (_: Exception) {
+                    try {
+                        Res.readBytes("files/en_sftp_setup.md").decodeToString()
+                    } catch (_: Exception) {
+                        Res.readBytes("files/sftp_setup.md").decodeToString()
+                    }
+                }
+            }
+            setupMarkdown = content
         } catch (e: Exception) {
             GcLog.e("SftpSetupScreen", "Failed to load sftp_setup.md: ${e.message}", e)
             setupMarkdown = getString(Res.string.failed_load_sftp_guide)

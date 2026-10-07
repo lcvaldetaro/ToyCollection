@@ -129,7 +129,7 @@ fun BackupRestoreCard(
                 phase = BackupPhase.Idle
                 throw c
             } catch (e: Throwable) {
-                val msg = e.message ?: "Unknown error"
+                val msg = e.message ?: getString(Res.string.unknown_error)
                 resultMessage = msg
                 phase = BackupPhase.SaveFailed
                 onSetStatus(getString(Res.string.backup_failed, msg))
@@ -221,7 +221,7 @@ fun BackupRestoreCard(
                     BackupFileHelper.release(openedResult.path)
                     pendingOpen = null
                 }
-                val msg = e.message ?: "Unknown error"
+                val msg = e.message ?: getString(Res.string.unknown_error)
                 resultMessage = msg
                 phase = BackupPhase.RestoreFailed
                 onSetStatus(getString(Res.string.restore_failed, msg))
@@ -262,7 +262,7 @@ fun BackupRestoreCard(
                 phase = BackupPhase.Idle
                 throw c
             } catch (e: Throwable) {
-                val msg = e.message ?: "Unknown error"
+                val msg = e.message ?: getString(Res.string.unknown_error)
                 resultMessage = msg
                 phase = BackupPhase.RestoreFailed
                 onSetStatus(getString(Res.string.restore_failed, msg))

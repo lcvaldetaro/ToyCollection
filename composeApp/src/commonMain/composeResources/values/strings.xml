@@ -331,4 +331,26 @@ All rights reserved.</string>
     <string name="restore_open_dialog_title">Choose a Backup File</string>
     <string name="website_status_creating">Creating website pages in %1$s...</string>
     <string name="website_status_done">Created %1$d website pages in %2$s.</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_language_system">System Default</string>
+    <string name="nav_cat_slots">Slots</string>
+    <string name="nav_cat_trains">Trains</string>
+    <string name="nav_cat_static">Static</string>
+    <string name="nav_cat_kits">Kits</string>
+    <string name="nav_cat_misc">Misc</string>
+    <string name="cat_label_slots">Slot Cars</string>
+    <string name="cat_label_trains">Model Trains</string>
+    <string name="cat_label_static">Static Models</string>
+    <string name="cat_label_kits">Model Kits</string>
+    <string name="cat_label_misc">Others</string>
+    <string name="gepetto_logo_desc">Gepetto Logo</string>
+    <string name="edit_filenames">Edit Filenames</string>
+    <string name="current_image_desc">Current image</string>
+    <string name="new_image_desc">New image</string>
+    <string name="downloading_image_desc">Downloading image...</string>
+    <string name="password_show">Show password</string>
+    <string name="password_hide">Hide password</string>
+    <string name="select_private_key_file">Select Private Key File</string>
+    <string name="select_image_dialog_title">Select Image to Upload</string>
+    <string name="unknown_error">Unknown error</string>
 </resources>

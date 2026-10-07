@@ -90,7 +90,7 @@ fun MakerForm(
             if (!isWebPlatform()) {
                 Spacer(modifier = Modifier.width(GcSpacing.Small))
                 IconButton(onClick = { showRenameDialog = true }) {
-                    Icon(Icons.Default.Edit, contentDescription = "Edit Filenames")
+                    Icon(Icons.Default.Edit, contentDescription = stringResource(Res.string.edit_filenames))
                 }
             }
         }

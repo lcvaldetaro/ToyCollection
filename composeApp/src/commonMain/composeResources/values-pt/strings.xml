@@ -331,4 +331,26 @@ Todos os direitos reservados.</string>
     <string name="restore_open_dialog_title">Escolha um Arquivo de Backup</string>
     <string name="website_status_creating">Criando páginas do site em %1$s...</string>
     <string name="website_status_done">%1$d páginas do site criadas em %2$s.</string>
+    <string name="settings_language">Idioma</string>
+    <string name="settings_language_system">Padrão do Sistema</string>
+    <string name="nav_cat_slots">Slots</string>
+    <string name="nav_cat_trains">Trens</string>
+    <string name="nav_cat_static">Estáticos</string>
+    <string name="nav_cat_kits">Kits</string>
+    <string name="nav_cat_misc">Diversos</string>
+    <string name="cat_label_slots">Autoramas</string>
+    <string name="cat_label_trains">Trens em Miniatura</string>
+    <string name="cat_label_static">Modelos Estáticos</string>
+    <string name="cat_label_kits">Kits de Montagem</string>
+    <string name="cat_label_misc">Diversos</string>
+    <string name="gepetto_logo_desc">Logotipo Gepetto</string>
+    <string name="edit_filenames">Editar Nomes de Arquivo</string>
+    <string name="current_image_desc">Imagem atual</string>
+    <string name="new_image_desc">Nova imagem</string>
+    <string name="downloading_image_desc">Baixando imagem...</string>
+    <string name="password_show">Mostrar senha</string>
+    <string name="password_hide">Ocultar senha</string>
+    <string name="select_private_key_file">Selecionar Arquivo de Chave Privada</string>
+    <string name="select_image_dialog_title">Selecionar Imagem para Carregar</string>
+    <string name="unknown_error">Erro desconhecido</string>
 </resources>

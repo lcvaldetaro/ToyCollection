@@ -119,7 +119,7 @@ fun HomeDestination(
 
         Image(
             painter = painterResource(imageRes),
-            contentDescription = "Gepetto",
+            contentDescription = stringResource(Res.string.gepetto_logo_desc),
             modifier = Modifier.fillMaxSize(),
             contentScale = contentScale
         )
@@ -205,7 +205,7 @@ private fun ShowBanner(
 
             Icon(
                 imageVector = Icons.Default.Close,
-                contentDescription = "Close",
+                contentDescription = stringResource(Res.string.close),
                 tint = Color.Blue,
                 modifier = Modifier
                     .clickable { onBannerStateChanged(false) }

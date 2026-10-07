@@ -26,6 +26,8 @@ fun main() {
         try {
             val database = WasmToyDatabase.open()
             val repository = ToyRepository(database)
+            val savedLanguage = repository.getLanguageSetting()
+            com.gepetto.toydb.platform.LocaleHelper.setAppLocale(savedLanguage)
             val baseUrl = repository.getBaseUrlSetting()
             if (!baseUrl.isNullOrBlank()) {
                 gCsetImagesBaseUrl(baseUrl.trimEnd('/') + "/")

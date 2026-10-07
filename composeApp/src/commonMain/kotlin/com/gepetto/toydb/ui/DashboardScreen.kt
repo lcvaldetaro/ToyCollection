@@ -146,8 +146,9 @@ fun DashboardContent(
         ) {
             items(stats.categories) { catStat ->
                 val categorySetting = categoriesSettings.find { it.category == catStat.category }
-                val categoryName = categorySetting?.label
+                val fallbackName = categorySetting?.label
                     ?: catStat.category.replaceFirstChar { it.uppercase() }
+                val categoryName = getLocalizedCategoryLabel(catStat.category, fallbackName)
                 val iconDrawable = getCollectionDrawableResource(catStat.category, categorySetting?.icon)
 
                 Card(
@@ -214,12 +215,12 @@ fun getCollectionDrawableResource(category: String, iconSetting: String? = null)
     val iconKey = iconSetting?.trim()?.lowercase() ?: ""
 
     when (iconKey) {
-        "slotcaricon", "slotcar", "slot", "slots" -> return GcRes.drawable.slotcaricon
-        "train", "trains" -> return GcRes.drawable.train
-        "staticmodel", "staticmodels", "static" -> return GcRes.drawable.staticmodel
-        "plastickits", "plastickit", "kit", "kits", "build" -> return GcRes.drawable.plastickits
-        "others", "other", "misc", "miscellaneous", "category" -> return GcRes.drawable.others
-        "car" -> return if (cat in listOf("static", "staticmodel")) {
+        "slotcaricon", "slotcar", "slotcars", "slot", "slots", "autorama", "autoramas" -> return GcRes.drawable.slotcaricon
+        "train", "trains", "trem", "trens", "tren", "trenes", "zug", "zuege", "züge", "treno", "treni" -> return GcRes.drawable.train
+        "staticmodel", "staticmodels", "static", "estatico", "estaticos", "estáticos", "statique", "statiques", "statico", "statici", "standmodell", "standmodelle" -> return GcRes.drawable.staticmodel
+        "plastickits", "plastickit", "kit", "kits", "build", "maqueta", "maquetas", "maquette", "maquettes", "bausatz", "bausätze" -> return GcRes.drawable.plastickits
+        "others", "other", "misc", "miscellaneous", "category", "outros", "outro", "diversos", "varios", "divers", "varie", "vari", "sonstiges" -> return GcRes.drawable.others
+        "car", "carro", "coche", "voiture", "auto" -> return if (cat in listOf("static", "staticmodel", "estatico", "estaticos", "estáticos", "statique", "statiques", "statico", "statici", "standmodell", "standmodelle")) {
             GcRes.drawable.staticmodel
         } else {
             GcRes.drawable.slotcaricon
@@ -227,11 +228,11 @@ fun getCollectionDrawableResource(category: String, iconSetting: String? = null)
     }
 
     return when (cat) {
-        "slot", "slots", "slotcar", "slotcars" -> GcRes.drawable.slotcaricon
-        "train", "trains" -> GcRes.drawable.train
-        "static", "staticmodel", "staticmodels" -> GcRes.drawable.staticmodel
-        "kit", "kits", "modelkit", "modelkits", "plastic", "plastickits" -> GcRes.drawable.plastickits
-        "misc", "miscellaneous", "others", "other" -> GcRes.drawable.others
+        "slot", "slots", "slotcar", "slotcars", "autorama", "autoramas" -> GcRes.drawable.slotcaricon
+        "train", "trains", "trem", "trens", "tren", "trenes", "zug", "zuege", "züge", "treno", "treni" -> GcRes.drawable.train
+        "static", "staticmodel", "staticmodels", "estatico", "estaticos", "estáticos", "statique", "statiques", "statico", "statici", "standmodell", "standmodelle" -> GcRes.drawable.staticmodel
+        "kit", "kits", "modelkit", "modelkits", "plastic", "plastickits", "maqueta", "maquetas", "maquette", "maquettes", "bausatz", "bausätze" -> GcRes.drawable.plastickits
+        "misc", "miscellaneous", "others", "other", "outros", "outro", "diversos", "varios", "divers", "varie", "vari", "sonstiges" -> GcRes.drawable.others
         else -> GcRes.drawable.others
     }
 }

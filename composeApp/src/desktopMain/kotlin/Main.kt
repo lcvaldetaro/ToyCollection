@@ -87,6 +87,10 @@ fun main(args: Array<String>) {
         return
     }
 
+    val startupRepo = ToyRepository(database)
+    val savedLang = startupRepo.getLanguageSetting()
+    com.gepetto.toydb.platform.LocaleHelper.setAppLocale(savedLang)
+
     application {
         val windowState = rememberWindowState(
             width = 1200.dp,

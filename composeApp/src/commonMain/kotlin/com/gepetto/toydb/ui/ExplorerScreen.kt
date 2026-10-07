@@ -77,9 +77,10 @@ fun ExplorerScreen(
         makerFilter = selectedMaker
     )
 
-    val categoryLabel = remember(categorySetting) {
+    val fallbackLabel = remember(categorySetting) {
         categorySetting?.label ?: category.replaceFirstChar { it.uppercase() }
     }
+    val categoryLabel = getLocalizedCategoryLabel(category, fallbackLabel)
 
     ExplorerContent(
         repository = repository,

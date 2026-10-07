@@ -284,8 +284,8 @@ Alle Rechte vorbehalten.</string>
     <string name="web_sync_success">Web-Synchronisierung abgeschlossen</string>
     <string name="web_sync_error">Web-Synchronisierung fehlgeschlagen</string>
     <string name="web_sync_no_updates">Web-Synchronisierung abgeschlossen (bereits aktuell)</string>
-    <string name="nav_home">Home</string>
-    <string name="nav_dashboard">Dash</string>
+    <string name="nav_home">Start</string>
+    <string name="nav_dashboard">Übersicht</string>
     <string name="nav_makers">Marken</string>
     <string name="nav_settings">Config</string>
     <string name="nav_info">Info</string>
@@ -331,4 +331,26 @@ Alle Rechte vorbehalten.</string>
     <string name="restore_open_dialog_title">Sicherungsdatei auswählen</string>
     <string name="website_status_creating">Webseiten werden in %1$s erstellt...</string>
     <string name="website_status_done">%1$d Webseiten in %2$s erstellt.</string>
+    <string name="settings_language">Sprache</string>
+    <string name="settings_language_system">Systemstandard</string>
+    <string name="nav_cat_slots">Slots</string>
+    <string name="nav_cat_trains">Züge</string>
+    <string name="nav_cat_static">Standmodelle</string>
+    <string name="nav_cat_kits">Bausätze</string>
+    <string name="nav_cat_misc">Sonstiges</string>
+    <string name="cat_label_slots">Slotcars</string>
+    <string name="cat_label_trains">Modelleisenbahnen</string>
+    <string name="cat_label_static">Standmodelle</string>
+    <string name="cat_label_kits">Modellbausätze</string>
+    <string name="cat_label_misc">Sonstiges</string>
+    <string name="gepetto_logo_desc">Gepetto-Logo</string>
+    <string name="edit_filenames">Dateinamen bearbeiten</string>
+    <string name="current_image_desc">Aktuelles Bild</string>
+    <string name="new_image_desc">Neues Bild</string>
+    <string name="downloading_image_desc">Bild wird heruntergeladen...</string>
+    <string name="password_show">Passwort anzeigen</string>
+    <string name="password_hide">Passwort verbergen</string>
+    <string name="select_private_key_file">Privaten Schlüssel auswählen</string>
+    <string name="select_image_dialog_title">Bild zum Hochladen auswählen</string>
+    <string name="unknown_error">Unbekannter Fehler</string>
 </resources>

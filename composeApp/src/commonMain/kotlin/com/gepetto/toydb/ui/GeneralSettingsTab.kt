@@ -27,6 +27,8 @@ import toydb.composeapp.generated.resources.*
 fun GeneralSettingsTab(
     currentTheme: Int,
     onThemeChanged: (Int) -> Unit,
+    currentLanguage: String = "",
+    onLanguageChanged: (String) -> Unit = {},
     appTitle: String,
     onAppTitleChanged: (String) -> Unit,
     dataPath: String?,
@@ -40,6 +42,7 @@ fun GeneralSettingsTab(
         verticalArrangement = Arrangement.spacedBy(GcSpacing.Standard)
     ) {
         ThemeSelector(currentTheme, onThemeChanged)
+        LanguageSelector(currentLanguage, onLanguageChanged)
         AppTitleSettings(
             title = appTitle,
             onTitleChange = onAppTitleChanged
@@ -54,6 +57,95 @@ fun GeneralSettingsTab(
         if (isWebPlatform()) {
             WebLocalDataNotice()
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun LanguageSelector(
+    currentLanguage: String,
+    onLanguageChanged: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val displayLanguage = languages.find {
+        it.thisLanguage == (if (currentLanguage.isEmpty()) getSystemLanguage() else currentLanguage)
+    } ?: languages[0]
+    val languageOptions = listOf("") + languages.map { it.thisLanguage }
+
+    @Composable
+    fun getLanguageName(code: String): String {
+        if (code.isEmpty()) return stringResource(Res.string.settings_language_system)
+        return when (code) {
+            "en" -> displayLanguage.english
+            "pt" -> displayLanguage.portuguese
+            "fr" -> displayLanguage.french
+            "es" -> displayLanguage.spanish
+            "it" -> displayLanguage.italian
+            "de" -> displayLanguage.german
+            else -> code
+        }
+    }
+
+    Column(modifier = modifier.fillMaxWidth()) {
+        Text(
+            text = stringResource(Res.string.settings_language),
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            color = sysTextColor()
+        )
+        Spacer(modifier = Modifier.height(GcSpacing.Small))
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = !expanded },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            OutlinedTextField(
+                value = getLanguageName(currentLanguage),
+                onValueChange = {},
+                readOnly = true,
+                label = { Text(stringResource(Res.string.settings_language)) },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = sysTextColor(),
+                    unfocusedTextColor = sysTextColor(),
+                    focusedLabelColor = MaterialTheme.colorScheme.primary,
+                    unfocusedLabelColor = sysTextColor().copy(alpha = 0.6f),
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                ),
+                modifier = Modifier
+                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, true)
+                    .fillMaxWidth()
+            )
+            ExposedDropdownMenu(
+                expanded = expanded,
+                containerColor = sysBackgroundColor(),
+                onDismissRequest = { expanded = false }
+            ) {
+                languageOptions.forEach { code ->
+                    DropdownMenuItem(
+                        text = { Text(getLanguageName(code), color = sysTextColor()) },
+                        onClick = {
+                            onLanguageChanged(code)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@PreviewLightDark
+@Preview(name = "Landscape", widthDp = 800, heightDp = 480)
+@Composable
+fun LanguageSelectorPreview() {
+    GcTheme {
+        LanguageSelector(
+            currentLanguage = "",
+            onLanguageChanged = {}
+        )
     }
 }
 

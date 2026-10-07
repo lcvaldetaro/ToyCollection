@@ -525,6 +525,10 @@ class ToyRepository(val db: ToyDatabase) {
         }
     }
 
+    fun getLanguageSetting(): String = getAppSetting("language") ?: ""
+
+    fun setLanguageSetting(language: String) = setAppSetting("language", language)
+
     fun getDataPathSetting(): String? {
         var path = getAppSetting("data_path")
         if (path == null) {

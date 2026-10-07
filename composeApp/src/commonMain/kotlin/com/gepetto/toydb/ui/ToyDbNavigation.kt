@@ -135,6 +135,7 @@ fun ToyDbNavigation(
 ) {
     val repository = remember { ToyRepository(db) }
     var themeMode by remember { mutableStateOf(repository.getThemeSetting()) }
+    var languageChoice by remember { mutableStateOf(repository.getLanguageSetting()) }
     var categoriesSettings by remember { mutableStateOf(repository.getCategorySettings()) }
     var syncTrigger by remember { mutableStateOf(0) }
     var appTitle by remember { mutableStateOf(repository.getAppTitleSetting()) }
@@ -166,13 +167,14 @@ fun ToyDbNavigation(
         }
     }
 
-    val isDark = when (themeMode) {
-        1 -> false // Light
-        2 -> true  // Dark
-        else -> androidx.compose.foundation.isSystemInDarkTheme() // System
-    }
+    key(languageChoice) {
+        val isDark = when (themeMode) {
+            1 -> false // Light
+            2 -> true  // Dark
+            else -> androidx.compose.foundation.isSystemInDarkTheme() // System
+        }
 
-    GcTheme(darkTheme = isDark) {
+        GcTheme(darkTheme = isDark) {
         val backStack = remember { mutableStateListOf<Destination>(Destination.Home) }
         val gcSceneStrategy = rememberGcSceneStrategy<NavKey>()
 
@@ -289,8 +291,9 @@ fun ToyDbNavigation(
         val navMakers = stringResource(Res.string.nav_makers)
         val navSettings = stringResource(Res.string.nav_settings)
         val navInfo = stringResource(Res.string.nav_info)
+        val shortLabelResolver = rememberCategoryShortLabelResolver()
 
-        val buttons = remember(categoriesSettings, isLandscape, navHome, navDashboard, navMakers, navSettings, navInfo) {
+        val buttons = remember(categoriesSettings, isLandscape, navHome, navDashboard, navMakers, navSettings, navInfo, shortLabelResolver) {
             val list = mutableListOf<GcNavButton>()
             list.add(
                 GcNavButton(
@@ -319,14 +322,7 @@ fun ToyDbNavigation(
             if (isLandscape) {
                 categoriesSettings.forEach { setting ->
                     val icon = getIconByName(setting.icon)
-                    val shortLabel = when (setting.category.lowercase()) {
-                        "slot" -> "Slots"
-                        "train" -> "Trains"
-                        "static" -> "Static"
-                        "kit" -> "Kits"
-                        "misc" -> "Misc"
-                        else -> setting.label.take(6)
-                    }
+                    val shortLabel = shortLabelResolver(setting.category, setting.label)
                     list.add(
                         GcNavButton(
                             label = shortLabel,
@@ -495,6 +491,12 @@ fun ToyDbNavigation(
                                         repository.setThemeSetting(newTheme)
                                         themeMode = newTheme
                                     },
+                                    currentLanguage = languageChoice,
+                                    onLanguageChanged = { newLanguage ->
+                                        repository.setLanguageSetting(newLanguage)
+                                        com.gepetto.toydb.platform.LocaleHelper.setAppLocale(newLanguage)
+                                        languageChoice = newLanguage
+                                    },
                                     onCategoriesChanged = {
                                         categoriesSettings = repository.getCategorySettings()
                                     },
@@ -506,6 +508,8 @@ fun ToyDbNavigation(
                                     onCollectionRestored = {
                                         categoriesSettings = repository.getCategorySettings()
                                         themeMode = repository.getThemeSetting()
+                                        languageChoice = repository.getLanguageSetting()
+                                        com.gepetto.toydb.platform.LocaleHelper.setAppLocale(languageChoice)
                                         appTitle = repository.getAppTitleSetting()
                                         com.gepetto.toydb.utils.ImageResolverConfig.imagesPath = repository.getDataPathSetting()
                                         onAppTitleChanged?.invoke(appTitle)
@@ -516,11 +520,15 @@ fun ToyDbNavigation(
                             entry<Destination.Info> { key ->
                                 InfoScreen(
                                     initialTopicId = key.topicId,
+                                    selectedLanguage = languageChoice,
                                     onNavigateToSftpSetup = { backStack.add(Destination.SftpSetup) }
                                 )
                             }
                             entry<Destination.SftpSetup> {
-                                SftpSetupScreen(onBack = { backStack.removeUpToInclusive(Destination.SftpSetup) })
+                                SftpSetupScreen(
+                                    onBack = { backStack.removeUpToInclusive(Destination.SftpSetup) },
+                                    selectedLanguage = languageChoice
+                                )
                             }
                         }
                     )
@@ -528,22 +536,23 @@ fun ToyDbNavigation(
             )
         }
         }
+        }
     }
 }
 
 fun getIconByName(name: String): androidx.compose.ui.graphics.vector.ImageVector {
-    return when (name.lowercase()) {
-        "car", "directionscar", "slot", "static" -> Icons.Default.DirectionsCar
-        "train" -> Icons.Default.Train
-        "build", "kit", "tool" -> Icons.Default.Build
-        "category", "misc" -> Icons.Default.Category
-        "brush" -> Icons.Default.Brush
-        "toy", "toys" -> Icons.Default.Toys
-        "star" -> Icons.Default.Star
-        "game", "controller" -> Icons.Default.SportsEsports
-        "palette" -> Icons.Default.Palette
-        "extension", "puzzle" -> Icons.Default.Extension
-        "robot", "smarttoy" -> Icons.Default.SmartToy
+    return when (name.lowercase().trim()) {
+        "car", "directionscar", "slot", "slots", "static", "carro", "coche", "voiture", "auto" -> Icons.Default.DirectionsCar
+        "train", "trains", "trem", "trens", "tren", "trenes", "zug", "zuege", "züge", "treno", "treni" -> Icons.Default.Train
+        "build", "kit", "kits", "tool", "tools", "ferramenta", "ferramentas", "outillage", "werkzeug", "attrezzo", "maqueta", "maquetas", "maquette", "maquettes", "bausatz", "bausätze" -> Icons.Default.Build
+        "category", "misc", "miscellaneous", "others", "other", "categoria", "categorias", "catégorie", "kategorie", "diversos", "outros", "varios", "divers", "vari", "sonstiges" -> Icons.Default.Category
+        "brush", "pincel", "pinceau", "pennello", "pinsel" -> Icons.Default.Brush
+        "toy", "toys", "brinquedo", "brinquedos", "juguete", "juguetes", "jouet", "jouets", "giocattolo", "giocattoli", "spielzeug" -> Icons.Default.Toys
+        "star", "estrela", "estrella", "étoile", "stella", "stern" -> Icons.Default.Star
+        "game", "controller", "jogo", "jogos", "juego", "juegos", "jeu", "jeux", "gioco", "giochi", "spiel", "spiele" -> Icons.Default.SportsEsports
+        "palette", "paleta", "tavolozza" -> Icons.Default.Palette
+        "extension", "puzzle", "quebra-cabeca", "quebracabeca", "rätsel" -> Icons.Default.Extension
+        "robot", "robô", "smarttoy" -> Icons.Default.SmartToy
         else -> Icons.Default.Category
     }
 }

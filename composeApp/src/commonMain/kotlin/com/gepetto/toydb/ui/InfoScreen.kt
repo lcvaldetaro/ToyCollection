@@ -45,6 +45,7 @@ enum class InfoTopic(
 fun InfoScreen(
     onNavigateToSftpSetup: () -> Unit = {},
     initialTopicId: String? = null,
+    selectedLanguage: String = "",
     modifier: Modifier = Modifier
 ) {
     val topics = InfoTopic.entries
@@ -69,14 +70,19 @@ fun InfoScreen(
     }
     val currentTopic = topics.getOrElse(selectedTopicIndex) { topics[0] }
 
-    val currentLang = remember {
-        val lang = try {
-            androidx.compose.ui.text.intl.Locale.current.language.lowercase()
-        } catch (_: Exception) {
+    val effectiveLang = if (selectedLanguage.isNotEmpty()) {
+        selectedLanguage
+    } else {
+        try {
+            com.gepetto.toydb.platform.LocaleHelper.getSystemLanguageCode()
+        } catch (_: Throwable) {
             "en"
         }
-        when (lang) {
-            "pt", "es", "it", "de", "fr" -> lang
+    }
+
+    val currentLang = remember(effectiveLang) {
+        when (effectiveLang.lowercase().take(2)) {
+            "pt", "es", "it", "de", "fr" -> effectiveLang.lowercase().take(2)
             else -> "en"
         }
     }

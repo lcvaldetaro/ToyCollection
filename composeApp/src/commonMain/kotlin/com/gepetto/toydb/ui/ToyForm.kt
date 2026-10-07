@@ -206,7 +206,7 @@ fun ToyForm(
                         Checkbox(checked = factoryCar, onCheckedChange = { factoryCar = it })
                         Text(stringResource(Res.string.form_field_factory_car), color = sysTextColor())
                     }
-                    FormField(label = stringResource(Res.string.form_field_general_comments), value = comments, onValueChange = { comments = it })
+                    FormField(label = stringResource(Res.string.form_field_general_comments), value = comments, singleLine = false, onValueChange = { comments = it })
                 }
                 1 -> { // Makers
                     FormField(label = stringResource(Res.string.form_field_body_maker), value = bodyMaker, onValueChange = { bodyMaker = it })
@@ -225,12 +225,12 @@ fun ToyForm(
                     FormField(label = stringResource(Res.string.form_field_buy_info), value = buy, onValueChange = { buy = it })
                 }
                 3 -> { // Restoration
-                    FormField(label = stringResource(Res.string.form_field_major_work), value = majorWork, onValueChange = { majorWork = it })
-                    FormField(label = stringResource(Res.string.form_field_minor_work), value = minorWork, onValueChange = { minorWork = it })
+                    FormField(label = stringResource(Res.string.form_field_major_work), value = majorWork, singleLine = false, onValueChange = { majorWork = it })
+                    FormField(label = stringResource(Res.string.form_field_minor_work), value = minorWork, singleLine = false, onValueChange = { minorWork = it })
                     FormField(label = stringResource(Res.string.form_field_repro_details), value = repro, onValueChange = { repro = it })
-                    FormField(label = stringResource(Res.string.form_field_maintenance_log), value = maintenance, onValueChange = { maintenance = it })
+                    FormField(label = stringResource(Res.string.form_field_maintenance_log), value = maintenance, singleLine = false, onValueChange = { maintenance = it })
                     FormField(label = stringResource(Res.string.form_field_to_build_info), value = toMake, onValueChange = { toMake = it })
-                    FormField(label = stringResource(Res.string.form_field_detail_decal_work), value = detail, onValueChange = { detail = it })
+                    FormField(label = stringResource(Res.string.form_field_detail_decal_work), value = detail, singleLine = false, onValueChange = { detail = it })
                 }
                 4 -> { // Images
                     FormField(label = stringResource(Res.string.form_field_main_picture), value = picture, onValueChange = { picture = it })
@@ -263,7 +263,7 @@ fun ToyForm(
                         if (!isWebPlatform()) {
                             Spacer(modifier = Modifier.width(GcSpacing.Small))
                             IconButton(onClick = { showRenameDialog = true }) {
-                                Icon(Icons.Default.Edit, contentDescription = "Edit Filenames")
+                                Icon(Icons.Default.Edit, contentDescription = stringResource(Res.string.edit_filenames))
                             }
                         }
                     }
@@ -399,7 +399,7 @@ fun ToyForm(
                             Spacer(modifier = Modifier.height(4.dp))
                             GcImage(
                                 imageFile = overwriteDestPath,
-                                contentDescription = "Current image",
+                                contentDescription = stringResource(Res.string.current_image_desc),
                                 modifier = Modifier.size(100.dp).clip(RoundedCornerShape(4.dp)),
                                 contentScale = ContentScale.Crop
                             )
@@ -413,7 +413,7 @@ fun ToyForm(
                             pendingImagePath?.let { path ->
                                 GcImage(
                                     imageFile = path,
-                                    contentDescription = "New image",
+                                    contentDescription = stringResource(Res.string.new_image_desc),
                                     modifier = Modifier.size(100.dp).clip(RoundedCornerShape(4.dp)),
                                     contentScale = ContentScale.Crop
                                 )
@@ -448,12 +448,12 @@ fun ToyForm(
 }
 
 @Composable
-fun FormField(label: String, value: String, onValueChange: (String) -> Unit) {
+fun FormField(label: String, value: String, singleLine: Boolean = true, onValueChange: (String) -> Unit) {
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
         label = { Text(label) },
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-        singleLine = label != "General Comments" && !label.contains("Work")
+        singleLine = singleLine
     )
 }

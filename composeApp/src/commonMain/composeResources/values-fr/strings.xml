@@ -284,8 +284,8 @@ Tous droits réservés.</string>
     <string name="web_sync_success">Synchronisation Web terminée</string>
     <string name="web_sync_error">Synchronisation Web échouée</string>
     <string name="web_sync_no_updates">Synchronisation Web terminée (déjà à jour)</string>
-    <string name="nav_home">Home</string>
-    <string name="nav_dashboard">Dash</string>
+    <string name="nav_home">Accueil</string>
+    <string name="nav_dashboard">Tableau</string>
     <string name="nav_makers">Marques</string>
     <string name="nav_settings">Config</string>
     <string name="nav_info">Info</string>
@@ -331,4 +331,26 @@ Tous droits réservés.</string>
     <string name="restore_open_dialog_title">Choisir un fichier de sauvegarde</string>
     <string name="website_status_creating">Création des pages du site dans %1$s...</string>
     <string name="website_status_done">%1$d pages du site créées dans %2$s.</string>
+    <string name="settings_language">Langue</string>
+    <string name="settings_language_system">Par défaut du Système</string>
+    <string name="nav_cat_slots">Slots</string>
+    <string name="nav_cat_trains">Trains</string>
+    <string name="nav_cat_static">Statiques</string>
+    <string name="nav_cat_kits">Maquettes</string>
+    <string name="nav_cat_misc">Divers</string>
+    <string name="cat_label_slots">Voitures de Slot</string>
+    <string name="cat_label_trains">Trains miniatures</string>
+    <string name="cat_label_static">Modèles statiques</string>
+    <string name="cat_label_kits">Maquettes</string>
+    <string name="cat_label_misc">Divers</string>
+    <string name="gepetto_logo_desc">Logo Gepetto</string>
+    <string name="edit_filenames">Modifier les Noms de Fichier</string>
+    <string name="current_image_desc">Image actuelle</string>
+    <string name="new_image_desc">Nouvelle image</string>
+    <string name="downloading_image_desc">Téléchargement de l\'image...</string>
+    <string name="password_show">Afficher le mot de passe</string>
+    <string name="password_hide">Masquer le mot de passe</string>
+    <string name="select_private_key_file">Sélectionner le Fichier de Clé Privée</string>
+    <string name="select_image_dialog_title">Sélectionner une Image à Télécharger</string>
+    <string name="unknown_error">Erreur inconnue</string>
 </resources>

@@ -39,6 +39,8 @@ fun SettingsScreen(
     sftpService: SftpService,
     currentTheme: Int,
     onThemeChanged: (Int) -> Unit,
+    currentLanguage: String = "",
+    onLanguageChanged: (String) -> Unit = {},
     onCategoriesChanged: () -> Unit = {},
     onNavigate: (Destination) -> Unit = {},
     onAppTitleChanged: (String) -> Unit = {},
@@ -136,6 +138,8 @@ fun SettingsScreen(
                                     GeneralSettingsTab(
                                         currentTheme = currentTheme,
                                         onThemeChanged = onThemeChanged,
+                                        currentLanguage = currentLanguage,
+                                        onLanguageChanged = onLanguageChanged,
                                         appTitle = appTitle,
                                         onAppTitleChanged = { newTitle ->
                                             repository.setAppTitleSetting(newTitle)

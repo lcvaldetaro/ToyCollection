@@ -65,6 +65,8 @@ class AppMainActivity : ComponentActivity() {
 
         // Initialize settings with fixed paths
         val repository = ToyRepository(database)
+        val savedLang = repository.getLanguageSetting()
+        com.gepetto.toydb.platform.LocaleHelper.setAppLocale(savedLang)
         if (repository.getDataPathSetting().isNullOrEmpty()) {
             repository.setDataPathSetting(dataDir.absolutePath)
         }

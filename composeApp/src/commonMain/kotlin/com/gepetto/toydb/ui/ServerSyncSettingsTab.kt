@@ -995,7 +995,7 @@ fun SftpSettingsCard(
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
                         val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
-                        val description = if (passwordVisible) "Hide password" else "Show password"
+                        val description = if (passwordVisible) stringResource(Res.string.password_hide) else stringResource(Res.string.password_show)
                         IconButton(onClick = { passwordVisible = !passwordVisible }) {
                             Icon(imageVector = image, contentDescription = description)
                         }
@@ -1006,6 +1006,7 @@ fun SftpSettingsCard(
                     )
                 )
             } else {
+                val selectKeyTitle = stringResource(Res.string.select_private_key_file)
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(
                         value = keyPath,
@@ -1020,7 +1021,7 @@ fun SftpSettingsCard(
                         )
                     )
                     Button(onClick = {
-                        val path = selectFileDialog("Select Private Key File", listOf("pem", "key", "rsa", "pub", ""))
+                        val path = selectFileDialog(selectKeyTitle, listOf("pem", "key", "rsa", "pub", ""))
                         if (path != null) {
                             onKeyPathChange(path)
                         }

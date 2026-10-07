@@ -285,7 +285,7 @@ Tutti i diritti riservati.</string>
     <string name="web_sync_error">Sincronizzazione Web non riuscita</string>
     <string name="web_sync_no_updates">Sincronizzazione Web completata (già aggiornato)</string>
     <string name="nav_home">Home</string>
-    <string name="nav_dashboard">Dash</string>
+    <string name="nav_dashboard">Pannello</string>
     <string name="nav_makers">Marche</string>
     <string name="nav_settings">Config</string>
     <string name="nav_info">Info</string>
@@ -331,4 +331,26 @@ Tutti i diritti riservati.</string>
     <string name="restore_open_dialog_title">Scegli un file di backup</string>
     <string name="website_status_creating">Creazione delle pagine del sito in %1$s...</string>
     <string name="website_status_done">%1$d pagine del sito create in %2$s.</string>
+    <string name="settings_language">Lingua</string>
+    <string name="settings_language_system">Predefinito di Sistema</string>
+    <string name="nav_cat_slots">Slot</string>
+    <string name="nav_cat_trains">Treni</string>
+    <string name="nav_cat_static">Statici</string>
+    <string name="nav_cat_kits">Kit</string>
+    <string name="nav_cat_misc">Vari</string>
+    <string name="cat_label_slots">Slot Car</string>
+    <string name="cat_label_trains">Treni modello</string>
+    <string name="cat_label_static">Modelli statici</string>
+    <string name="cat_label_kits">Kit di montaggio</string>
+    <string name="cat_label_misc">Varie</string>
+    <string name="gepetto_logo_desc">Logo Gepetto</string>
+    <string name="edit_filenames">Modifica Nomi di File</string>
+    <string name="current_image_desc">Immagine corrente</string>
+    <string name="new_image_desc">Nuova immagine</string>
+    <string name="downloading_image_desc">Download dell\'immagine in corso...</string>
+    <string name="password_show">Mostra password</string>
+    <string name="password_hide">Nascondi password</string>
+    <string name="select_private_key_file">Seleziona File di Chiave Privata</string>
+    <string name="select_image_dialog_title">Seleziona Immagine da Caricare</string>
+    <string name="unknown_error">Errore sconosciuto</string>
 </resources>

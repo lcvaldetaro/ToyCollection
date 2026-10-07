@@ -5,6 +5,9 @@ import javax.swing.JFileChooser
 import javax.swing.SwingUtilities
 import java.awt.FileDialog
 import java.awt.Frame
+import androidx.compose.runtime.Composable
+import org.jetbrains.compose.resources.stringResource
+import toydb.composeapp.generated.resources.*
 
 actual fun resolveImageUri(prefix: String, refNum: Int): String? {
     val extensions = listOf("jpg", "jpeg", "png", "gif", "webp", "JPG", "PNG", "GIF")
@@ -119,11 +122,12 @@ actual fun selectFileDialog(title: String, allowedExtensions: List<String>): Str
 
 actual fun isDesktopPlatform(): Boolean = true
 
-@androidx.compose.runtime.Composable
+@Composable
 actual fun rememberImagePicker(onImagePicked: (String) -> Unit): () -> Unit {
+    val dialogTitle = stringResource(Res.string.select_image_dialog_title)
     return {
         val selectedPath = selectFileDialog(
-            "Select Image to Upload",
+            dialogTitle,
             listOf("jpg", "jpeg", "png", "gif", "webp", "JPG", "JPEG", "PNG", "GIF")
         )
         if (selectedPath != null) {

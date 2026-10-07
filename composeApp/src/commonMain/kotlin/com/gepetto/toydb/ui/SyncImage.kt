@@ -8,6 +8,8 @@ import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
+import org.jetbrains.compose.resources.stringResource
+import toydb.composeapp.generated.resources.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -205,7 +207,7 @@ fun SyncImage(
                 ) {
                     Icon(
                         imageVector = Icons.Default.HourglassEmpty,
-                        contentDescription = "Downloading image...",
+                        contentDescription = stringResource(Res.string.downloading_image_desc),
                         modifier = Modifier.size(iconSize),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
