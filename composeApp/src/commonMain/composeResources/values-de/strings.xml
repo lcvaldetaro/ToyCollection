@@ -76,9 +76,11 @@
     <string name="export_success_files">Exportierte Dateien:</string>
     <string name="export_success_title">Export erfolgreich</string>
     <string name="failed_load_about">Anwendungsinformationen konnten nicht geladen werden.</string>
+    <string name="failed_load_help">Hilfeinhalt konnte nicht geladen werden.</string>
     <string name="failed_load_privacy">Datenschutzerklärung konnte nicht geladen werden.</string>
     <string name="failed_load_sftp_guide">SFTP-Server Einrichtungsleitfaden konnte nicht geladen werden.</string>
     <string name="failed_load_terms">Nutzungsbedingungen konnten nicht geladen werden.</string>
+    <string name="help_title">Hilfe</string>
     <string name="info_tab_about">Über</string>
     <string name="info_tab_backup">Server-Synchronisierung</string>
     <string name="info_tab_privacy">Datenschutzerklärung</string>

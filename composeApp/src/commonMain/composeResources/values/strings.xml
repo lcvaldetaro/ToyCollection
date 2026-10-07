@@ -76,9 +76,11 @@
     <string name="export_success_files">Exported Files:</string>
     <string name="export_success_title">Export Successful</string>
     <string name="failed_load_about">Failed to load application information.</string>
+    <string name="failed_load_help">Failed to load help content.</string>
     <string name="failed_load_privacy">Failed to load privacy policy.</string>
     <string name="failed_load_sftp_guide">Failed to load SFTP server setup guide.</string>
     <string name="failed_load_terms">Failed to load terms of use.</string>
+    <string name="help_title">Help</string>
     <string name="info_tab_about">About</string>
     <string name="info_tab_backup">Server Sync</string>
     <string name="info_tab_privacy">Privacy Policy</string>

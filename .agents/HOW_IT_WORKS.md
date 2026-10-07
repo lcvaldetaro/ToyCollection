@@ -432,10 +432,15 @@ The **SettingsScreen** organizes configuration into four tabs (`SettingsTab`):
 - **Server Sync**: Remote Web synchronization Base URL, SFTP server credentials, connection test, and differential cloud synchronization.
 - **Categories**: Dynamic toy categories manager (add, edit, and delete categories, image prefixes, navigation labels, and icons).
 
+The screen header includes a help button that navigates directly to the equivalent help tab on the **InfoScreen** for the currently selected settings tab.
+
 ### Info Screen Tabs (`ui/InfoScreen.kt`)
-The **InfoScreen** provides documentation and legal disclosures using a tabbed layout:
+The **InfoScreen** provides succinct, plain-language documentation without technical jargon across seven tabs (`InfoTopic`):
 - **About**: System summary, key capabilities, and application metadata (`about.md`).
-- **Server Sync**: Setup instructions and provider recommendations for SFTP server configuration (`sftp_setup.md`).
+- **General**: Help for theme colors, collection title, storage directory, and app details (`general.md`).
+- **Backup & Restore**: Help for full collection `.zip` backup, restoration, and web page generation (`backup_restore.md`).
+- **Server Sync**: Help for cloud synchronization and server credentials (`server_sync.md`), with an expandable button to view the complete SFTP server setup guide (`sftp_setup.md`).
+- **Categories**: Help for adding, editing, and organizing custom toy categories and image prefixes (`categories.md`).
 - **Privacy Policy**: Data collection disclosures and privacy guarantees (`privacypolicy.md`).
 - **Terms of Use**: Software license terms and liability limitations (`terms.md`).
 

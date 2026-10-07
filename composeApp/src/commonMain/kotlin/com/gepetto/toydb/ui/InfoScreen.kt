@@ -32,7 +32,10 @@ enum class InfoTopic(
     val titleRes: StringResource
 ) {
     ABOUT("about", Res.string.info_tab_about),
-    BACKUP("backup", Res.string.info_tab_backup),
+    GENERAL("general", Res.string.tab_general),
+    BACKUP_RESTORE("backup_restore", Res.string.backup_title),
+    SERVER_SYNC("server_sync", Res.string.info_tab_backup),
+    CATEGORIES("categories", Res.string.categories),
     PRIVACY("privacy", Res.string.info_tab_privacy),
     TERMS("terms", Res.string.info_tab_terms)
 }
@@ -46,11 +49,23 @@ fun InfoScreen(
     val topics = InfoTopic.entries
     val initialIndex = remember(initialTopicId) {
         if (initialTopicId != null) {
-            val idx = topics.indexOfFirst { it.id == initialTopicId }
+            val idx = topics.indexOfFirst {
+                it.id == initialTopicId || (initialTopicId == "backup" && it.id == "server_sync")
+            }
             if (idx != -1) idx else 0
         } else 0
     }
     var selectedTopicIndex by remember(initialIndex) { mutableStateOf(initialIndex) }
+    LaunchedEffect(initialTopicId) {
+        if (initialTopicId != null) {
+            val idx = topics.indexOfFirst {
+                it.id == initialTopicId || (initialTopicId == "backup" && it.id == "server_sync")
+            }
+            if (idx != -1) {
+                selectedTopicIndex = idx
+            }
+        }
+    }
     val currentTopic = topics.getOrElse(selectedTopicIndex) { topics[0] }
 
     val currentLang = remember {
@@ -72,7 +87,10 @@ fun InfoScreen(
         isLoading = true
         val baseName = when (currentTopic) {
             InfoTopic.ABOUT -> "about"
-            InfoTopic.BACKUP -> "sftp_setup"
+            InfoTopic.GENERAL -> "general"
+            InfoTopic.BACKUP_RESTORE -> "backup_restore"
+            InfoTopic.SERVER_SYNC -> "server_sync"
+            InfoTopic.CATEGORIES -> "categories"
             InfoTopic.PRIVACY -> "privacypolicy"
             InfoTopic.TERMS -> "terms"
         }
@@ -92,7 +110,10 @@ fun InfoScreen(
             GcLog.e("InfoScreen", "Failed to load ${baseName}.md: ${e.message}", e)
             topicContent = when (currentTopic) {
                 InfoTopic.ABOUT -> getString(Res.string.failed_load_about)
-                InfoTopic.BACKUP -> getString(Res.string.failed_load_sftp_guide)
+                InfoTopic.GENERAL,
+                InfoTopic.BACKUP_RESTORE,
+                InfoTopic.CATEGORIES -> getString(Res.string.failed_load_help)
+                InfoTopic.SERVER_SYNC -> getString(Res.string.failed_load_sftp_guide)
                 InfoTopic.PRIVACY -> getString(Res.string.failed_load_privacy)
                 InfoTopic.TERMS -> getString(Res.string.failed_load_terms)
             }
@@ -143,10 +164,25 @@ fun InfoScreen(
                             aboutText = topicContent,
                             isLoading = isLoading
                         )
-                        InfoTopic.BACKUP -> BackupTabContent(
+                        InfoTopic.GENERAL -> MarkdownTabContent(
+                            title = stringResource(Res.string.tab_general),
+                            content = topicContent,
+                            isLoading = isLoading
+                        )
+                        InfoTopic.BACKUP_RESTORE -> MarkdownTabContent(
+                            title = stringResource(Res.string.backup_title),
+                            content = topicContent,
+                            isLoading = isLoading
+                        )
+                        InfoTopic.SERVER_SYNC -> ServerSyncTabContent(
                             guideText = topicContent,
                             isLoading = isLoading,
                             onNavigateToSftpSetup = onNavigateToSftpSetup
+                        )
+                        InfoTopic.CATEGORIES -> MarkdownTabContent(
+                            title = stringResource(Res.string.categories),
+                            content = topicContent,
+                            isLoading = isLoading
                         )
                         InfoTopic.PRIVACY -> MarkdownTabContent(
                             title = stringResource(Res.string.info_tab_privacy),
@@ -230,7 +266,7 @@ fun AboutTabContent(
 }
 
 @Composable
-fun BackupTabContent(
+fun ServerSyncTabContent(
     guideText: String,
     isLoading: Boolean,
     onNavigateToSftpSetup: () -> Unit,
@@ -244,47 +280,38 @@ fun BackupTabContent(
         horizontalAlignment = Alignment.Start
     ) {
         Text(
-            text = stringResource(Res.string.backup_sync_title),
+            text = stringResource(Res.string.info_tab_backup),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             color = sysForegroundColor()
         )
 
-        Spacer(Modifier.height(8.dp))
-
-        Text(
-            text = stringResource(Res.string.backup_sync_description),
-            style = MaterialTheme.typography.bodyMedium,
-            color = sysForegroundColor().copy(alpha = 0.8f)
-        )
-
-        if (!isWebPlatform()) {
-            Spacer(Modifier.height(16.dp))
-
-            Button(
-                onClick = onNavigateToSftpSetup,
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-            ) {
-                Text(
-                    text = stringResource(Res.string.sftp_setup_guide_btn),
-                    style = MaterialTheme.typography.labelLarge
-                )
-            }
-
-            Spacer(Modifier.height(20.dp))
-        } else {
-            Spacer(Modifier.height(16.dp))
-        }
+        Spacer(Modifier.height(16.dp))
         HorizontalDivider(color = sysForegroundColor().copy(alpha = 0.15f))
         Spacer(Modifier.height(16.dp))
 
         Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.TopStart) {
             if (guideText.isNotEmpty()) {
                 key(guideText) {
-                    GcMarkdown(
-                        content = guideText,
-                        textColor = sysForegroundColor()
-                    )
+                    Column {
+                        GcMarkdown(
+                            content = guideText,
+                            textColor = sysForegroundColor()
+                        )
+                        if (!isWebPlatform()) {
+                            Spacer(Modifier.height(20.dp))
+                            Button(
+                                onClick = onNavigateToSftpSetup,
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                            ) {
+                                Text(
+                                    text = stringResource(Res.string.sftp_setup_guide_btn),
+                                    style = MaterialTheme.typography.labelLarge
+                                )
+                            }
+                            Spacer(Modifier.height(16.dp))
+                        }
+                    }
                 }
             } else if (isLoading) {
                 Box(

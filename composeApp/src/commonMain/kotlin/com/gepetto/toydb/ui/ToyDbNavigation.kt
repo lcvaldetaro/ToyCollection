@@ -373,7 +373,7 @@ fun ToyDbNavigation(
                     extraDp = 28.dp,
                     navChoice = "info",
                     onClick = {
-                        navigateRoot(backStack, Destination.Info)
+                        navigateRoot(backStack, Destination.Info())
                     }
                 )
             )
@@ -410,7 +410,7 @@ fun ToyDbNavigation(
                                         backStack.add(Destination.Dashboard)
                                     },
                                     onNavigateToInfo = {
-                                        backStack.add(Destination.Info)
+                                        backStack.add(Destination.Info())
                                     },
                                     themeMode = themeMode
                                 )
@@ -513,8 +513,11 @@ fun ToyDbNavigation(
                                     }
                                 )
                             }
-                            entry<Destination.Info> {
-                                InfoScreen(onNavigateToSftpSetup = { backStack.add(Destination.SftpSetup) })
+                            entry<Destination.Info> { key ->
+                                InfoScreen(
+                                    initialTopicId = key.topicId,
+                                    onNavigateToSftpSetup = { backStack.add(Destination.SftpSetup) }
+                                )
                             }
                             entry<Destination.SftpSetup> {
                                 SftpSetupScreen(onBack = { backStack.removeUpToInclusive(Destination.SftpSetup) })

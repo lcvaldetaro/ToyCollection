@@ -76,9 +76,11 @@
     <string name="export_success_files">File Esportati:</string>
     <string name="export_success_title">Esportazione Riuscita</string>
     <string name="failed_load_about">Impossibile caricare le informazioni sull\'applicazione.</string>
+    <string name="failed_load_help">Impossibile caricare il contenuto della guida.</string>
     <string name="failed_load_privacy">Impossibile caricare l\'informativa sulla privacy.</string>
     <string name="failed_load_sftp_guide">Impossibile caricare la guida alla configurazione del server SFTP.</string>
     <string name="failed_load_terms">Impossibile caricare i termini di utilizzo.</string>
+    <string name="help_title">Aiuto</string>
     <string name="info_tab_about">Informazioni</string>
     <string name="info_tab_backup">Sincronizzazione server</string>
     <string name="info_tab_privacy">Informativa sulla Privacy</string>

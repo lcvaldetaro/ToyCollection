@@ -9,6 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
@@ -1033,11 +1034,13 @@ fun SettingsScreen(
                 .fillMaxSize()
                 .background(Color.Transparent)
         ) {
-            // Header: Title
-            Column(
+            // Header: Title and Help
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = GcSpacing.Standard, vertical = GcSpacing.Small)
+                    .padding(horizontal = GcSpacing.Standard, vertical = GcSpacing.Small),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = stringResource(Res.string.settings_title),
@@ -1045,6 +1048,23 @@ fun SettingsScreen(
                     fontWeight = FontWeight.Bold,
                     color = sysTextColor()
                 )
+                IconButton(
+                    onClick = {
+                        val topicId = when (selectedTab) {
+                            SettingsTab.GENERAL -> "general"
+                            SettingsTab.BACKUP_RESTORE -> "backup_restore"
+                            SettingsTab.SERVER_SYNC -> "server_sync"
+                            SettingsTab.CATEGORIES -> "categories"
+                        }
+                        onNavigate(Destination.Info(topicId))
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Info,
+                        contentDescription = stringResource(Res.string.help_title),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
 
             // Tab Row
@@ -1121,7 +1141,7 @@ fun SettingsScreen(
                                         if (isWebPlatform()) {
                                             WebLocalDataNotice()
                                         }
-                                        AppInfoSettings(onNavigate = { onNavigate(Destination.Info) })
+                                        AppInfoSettings(onNavigate = { onNavigate(Destination.Info("about")) })
                                     }
                                 }
 

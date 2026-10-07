@@ -76,9 +76,11 @@
     <string name="export_success_files">Fichiers Exportés:</string>
     <string name="export_success_title">Exportation Réussie</string>
     <string name="failed_load_about">Échec du chargement des informations sur l\'application.</string>
+    <string name="failed_load_help">Échec du chargement du contenu d\'aide.</string>
     <string name="failed_load_privacy">Échec du chargement de la politique de confidentialité.</string>
     <string name="failed_load_sftp_guide">Échec du chargement du guide de configuration du serveur SFTP.</string>
     <string name="failed_load_terms">Échec du chargement des conditions d’utilisation.</string>
+    <string name="help_title">Aide</string>
     <string name="info_tab_about">À propos</string>
     <string name="info_tab_backup">Synchronisation serveur</string>
     <string name="info_tab_privacy">Politique de confidentialité</string>
