@@ -32,12 +32,12 @@ The Toy Database Manager is a **Kotlin Multiplatform (KMP) database and catalog 
   - Supports renaming manufacturers with safe referential integrity.
   - Automatically updates `body_maker`, `chassis_maker`, `motor_maker`, and recalculates composite `maker_combo` strings across all affected toy records.
   - Detects duplicate names and prompts for confirmation with affected record counts.
-- **Import and Export Pipelines**:
-  - Imports and exports database tables to JSON files (`carmaker.json`, `category_settings.json`, `{prefix}list.json`).
-  - Automatically calculates actual file sizes and modification timestamps by scanning local image storage.
-  - Extracts additional historical metadata (`year_made`, racing `number`, `my_comments`) from legacy fixed-width text files (`.lst`).
-- **Static Website Publisher**:
-  - Generates a static website containing category index pages (`[prefix]maker.html`), manufacturer gallery pages (`[prefix]m_[index].html`), and single toy detail pages (`[prefix]_[ref_num].html`).
+- **Backup & Restore**:
+  - Exports a complete collection archive (`.zip`) containing all database records and photos.
+  - Streams large archives (~1.5 GB photos and JSON data) without holding the archive in memory.
+  - Restores collections cleanly with full database replacement, atomic rollback on failure, and live UI refresh.
+- **Create Website Pages**:
+  - Generates static website pages containing category index pages (`[prefix]maker.html`), manufacturer gallery pages (`[prefix]m_[index].html`), and single toy detail pages (`[prefix]_[ref_num].html`).
   - Automatically calculates collection statistics (factory models, reproductions, scale distribution).
 - **Synchronization Subsystems**:
   - **Remote Web HTTP Synchronization**: Automatically verifies remote JSON backups via HTTP, checks server modification timestamps and SHA-256 hashes, and imports updated data.
@@ -63,8 +63,9 @@ ToyDb/
 │   │   ├── commonMain/
 │   │   │   ├── kotlin/com/gepetto/toydb/
 │   │   │   │   ├── database/       # Database interfaces, models, SQL schema, migrations, ToyRepository
-│   │   │   │   ├── service/        # Import/Export, HTML generator, SFTP service contract, HTTP sync
-│   │   │   │   ├── ui/             # Compose UI screens, Nav3 navigation, forms, dialogs, image components
+│   │   │   │   ├── platform/       # Expect declarations (BackupArchive, BackupFileHelper, StoragePermission)
+│   │   │   │   ├── service/        # BackupRestoreService, ImportExport, HTML generator, SFTP contract, HTTP sync
+│   │   │   │   ├── ui/             # Compose UI screens, Nav3 navigation, BackupRestoreCard, forms, dialogs
 │   │   │   │   └── utils/          # Cross-platform file/directory dialogs, image resolvers, scroll utilities
 │   │   │   └── composeResources/   # Localized strings (en, pt, de, es, fr, it), icons, default SQLite database
 │   │   ├── desktopMain/
@@ -72,21 +73,24 @@ ToyDb/
 │   │   │   │   ├── Main.kt         # Desktop application entry point, window management, headless CLI commands
 │   │   │   │   └── com/gepetto/toydb/
 │   │   │   │       ├── database/   # DesktopToyDatabase (JDBC sqlite-jdbc implementation)
+│   │   │   │       ├── platform/   # Desktop actuals (native zip streaming, Swing file chooser)
 │   │   │   │       ├── service/    # DesktopSftpService (SSHJ implementation)
 │   │   │   │       └── utils/      # Desktop platform implementations
 │   │   │   └── resources/          # Application icons (.icns, .ico, .png)
 │   │   ├── androidMain/
 │   │   │   ├── kotlin/com/gepetto/toydb/
-│   │   │   │   ├── AppMainActivity.kt # Android Activity, BouncyCastle initialization, database provisioning
+│   │   │   │   ├── AppMainActivity.kt # Android Activity, BouncyCastle initialization, GcAppInfo context setup
 │   │   │   │   ├── database/       # AndroidToyDatabase (Android SQLite framework implementation)
+│   │   │   │   ├── platform/       # Android actuals (MediaStore, scoped storage, zip streaming)
 │   │   │   │   ├── service/        # AndroidSftpService (SSHJ implementation for Android)
 │   │   │   │   └── utils/          # Android platform implementations
-│   │   │   └── AndroidManifest.xml # Android permissions (Internet, Network State, Storage)
+│   │   │   └── AndroidManifest.xml # Android permissions (Internet, Network State, Storage maxSdkVersion 28)
 │   │   └── wasmJsMain/
 │   │       ├── kotlin/
 │   │       │   ├── Main.kt         # WebAssembly application entry point, tab title management, ComposeViewport
 │   │       │   └── com/gepetto/toydb/
 │   │       │       ├── database/   # WasmToyDatabase (sql.js + IndexedDB snapshot persistence)
+│   │       │       ├── platform/   # Web actual stubs (unsupported feature placeholders)
 │   │       │       ├── service/    # WebSftpService (disabled stub), ImportExportServiceWasm
 │   │       │       └── utils/      # Web platform implementations (NoFileSystem, ImageResolver, etc.)
 │   │       └── resources/          # index.html web shell
@@ -103,7 +107,7 @@ ToyDb/
 The persistence layer uses a custom platform-independent database abstraction (`ToyDatabase` and `SqlCursor`). It avoids heavy ORM dependencies to ensure fast startup and reliable cross-platform execution.
 
 ### Database Abstraction (`database/Database.kt`)
-- `interface ToyDatabase`: Exposes `execute(sql, bindArgs)` and `query(sql, bindArgs): SqlCursor`.
+- `interface ToyDatabase`: Exposes `execute(sql, bindArgs)`, `query(sql, bindArgs): SqlCursor`, and atomic transaction execution `transaction(block: () -> T): T` with automatic rollback on error.
 - `interface SqlCursor`: Provides `next()`, `getString(col)`, `getInt(col)`, `getDouble(col)`, and `close()`.
 - **Desktop Implementation** (`DesktopDatabase.kt`): Uses `java.sql.Connection` and `org.xerial:sqlite-jdbc`.
 - **Android Implementation** (`AndroidDatabase.kt`): Uses `android.database.sqlite.SQLiteDatabase`.
@@ -273,6 +277,61 @@ The export function creates a complete static website:
    - Tabular specifications: scale, catalog number, brand, chassis configuration, motor details, color, year made, racing number, boxed status, and comments.
    - Standard chassis convention legend explaining chassis coding letters.
 
+### Backup & Restore Pipeline (`service/BackupRestoreService.kt`)
+
+The Backup & Restore pipeline creates and restores complete collection archives (`.zip`). It streams large collections containing thousands of photos (~1.5 GB) without loading entire archive files into memory.
+
+#### Archive File Layout
+The backup archive uses the standard ZIP format with the following entry structure:
+
+```
+backup.zip
+├── manifest.json            # Backup envelope metadata and entity counts
+├── photos.json              # Photo modification timestamps index
+├── data/
+│   ├── category_settings.json # Category rules and display titles
+│   ├── carmaker.json        # Manufacturer records
+│   ├── app_settings.json    # Portable configuration settings
+│   └── carlist.json         # Toy entities for category (named in manifest)
+└── images/
+    ├── car101.jpg           # Master and secondary toy photographs
+    └── m_scx.jpg            # Manufacturer logo and factory pictures
+```
+
+#### Settings Filter Rules
+To prevent host configuration pollution and security leaks, the backup pipeline excludes non-portable keys:
+- **Paths Excluded**: `data_path`, `images_path`, `import_export_path`, `window_width`, `window_height`, `window_x`, `window_y`.
+- **Secrets Excluded**: `sftp_host`, `sftp_port`, `sftp_user`, `sftp_password`, `sftp_key_path`, `sftp_passphrase`, `sftp_remote_path`.
+- **Portable Settings Preserved**: `app_title`, `theme_mode`, `base_url`.
+
+#### Concurrency and Thread Safety (`CollectionWriteLock`)
+To prevent concurrent data mutation during sync or restore procedures:
+- `CollectionWriteLock` (`service/CollectionWriteLock.kt`) provides a shared application mutex.
+- `prepareBackup` acquires the lock to capture a consistent point-in-time database snapshot.
+- `restoreBackup` and `HtmlSyncService.syncIfNewer` acquire the lock for the full duration of data replacement.
+
+#### Restore Process & Execution Order
+Restoring a collection follows a strict sequence:
+1. **Archive Validation**: `readBackup` verifies `manifest.json`, `photos.json`, and all JSON documents in `data/`. If any entry is corrupt or missing, validation fails and nothing is modified.
+2. **Photo Extraction**: `BackupArchive.extractPhotos` streams image entries into the image directory using temporary `.partial` files. It sets disk timestamps using `photos.json`.
+3. **Atomic Database Transaction**:
+   - Clears existing records from `toys`, `makers`, `category_settings`, and portable `app_settings`.
+   - Imports category settings from `data/category_settings.json`.
+   - Imports manufacturers from `data/carmaker.json`.
+   - Imports portable settings from `data/app_settings.json`.
+   - Imports toys for each category mapped in `manifest.categoryFiles`.
+   - Writes sync markers (`html_sync_imported_date_*` and `html_sync_imported_hash_*`) matching the restored JSON files. This prevents the startup web sync from immediately overwriting restored data.
+4. **Cache Invalidation & UI Refresh**: Clears Coil image memory and disk caches, updates runtime image paths, and increments UI refresh triggers.
+
+#### Known Limitations
+1. **Concurrent File Deletions**: If an external file manager removes an image file while a backup runs, the archive omits that missing photo and logs a warning.
+2. **Coil Image Caching**: Active UI screens may hold cached image bitmaps until the user navigates away or refreshes the view.
+3. **Android Storage Constraints**: Devices with less free storage space than the required extraction threshold trigger a low-storage notification.
+4. **Web Platform Support**: Web browsers do not expose native local file systems for streaming large ZIP archives; this feature is hidden on WebAssembly targets.
+5. **Monetary Precision**: Currency values follow standard IEEE 754 floating-point serialization in JSON documents.
+6. **Unassigned Toy Categories**: Toys with unrecognized category identifiers are logged and excluded from category JSON lists.
+7. **Server-Specific Categories**: Categories that exist only on remote web servers are not present in local backup archives.
+
 ---
 
 ## 6. Remote Synchronization Subsystems
@@ -297,7 +356,7 @@ The application uses the Base URL for two distinct operations:
   - Compares the remote timestamp and hash against local values stored in `app_settings` (`html_sync_imported_date_*` and `html_sync_imported_hash_*`).
 - **Import Execution**:
   - If any remote file is newer than the local record, if the hash differs, or if the local `toys` table has zero records (such as on a fresh installation):
-  - The service executes a clean transaction: deletes existing records in `toys`, `makers`, and `category_settings`, imports the downloaded data, and updates the local metadata timestamps and hashes in `app_settings`.
+  - The service holds `CollectionWriteLock` and executes a clean transaction (`db.transaction`): deletes existing records in `toys`, `makers`, and `category_settings`, imports the downloaded data, and updates the local metadata timestamps and hashes in `app_settings`. If an import error occurs, the database transaction rolls back automatically, leaving the collection unchanged.
 
 #### 2. On-Demand Lazy Image Hydration (`ui/SyncImage.kt`)
 The Base URL enables lazy media loading without requiring a full upfront download of multi-gigabyte photo archives:
@@ -366,6 +425,13 @@ Navigation uses `androidx.navigation3` and `club.gepetto.composeutils.navigation
 - **Landscape / Desktop Orientation**: Renders a vertical navigation rail.
 - **Dynamic Category Buttons**: Dynamically injects navigation items for all categories registered in table `category_settings`, matching icons via `getIconByName()`.
 
+### Info Screen Tabs (`ui/InfoScreen.kt`)
+The **InfoScreen** provides documentation and legal disclosures using a tabbed layout:
+- **About**: System summary, key capabilities, and application metadata (`about.md`).
+- **Server Sync**: Setup instructions and provider recommendations for SFTP server configuration (`sftp_setup.md`).
+- **Privacy Policy**: Data collection disclosures and privacy guarantees (`privacypolicy.md`).
+- **Terms of Use**: Software license terms and liability limitations (`terms.md`).
+
 ### Localization
 String resources are fully localized across six languages under `composeApp/src/commonMain/composeResources/`:
 - `values/strings.xml` (English - default)
@@ -389,6 +455,7 @@ String resources are fully localized across six languages under `composeApp/src/
 - **Windows**: `%APPDATA%/ToyDatabaseManager/toydb.db`
 - **Linux**: `~/.local/share/ToyDatabaseManager/toydb.db`
 - **Android**: Application internal storage via `context.getDatabasePath("toydb.db")`
+- **Android Backup Location**: Public device Downloads folder (`Downloads/toy_collection_backup.zip`) via Android MediaStore (API 29+) or public external storage (API 24–28)
 
 ### Unified Data Directory (`data_path`)
 The application prompts the user on first launch to configure a data directory for images, JSON documents, and HTML exports:
@@ -413,9 +480,9 @@ The application prompts the user on first launch to configure a data directory f
    *"Renaming '<Old>' to '<New>' will also update <N> associated toy(s). Do you want to proceed?"*
 5. On confirmation, the database updates the maker and cascades changes across all referencing toys.
 
-### 3. Publishing Website & Backfilling Data
+### 3. Creating Website Pages
 1. Navigate to **Settings** (`Destination.Settings`).
-2. Under **Database Operations**, click **Export HTML Web Pages**.
+2. Under **Create Website Pages**, click **Create Pages**.
 3. The service parses any existing `.lst` files to backfill missing metadata.
 4. The service generates `{prefix}maker.html`, brand pages, and individual toy HTML detail pages in the target data directory.
 
@@ -424,6 +491,13 @@ The application prompts the user on first launch to configure a data directory f
 2. Click **Test SFTP Connection** to verify connectivity and approve host key fingerprints.
 3. Click **Upload to Cloud** or **Download from Cloud**.
 4. Review the selective synchronization plan modal and confirm the file transfer.
+
+### 5. Backing Up and Restoring Your Collection
+1. Navigate to **Settings** (`Destination.Settings`).
+2. Under **Backup & Restore**:
+   - To create a backup: click or tap **Back Up Collection**. Choose a destination file (on Android, the app writes directly to `Downloads/toy_collection_backup.zip`).
+   - To restore a backup: click or tap **Restore Collection**. Confirm the warning dialog, then select the backup `.zip` file.
+3. The application validates the archive, restores all photos and database records within an atomic transaction, invalidates image caches, and refreshes all active screens.
 
 ---
 
@@ -446,11 +520,20 @@ The desktop application includes command-line flags for batch execution and auto
 According to workspace rules (Rule 14 in `.agents/AGENTS.md`), **never run `gradlew assemble`**. Use the following verification commands:
 
 ```bash
+# Run Desktop JVM unit tests
+./gradlew :composeApp:desktopTest
+
 # Verify Desktop JVM compilation
-./gradlew compileKotlinDesktop
+./gradlew :composeApp:compileKotlinDesktop
 
 # Verify Android Debug compilation
-./gradlew compileDebugKotlinAndroid
+./gradlew :composeApp:compileDebugKotlinAndroid
+
+# Verify WebAssembly compilation
+./gradlew :composeApp:compileKotlinWasmJs
+
+# Verify Android Debug packaging and merged manifest
+./gradlew :composeApp:assembleDebug
 
 # Run Desktop Application
 ./gradlew :composeApp:run

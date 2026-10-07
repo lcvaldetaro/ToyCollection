@@ -129,6 +129,22 @@ class WasmToyDatabase private constructor(private val db: SqlJsDatabase) : ToyDa
         }
     }
 
+    override fun <T> transaction(block: () -> T): T {
+        execute("BEGIN")
+        return try {
+            val result = block()
+            execute("COMMIT")
+            result
+        } catch (e: Throwable) {
+            try {
+                execute("ROLLBACK")
+            } catch (rbEx: Throwable) {
+                GcLog.w("$TAG_WASM: Rollback failed: ${rbEx.message}")
+            }
+            throw e
+        }
+    }
+
     override fun close() {
         db.close()
     }

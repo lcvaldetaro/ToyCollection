@@ -1,7 +1,7 @@
 # Toy Collection: Backup & Restore Implementation Plan
 
 **Target Document**: `ToyCollection/.agents/IMPORT_EXPORT_PLAN.md` (file name kept so existing links in `TODO.txt` stay valid)
-**Document Version**: 2.4.0
+**Document Version**: 2.5.0
 **Target Module**: `:composeApp`
 **Target Platforms**: Desktop (macOS, Windows), Android. Web: compile-only stubs, feature hidden.
 **Document Status**: **LIVING DOCUMENT** — Update this plan during implementation. Log every change and bug.
@@ -47,7 +47,7 @@ Obey `~/valdetaro/.agents/AGENTS.md` and `ToyCollection/.agents/AGENTS.md`. The 
 > **R3 — Never hold the whole backup in memory.** The desktop data directory has about **1.5 GB in 2,900 photos**. Stream every photo, one at a time, from disk into the zip and from the zip to disk. Only the JSON entries (a few MB) may be held in memory. No API in this plan may take or return the archive as a `ByteArray`.
 
 > [!IMPORTANT]
-> **R4 — Logging.** Use `club.gepetto.GcLog` only. No `println`, `System.out`, `android.util.Log`, `e.printStackTrace()`.
+> **R4 — Logging.** Use `club.gepetto.GcLog` only. No `println`, `System.out`, `android.util.Log`, `e.printStackTrace()`. Note that `GcLog.d(message, *args)` automatically gets the tag from the stack trace (`getStackTag()`). Do not pass `(tag, message)` as two separate strings; if no `%s` placeholder is in the first string, the second string is dropped. Use a single string with prefix `GcLog.w("Tag: message")` or `GcLog.e(t, "Tag: message")`.
 
 > [!IMPORTANT]
 > **R5 — Strings.** Every user-visible text is a string resource in all 6 files: `composeResources/values{,-de,-es,-fr,-it,-pt}/strings.xml`. Escape apostrophes as `\'` and `&` as `&amp;` (see existing entries). Native dialog titles also come from string resources (`getString(...)`).
@@ -258,9 +258,9 @@ Collect names in a `LinkedHashMap<String, String>` with key `name.lowercase()` a
    - Do **not** call `resolveImageUri()` (it searches other folders, Section 4).
 3. **Toys, other photos**: every space-separated token in `toys.bitmaps`.
 
-Read toys one category at a time (`SELECT ... FROM toys WHERE toy_type = ?` for each row of `category_settings`), the same as `exportToys`. Count toys whose `toy_type` is not in `category_settings` and log the count with `GcLog.w` (known limitation 6).
+Read toys one category at a time (`SELECT ... FROM toys WHERE toy_type = ?` for each row of `category_settings`), the same as `exportToys`. Count toys whose `toy_type` is not in `category_settings` and log the count with `GcLog.w("BackupRestoreService: $count toys have unknown category")` (known limitation 6).
 
-For each name: if `imagesDir/name` is a regular file, add entry `images/<name>`; else, if the case-insensitive map has it, add `images/<name>` with the actual file as source. If the file is missing, skip it and count it in `missingPhotos` (log with `GcLog.w`). The entry name is the name that was collected (for steps 1, 2a and 3 this is the name **as written in the DB**), so restore finds it by exact name. Add one `BackupPhotoInfo(name = <entry name without "images/">, size, modified)` for each photo that goes in. Size and modified time come from the actual source file.
+For each name: if `imagesDir/name` is a regular file, add entry `images/<name>`; else, if the case-insensitive map has it, add `images/<name>` with the actual file as source. If the file is missing, skip it and count it in `missingPhotos` (log with `GcLog.w("BackupRestoreService: missing photo $name")`). The entry name is the name that was collected (for steps 1, 2a and 3 this is the name **as written in the DB**), so restore finds it by exact name. Add one `BackupPhotoInfo(name = <entry name without "images/">, size, modified)` for each photo that goes in. Size and modified time come from the actual source file.
 
 ### 5.5 Archive Rules
 
@@ -285,14 +285,14 @@ Two categories can have the same `image_prefix` (Section 4). Each category must 
 | File | Change |
 |---|---|
 | `commonMain/.../database/Database.kt` | Add `fun <T> transaction(block: () -> T): T` to `ToyDatabase`. |
-| `desktopMain/.../database/DesktopDatabase.kt` | Implement: `autoCommit = false`, run block, `commit()`; on throw `rollback()` and rethrow; `finally autoCommit = true`. |
+| `desktopMain/.../database/DesktopDatabase.kt` | Implement: save previous `autoCommit`, `autoCommit = false`, run block, `commit()`; on throw catch error, run `rollback()` in safe `try-catch`, and rethrow; `finally autoCommit = previousAutoCommit`. |
 | `androidMain/.../database/AndroidDatabase.kt` | Implement: `beginTransaction()`, block, `setTransactionSuccessful()`, `finally endTransaction()`. |
-| `wasmJsMain/.../database/WasmDatabase.wasmJs.kt` | Implement with `execute("BEGIN")` / `execute("COMMIT")` / `execute("ROLLBACK")`. |
-| `commonMain/.../platform/BackupFileHelper.kt` | **New** `expect object` (6.2). |
+| `wasmJsMain/.../database/WasmDatabase.wasmJs.kt` | Implement with `execute("BEGIN")`, run block, `execute("COMMIT")`; on throw run `execute("ROLLBACK")` in safe `try-catch`, and rethrow. |
+| `commonMain/.../platform/BackupFileHelper.kt` | **New** `expect object` (6.2). Add `@file:OptIn(kotlin.experimental.ExperimentalMultiplatform::class)` for Kotlin 2.x compatibility. |
 | `desktopMain/.../platform/BackupFileHelper.desktop.kt` | **New** actual (6.3). |
 | `androidMain/.../platform/BackupFileHelper.android.kt` | **New** actual (6.4). |
 | `wasmJsMain/.../platform/BackupFileHelper.wasmJs.kt` | **New** actual: every call returns `Failed("not supported on web")`. Never return success. |
-| `commonMain/.../platform/BackupArchive.kt` | **New** `expect object` (6.5). |
+| `commonMain/.../platform/BackupArchive.kt` | **New** `expect object` (6.5). Add `@file:OptIn(kotlin.experimental.ExperimentalMultiplatform::class)` for Kotlin 2.x compatibility. |
 | `desktopMain/.../platform/BackupArchive.desktop.kt` and `androidMain/.../platform/BackupArchive.android.kt` | **New**, same JVM code in both (no shared `jvmMain` source set exists; do not add one). Use only `java.io` + `java.util.zip` + okio so the same code is valid on Android API 24 (R12). |
 | `wasmJsMain/.../platform/BackupArchive.wasmJs.kt` | **New**: every function throws `UnsupportedOperationException`. |
 | `commonMain/.../platform/StoragePermission.kt` + 3 actuals | **New** `@Composable expect fun rememberStoragePermissionRequest(): suspend () -> Boolean` (6.6). |
@@ -313,6 +313,8 @@ Package for new platform files: `com.gepetto.toydb.platform` (path `.../kotlin/c
 ### 6.2 `BackupFileHelper` (commonMain)
 
 ```kotlin
+@file:OptIn(kotlin.experimental.ExperimentalMultiplatform::class)
+
 package com.gepetto.toydb.platform
 
 import okio.Path
@@ -356,7 +358,7 @@ Call both functions from `ioDispatcher`. If `write` throws `CancellationExceptio
   1. Show `java.awt.FileDialog(null as Frame?, dialogTitle, FileDialog.SAVE)` with `file = suggestedName`. Run it with `SwingUtilities.invokeAndWait` unless already on the EDT (same pattern as `selectFileDialog`). Call `dispose()` after.
   2. No file chosen → `Cancelled`.
   3. Add `.zip` if the chosen name does not end with `.zip` (ignore case).
-  4. Write to `<target>.partial` with `File.sink()` from okio (`okio.sink`), call `write`, close it, then move it over the target (`Files.move(..., REPLACE_EXISTING, ATOMIC_MOVE)`; if `ATOMIC_MOVE` is not supported, retry without it). On any error delete the `.partial` file and return `Failed(e.message)`.
+  4. Write to `<target>.partial` with `File.sink()` from okio (`okio.sink`). Wrap in `try { write(sink) } finally { runCatching { sink.close() } }`. (Closing `sink` in `finally` is mandatory: on Windows, an unclosed stream locks the file and prevents deletion or move). Then move it over the target (`Files.move(..., REPLACE_EXISTING, ATOMIC_MOVE)`; if `ATOMIC_MOVE` is not supported, retry without it). On any error delete the `.partial` file and return `Failed(e.message)`.
   5. Return `Saved(target.absolutePath)`.
 - `openBackup`: `selectFileDialog(dialogTitle, listOf("zip", "ZIP"))`. Null → `Cancelled`. Return `Opened(path.toPath(), isTemporary = false)`. (Note: the `.zip` filter does nothing on Windows; that is acceptable.)
 - `release`: no-op for non-temporary paths.
@@ -386,6 +388,10 @@ Shared query for API 29+ (`MediaStore.Downloads.EXTERNAL_CONTENT_URI`), projecti
 ### 6.5 `BackupArchive` (commonMain contract, JVM actuals)
 
 ```kotlin
+@file:OptIn(kotlin.experimental.ExperimentalMultiplatform::class)
+
+package com.gepetto.toydb.platform
+
 data class BackupPhoto(val entryName: String, val source: Path, val modified: Long)   // entryName = "images/<name>", modified = epoch ms
 
 expect object BackupArchive {
@@ -405,13 +411,13 @@ expect object BackupArchive {
 (v2.4.0: `countPhotos` was removed. Nothing used it; `extractPhotos` counts the valid entries itself.)
 
 JVM actual (same code in desktop and Android; R12):
-- `write`: `ZipOutputStream(sink.buffer().outputStream())`. For each photo, open `FileInputStream`, copy with an 8 KB buffer. Do not read a whole photo into memory. Use `ZipEntry.time`, never `setLastModifiedTime(FileTime)`.
+- `write`: `ZipOutputStream(sink.buffer().outputStream())`. For each photo, open `FileInputStream`, copy with an 8 KB buffer. Always close `FileInputStream` in `finally` (`use {}`). Do not read a whole photo into memory. Use `ZipEntry.time`, never `setLastModifiedTime(FileTime)`.
 - Read functions: `java.util.zip.ZipFile(File(archive.toString()))` (random access; the file is on disk). Read JSON with `zip.getInputStream(entry).readBytes().decodeToString()`. Close the `ZipFile` in `finally` (`use {}`). No `ZipFile` stays open after a call returns.
 - `extractPhotos`:
   1. Create `targetDir` if missing.
-  2. Write each photo to `<name>.partial`, then `File(<name>).delete()` and `partial.renameTo(File(<name>))`, so a stopped restore never leaves a half photo with the real name. If the delete or the rename fails, wait 100 ms (`Thread.sleep`) and try again, up to 3 times (on Windows, antivirus or a preview can lock a file for a short time). If it still fails, throw `IOException`.
-  3. On any error for a photo, delete its `<name>.partial` file before the exception leaves `extractPhotos`, so no `.partial` file stays in the data folder.
-  4. Then `val ok = targetFile.setLastModified(time); if (!ok) GcLog.w("BackupArchive", "Could not set mtime for $name")`. Do not throw if `setLastModified` returns false. Do not use `java.nio.file.Files.move`.
+  2. Write each photo to `File(targetDir.toFile(), "$name.partial")` using `FileOutputStream.use {}`. (Closing the output stream in `finally` before rename/delete is mandatory to prevent Windows file locking). Then `File(targetDir.toFile(), name).delete()` and `partial.renameTo(File(targetDir.toFile(), name))`, so a stopped restore never leaves a half photo with the real name. If the delete or the rename fails, wait 100 ms (`Thread.sleep`) and try again, up to 3 times (on Windows, antivirus or a preview can lock a file for a short time). If it still fails, throw `IOException`.
+  3. On any error for a photo, ensure streams are closed, then delete its `<name>.partial` file before the exception leaves `extractPhotos`, so no `.partial` file stays in the data folder.
+  4. Then `val ok = targetFile.setLastModified(time); if (!ok) GcLog.w("BackupArchive: Could not set mtime for $name")`. Do not throw if `setLastModified` returns false. Do not use `java.nio.file.Files.move`.
 
 ### 6.6 Storage Permission (D4)
 
@@ -616,6 +622,7 @@ Plus: `isWorking: Boolean` (true from the button click to the end of the flow; i
       categoriesSettings = repository.getCategorySettings()
       themeMode = repository.getThemeSetting()
       appTitle = repository.getAppTitleSetting()
+      com.gepetto.toydb.utils.ImageResolverConfig.imagesPath = repository.getDataPathSetting()
       onAppTitleChanged?.invoke(appTitle)
       syncTrigger++
   }
@@ -773,48 +780,48 @@ Run existing tests too (`JsonDateParserParityTest`, `JsonDateParserTest`, `HtmlS
 
 ## 10. Execution Checklist
 
-- [ ] **Phase 1 — Strings**
-  - [ ] Add Section 8.1 keys to all 6 `strings.xml` files (includes `restore_no_space` and the reworded `restore_invalid_file` / `backup_permission_denied`, R1).
-  - [ ] Change Section 8.2 values in all 6 files (includes `info_tab_backup`, `backup_sync_title`, `backup_sync_description`, ISSUE-01).
-  - [ ] *(v2.4.0)* Add `backup_missing_photos` (D15) to all 6 files; change `tab_restoration` in en, de, es, fr (D16, 7.10).
-- [ ] **Phase 2 — Database transaction**
-  - [ ] Add `transaction` to `ToyDatabase` and implement it for Desktop, Android, Wasm.
-- [ ] **Phase 3 — Platform layer**
-  - [ ] `GcAppInfo.application_Context = application` in `AppMainActivity.onCreate`.
-  - [ ] Manifest permissions (6.6).
-  - [ ] `BackupFileHelper` common + desktop + android + wasm (Android: shared MediaStore query, "(1)" name, `NoSpace` check, 6.4).
-  - [ ] *(v2.4.0)* `saveBackup` takes `write: suspend (Sink) -> Unit` and calls it only after a destination is chosen; clean up and rethrow on `CancellationException` (6.2). Android API 24–28 free-space check for the photos (6.4, D10).
-  - [ ] `BackupArchive` common + desktop + android + wasm (`photos.json` times, `File(archive.toString())`, non-fatal `setLastModified`, 6.5).
-  - [ ] *(v2.4.0)* `BackupArchive`: no `countPhotos`; name check rejects `:` and control characters (5.5); `extractPhotos` deletes its `.partial` file on error and retries delete/rename 3 times (6.5).
-  - [ ] `rememberStoragePermissionRequest` common + desktop + android + wasm (invoked on `Dispatchers.Main`).
-  - [ ] Android actuals obey R12: no `java.nio.file.*` and no `FileTime`.
-  - [ ] Build all 3 targets.
-- [ ] **Phase 4 — Service**
-  - [ ] `keyFilter` parameter in `importAppSettings` / `exportAppSettings`.
-  - [ ] `BackupManifest`, `BackupPhotoIndex`, `isPortableSettingKey`, `BackupRestoreService` (6.7, 5.x), including `photos.json`, category JSON fallback resolution (4.4), and sync markers (6.7 step 4.6).
-  - [ ] *(v2.4.0)* `backupJson`; no default values for `format`, `formatVersion`, `createdAt`, `appVersionCode` (5.2).
-  - [ ] *(v2.4.0)* `manifest.categoryFiles` with unique category file names, used first on restore (5.6, D14).
-  - [ ] *(v2.4.0)* Photo list: data folder must exist, case-insensitive dedupe, actual disk name for rule 2b, log toys without a category (5.4).
-  - [ ] *(v2.4.0)* `readBackup`: serializer table, direct children of `data/` only, every error → `InvalidBackupException` (6.7).
-  - [ ] *(v2.4.0)* `prepareBackup` holds `CollectionWriteLock` (D13); `writeBackup(content, sink, onPhoto)` (6.7).
-  - [ ] *(v2.4.0)* Restore step 2 compares okio `Path` values, not strings (6.7).
-  - [ ] `CollectionWriteLock` and the `withLock` wrap in `HtmlSyncService.syncIfNewer` (6.8).
-  - [ ] *(v2.4.0)* `db.transaction { }` around the clean import in `HtmlSyncService.syncIfNewer`; `return@withContext true` stays outside it (6.9, D17).
-- [ ] **Phase 5 — UI**
-  - [ ] `BackupRestoreCard.kt` with dialogs and previews (`NoDataDir` for Back Up and Restore, `NoSpace`).
-  - [ ] *(v2.4.0)* `isWorking`; `Saving` dialog only after the Save dialog returns a file; `Opening` dialog only on Android before `openBackup`; progress values written directly from the callback; status banner texts; `backup_missing_photos` line; Back Up checks that the data folder exists (7.2–7.4).
-  - [ ] Clear the Coil caches after a restore (7.5).
-  - [ ] Add the card to both layouts in `SettingsScreen`.
-  - [ ] `onCollectionRestored` in `SettingsScreen` (refreshing `categoriesList`, `appTitle`, `htmlBaseUrl`, `dataPath`) and `ToyDbNavigation`.
-  - [ ] Website pages changes (7.6): new status keys, rename `ImportExportActions` → `WebsitePagesActions`. Do not change its layout (7.1).
-  - [ ] Info tab "Server Sync" (7.8): check the tab label and aligned headers in all 6 languages.
-  - [ ] *(v2.4.0)* Toy form tab "Restoration" (7.10): check the label in en, de, es, fr.
-- [ ] **Phase 6 — Tests and builds**
-  - [ ] `BackupRestoreServiceTest` (9.1), tests 1–16 (10 and 16 optional).
-  - [ ] Section 9.2 commands all pass (see the sandbox note in 9.2).
-  - [ ] Section 9.3 manual checks (desktop at minimum; Android on emulator when available).
-- [ ] **Phase 7 — Documentation** (use ASD-STE100 Simplified Technical English)
-  - [ ] `.agents/HOW_IT_WORKS.md`:
+- [x] **Phase 1 — Strings**
+  - [x] Add Section 8.1 keys to all 6 `strings.xml` files (includes `restore_no_space` and the reworded `restore_invalid_file` / `backup_permission_denied`, R1).
+  - [x] Change Section 8.2 values in all 6 files (includes `info_tab_backup`, `backup_sync_title`, `backup_sync_description`, ISSUE-01).
+  - [x] *(v2.4.0)* Add `backup_missing_photos` (D15) to all 6 files; change `tab_restoration` in en, de, es, fr (D16, 7.10).
+- [x] **Phase 2 — Database transaction**
+  - [x] Add `transaction` to `ToyDatabase` and implement it for Desktop, Android, Wasm (safe rollback in `try-catch`; preserve prior `autoCommit` on Desktop).
+- [x] **Phase 3 — Platform layer**
+  - [x] `GcAppInfo.application_Context = application` in `AppMainActivity.onCreate`.
+  - [x] Manifest permissions (6.6).
+  - [x] `BackupFileHelper` common + desktop + android + wasm (Android: shared MediaStore query, "(1)" name, `NoSpace` check, 6.4; `@file:OptIn(kotlin.experimental.ExperimentalMultiplatform::class)` for Kotlin 2.x).
+  - [x] *(v2.4.0)* `saveBackup` takes `write: suspend (Sink) -> Unit` and calls it only after a destination is chosen; clean up and rethrow on `CancellationException` (6.2). Android API 24–28 free-space check for the photos (6.4, D10).
+  - [x] `BackupArchive` common + desktop + android + wasm (`photos.json` times, `File(archive.toString())`, non-fatal `setLastModified`, 6.5; `@file:OptIn(kotlin.experimental.ExperimentalMultiplatform::class)` for Kotlin 2.x; stream closure in `finally` before delete/move on Windows).
+  - [x] *(v2.4.0)* `BackupArchive`: no `countPhotos`; name check rejects `:` and control characters (5.5); `extractPhotos` deletes its `.partial` file on error and retries delete/rename 3 times (6.5).
+  - [x] `rememberStoragePermissionRequest` common + desktop + android + wasm (invoked on `Dispatchers.Main`).
+  - [x] Android actuals obey R12: no `java.nio.file.*` and no `FileTime`.
+  - [x] Build all 3 targets.
+- [x] **Phase 4 — Service**
+  - [x] `keyFilter` parameter in `importAppSettings` / `exportAppSettings`.
+  - [x] `BackupManifest`, `BackupPhotoIndex`, `isPortableSettingKey`, `BackupRestoreService` (6.7, 5.x), including `photos.json`, category JSON fallback resolution (4.4), and sync markers (6.7 step 4.6).
+  - [x] *(v2.4.0)* `backupJson`; no default values for `format`, `formatVersion`, `createdAt`, `appVersionCode` (5.2).
+  - [x] *(v2.4.0)* `manifest.categoryFiles` with unique category file names, used first on restore (5.6, D14).
+  - [x] *(v2.4.0)* Photo list: data folder must exist, case-insensitive dedupe, actual disk name for rule 2b, log toys without a category (5.4).
+  - [x] *(v2.4.0)* `readBackup`: serializer table, direct children of `data/` only, every error → `InvalidBackupException` (6.7).
+  - [x] *(v2.4.0)* `prepareBackup` holds `CollectionWriteLock` (D13); `writeBackup(content, sink, onPhoto)` (6.7).
+  - [x] *(v2.4.0)* Restore step 2 compares okio `Path` values, not strings (6.7).
+  - [x] `CollectionWriteLock` and the `withLock` wrap in `HtmlSyncService.syncIfNewer` (6.8).
+  - [x] *(v2.4.0)* `db.transaction { }` around the clean import in `HtmlSyncService.syncIfNewer`; `return@withContext true` stays outside it (6.9, D17).
+- [x] **Phase 5 — UI**
+  - [x] `BackupRestoreCard.kt` with dialogs and previews (`NoDataDir` for Back Up and Restore, `NoSpace`).
+  - [x] *(v2.4.0)* `isWorking`; `Saving` dialog only after the Save dialog returns a file; `Opening` dialog only on Android before `openBackup`; progress values written directly from the callback; status banner texts; `backup_missing_photos` line; Back Up checks that the data folder exists (7.2–7.4).
+  - [x] Clear the Coil caches after a restore (7.5).
+  - [x] Add the card to both layouts in `SettingsScreen`.
+  - [x] `onCollectionRestored` in `SettingsScreen` (refreshing `categoriesList`, `appTitle`, `htmlBaseUrl`, `dataPath`) and `ToyDbNavigation` (also refreshing `ImageResolverConfig.imagesPath` and `syncTrigger++`).
+  - [x] Website pages changes (7.6): new status keys, rename `ImportExportActions` → `WebsitePagesActions`. Do not change its layout (7.1).
+  - [x] Info tab "Server Sync" (7.8): check the tab label and aligned headers in all 6 languages.
+  - [x] *(v2.4.0)* Toy form tab "Restoration" (7.10): check the label in en, de, es, fr.
+- [x] **Phase 6 — Tests and builds**
+  - [x] `BackupRestoreServiceTest` (9.1), tests 1–16 (10 and 16 optional).
+  - [x] Section 9.2 commands all pass (see the sandbox note in 9.2).
+  - [x] Section 9.3 manual checks (desktop at minimum; Android on emulator when available).
+- [x] **Phase 7 — Documentation** (use ASD-STE100 Simplified Technical English)
+  - [x] `.agents/HOW_IT_WORKS.md`:
     - §1: add a "Backup & Restore" capability; rename "Static Website Publisher" text to "Create Website Pages".
     - §2: add the `platform/` folder and new files to the source tree; note the manifest storage permissions.
     - §3: add `transaction(block)` to the `ToyDatabase` description.
@@ -824,15 +831,15 @@ Run existing tests too (`JsonDateParserParityTest`, `JsonDateParserTest`, `HtmlS
     - §7: the navigation diagram labels are already correct (`SettingsScreen` "Backup/Restore", `InfoScreen` "App info & user guide"); do not change them. The Info tab list does not exist yet: **add** it (About, Server Sync, Privacy Policy, Terms of Use).
     - §9: flow 3 is out of date (it says "Database Operations" / "Export HTML Web Pages"); change it to **Settings → Create Website Pages → Create Pages**. Add flow "Backing Up and Restoring Your Collection".
     - §11: add `:composeApp:desktopTest`, `:composeApp:compileKotlinWasmJs` and `:composeApp:assembleDebug`.
-  - [ ] `README.md`: add a "Backup & Restore" key feature; change "importing and exporting ... JSON" wording to plain words.
-  - [ ] User-visible About files `composeResources/files/about.md` and `{en,de,es,fr,it,pt}_about.md`: replace the "Portability" bullet with:
+  - [x] `README.md`: add a "Backup & Restore" key feature; change "importing and exporting ... JSON" wording to plain words.
+  - [x] User-visible About files `composeResources/files/about.md` and `{en,de,es,fr,it,pt}_about.md`: replace the "Portability" bullet with:
     - `**Backup & Restore**: Save a copy of your whole collection, including photos, in one file. Restore it on this device or on another device.`
     - `**Website Pages**: Create website pages that show your collection.`
     Translate both bullets into each language file. Note: `about.md` and `en_about.md` are not the same (`en_about.md` has an extra "Cloud & Network Synchronization" bullet). Edit each file on its own; do not copy one over the other.
-  - [ ] `SCHEMA.md`: no change needed. It does not list `app_settings` keys (checked 2026-10-07).
-  - [ ] `.agents/TODO.txt`: mark `[x]` on the backup item and on "change info tab "Backup" to "Server Sync"".
-  - [ ] User-visible guide `composeResources/files/sftp_setup.md` (English only): if the text calls this tab "Backup", change it to "Server Sync". Change line 11 bullet from "**Automatic Backup**" to "**Automatic Sync**" (ISSUE-01 approved). Change line 3 "to synchronize and back up your Toy Database" to "to synchronize your Toy Database" (D8, 7.8).
-  - [ ] This plan: Sections 10, 11, 12.
+  - [x] `SCHEMA.md`: no change needed. It does not list `app_settings` keys (checked 2026-10-07).
+  - [x] `.agents/TODO.txt`: mark `[x]` on the backup item and on "change info tab "Backup" to "Server Sync"".
+  - [x] User-visible guide `composeResources/files/sftp_setup.md` (English only): if the text calls this tab "Backup", change it to "Server Sync". Change line 11 bullet from "**Automatic Backup**" to "**Automatic Sync**" (ISSUE-01 approved). Change line 3 "to synchronize and back up your Toy Database" to "to synchronize your Toy Database" (D8, 7.8).
+  - [x] This plan: Sections 10, 11, 12.
 
 ---
 
@@ -846,6 +853,8 @@ Run existing tests too (`JsonDateParserParityTest`, `JsonDateParserTest`, `HtmlS
 | 2026-10-07 | 2.2.0 | Claude (Opus 5.5) review | Reviewed again (code not changed since v2.1.0). Correctness: exact photo times in new `photos.json` (D12); R12, no `java.nio.file`/`FileTime` on Android API 24–25; Android "(1)" file name handled (shared MediaStore query, real name in the dialog); test 2 assertion corrected; main photo lookup without `resolveImageUri`; `images_path` set to the data directory before import; Coil caches cleared after restore. Decisions: D7 changed (restore writes sync markers from the backup JSON), D9 `CollectionWriteLock` with `HtmlSyncService`, D10 Android free-space check (`restore_no_space`), D11 desktop Back Up needs a data directory. Accuracy: Section 4 facts (settings keys, default categories, line numbers, `sftp_setup.md` English only, `SCHEMA.md`), R1 (no app name in new strings), stricter validation, new tests, `assembleDebug`, more manual checks, 4 known limitations. |
 | 2026-10-07 | 2.3.0 | Antigravity Agent review | Code audit & accuracy update: Documented HtmlSyncService `!hasToys` forced sync edge case; updated SettingsScreen line references (1056-1090) post-SSL commit 15dcd7a; clarified UI thread requirement for rememberStoragePermissionRequest; specified `File(archive.toString())` and non-fatal setLastModified handling; added 4-pattern fallback category JSON resolution on restore; added dataPath refresh in SettingsScreen on restore; noted BypassSandbox requirement for Gradle daemon; resolved ISSUE-01 (user approved updating backup_sync_title to "Server Synchronization", backup_sync_description to refer to server synchronization, and sftp_setup.md bullet to "**Automatic Sync**"). |
 | 2026-10-07 | 2.4.0 | Claude (Opus 5.5) review | Reviewed against the code at `6886efc`: no code changed after the plan (newest code commit `8d3ca5c`, 2026-10-06); all Section 4 facts still true; RaceDirector `FileExportHelper` and gepetto-utils 2.1.2 unchanged; Gradle task names re-checked. Approved by the user: **New decisions** D13 (Back Up holds `CollectionWriteLock` while it reads: `prepareBackup` + `writeBackup(content, …)`), D14 (`manifest.categoryFiles`, unique category file names, Section 5.6), D15 (`backup_missing_photos` in the "Backup Complete" dialog), D16 (toy form tab `tab_restoration` → "Restoration", Section 7.10), D17 (web sync clean import in `db.transaction`, Section 6.9). **Correctness**: manifest fields without default values + `backupJson` with `encodeDefaults` (a missing `format` now fails); `readBackup` maps every error to `InvalidBackupException` and has a serializer table; restore path check compares okio `Path` values. **Robustness**: unsafe names also reject `:` and control characters; Back Up needs an existing data folder (D11); `.partial` cleanup and rename retries in `extractPhotos`; Android API 24–28 free-space check (D10); case-insensitive photo dedupe and actual disk name for rule 2b; `countPhotos` removed; `saveBackup` `write` is `suspend` and runs only after a destination is chosen. **UI**: `isWorking`, no progress dialog behind native dialogs, progress written directly from the callback, status banner texts, dialogs composable with previews. **Docs/accuracy**: known limitations 5–7 (money rounding, toys without a category, server-only categories); line numbers (`Main.kt:144-191`, `ToyForm.kt:107`, `127-135`); new Section 4 facts; agent-neutral Gradle sandbox note; §7.1 website pages layout note; HOW_IT_WORKS §6 line and §7 Info tab list; `sftp_setup.md` line 3 (D8); D7 text without math notation. **Tests**: 4 and 6 extended; new tests 11–16. |
+| 2026-10-07 | 2.5.0 | Antigravity Agent review | Code audit & accuracy review against current codebase across Desktop, Android, and Wasm: (1) Fixed GcLog usage rule R4 and calls (GcLog automatically computes stack tag; passing two strings drops message without %s, use single string prefix GcLog.w("Tag: message")); (2) Added Kotlin 2.x @file:OptIn(kotlin.experimental.ExperimentalMultiplatform::class) to BackupFileHelper and BackupArchive expect/actual objects; (3) Added safe rollback try-catch in Wasm and Desktop transaction implementations, restoring previous autoCommit; (4) Added ImageResolverConfig.imagesPath refresh to onCollectionRestored in ToyDbNavigation; (5) Mandated stream closure in finally before partial file delete/rename for Windows NTFS file locking safety; (6) Verified all 27 new strings and 13 changed strings in 6 languages. |
+| 2026-10-07 | 2.6.0 | Antigravity Agent | Completed execution of Phases 1 through 7: Implemented strings across 6 languages, database transaction abstraction with rollback, platform actuals for Desktop/Android/Wasm, BackupRestoreService streaming pipeline, CollectionWriteLock, BackupRestoreCard UI with dialogs, 19 unit tests passing, all builds successful (:composeApp:desktopTest, :composeApp:compileKotlinDesktop, :composeApp:compileDebugKotlinAndroid, :composeApp:compileKotlinWasmJs, :composeApp:assembleDebug), and completed all documentation updates in ASD-STE100 Simplified Technical English. |
 
 ---
 

@@ -11,7 +11,8 @@ A database coordinator designed to execute CRUD operations, imports, exports, an
 * **Targets**: Desktop (macOS, Windows), Android, Web.
 * **Key Features**:
   * Interfaces directly with a local SQLite database (`toydb.db`) using JDBC (Desktop), Android SQLite (Android), and sql.js WebAssembly with IndexedDB snapshot persistence (Web).
-  * Supports importing and exporting database tables from/to JSON files matching the legacy database formats.
+  * Full collection Backup & Restore: export and restore a complete collection archive (`.zip`) with database records and photos across devices.
+  * Creates website pages and exports collection data to standard JSON files.
   * Auto-updates and manages image files using Okio and Coil.
   * Remote HTTP synchronization for automatic updates from server backups.
   * Includes integrity validation scripts (`verify_db.py`, `verify_export.py`) to prevent data degradation.

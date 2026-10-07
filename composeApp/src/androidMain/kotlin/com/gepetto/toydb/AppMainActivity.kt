@@ -25,6 +25,7 @@ class AppMainActivity : ComponentActivity() {
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         GcLog.plant(GcLog.DebugTree())
+        club.gepetto.utils.GcAppInfo.application_Context = application
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 

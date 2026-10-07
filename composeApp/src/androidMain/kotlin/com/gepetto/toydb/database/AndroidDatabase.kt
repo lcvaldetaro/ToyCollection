@@ -55,6 +55,17 @@ class AndroidToyDatabase(context: Context, dbName: String) : ToyDatabase {
         return AndroidSqlCursor(cursor)
     }
 
+    override fun <T> transaction(block: () -> T): T {
+        db.beginTransaction()
+        return try {
+            val result = block()
+            db.setTransactionSuccessful()
+            result
+        } finally {
+            db.endTransaction()
+        }
+    }
+
     override fun close() {
         db.close()
     }

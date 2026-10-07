@@ -502,6 +502,14 @@ fun ToyDbNavigation(
                                     onAppTitleChanged = { newTitle ->
                                         appTitle = newTitle
                                         onAppTitleChanged?.invoke(newTitle)
+                                    },
+                                    onCollectionRestored = {
+                                        categoriesSettings = repository.getCategorySettings()
+                                        themeMode = repository.getThemeSetting()
+                                        appTitle = repository.getAppTitleSetting()
+                                        com.gepetto.toydb.utils.ImageResolverConfig.imagesPath = repository.getDataPathSetting()
+                                        onAppTitleChanged?.invoke(appTitle)
+                                        syncTrigger++
                                     }
                                 )
                             }

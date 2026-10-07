@@ -17,6 +17,7 @@ interface SqlCursor {
 interface ToyDatabase {
     fun execute(sql: String, bindArgs: List<Any?> = emptyList())
     fun query(sql: String, bindArgs: List<String> = emptyList()): SqlCursor
+    fun <T> transaction(block: () -> T): T
     fun close()
 }
 

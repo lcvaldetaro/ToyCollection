@@ -3,10 +3,10 @@ HARD:
 [ ]-have a "file manager to manipulate a toy's image files"
 
 SIMPLE:
-[ ]-change info tab "Backup" to "Server Sync"
 [ ]-create help tab for "backup and restore"
 [ ]-create help tab for categories
-[ ]-simplify the settings / break into categories with tabs / "Theme" | "Server Sync" | "Categories" | "Backup and Restore"
+[ ]-simplify the settings / break into categories with tabs / "Theme" (or a better name, because for example, we plan to introduce the ability to change locale) | "Server Sync" | "Categories" | "Backup and Restore"
+[ ]-ability to change language locale
 [ ]-desktop must check if there is a new version to download
 [ ]-web version backaup/restore
 
@@ -16,4 +16,5 @@ SIMPLE:
 [x]-change package to "com.gepetto.slotcarscollection"
 [x]-create tabbed info page
 [x]-creation of web version (see .agents/WEB_PORT_PLAN.md)
-[ ]-ability to export/import the DB and images to a zip, and save it / read it / the same way Race Director does (see .agents/IMPORT_EXPORT_PLAN.md)
+[x]-ability to export/import the DB and images to a zip, and save it / read it / the same way Race Director does (see .agents/IMPORT_EXPORT_PLAN.md)
+[x]-change info tab "Backup" to "Server Sync"

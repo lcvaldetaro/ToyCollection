@@ -52,6 +52,29 @@ class DesktopToyDatabase(dbName: String) : ToyDatabase {
         return DesktopSqlCursor(rs)
     }
 
+    override fun <T> transaction(block: () -> T): T {
+        val previousAutoCommit = connection.autoCommit
+        connection.autoCommit = false
+        return try {
+            val result = block()
+            connection.commit()
+            result
+        } catch (e: Throwable) {
+            try {
+                connection.rollback()
+            } catch (rbEx: Throwable) {
+                GcLog.w("DesktopToyDatabase: Rollback failed: ${rbEx.message}")
+            }
+            throw e
+        } finally {
+            try {
+                connection.autoCommit = previousAutoCommit
+            } catch (acEx: Throwable) {
+                GcLog.w("DesktopToyDatabase: Restoring autoCommit failed: ${acEx.message}")
+            }
+        }
+    }
+
     override fun close() {
         connection.close()
     }

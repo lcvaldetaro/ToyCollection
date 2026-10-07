@@ -450,35 +450,47 @@ object ImportExportService {
         return json.encodeToString(JsonCategorySettingsFile.serializer(), fileObj)
     }
 
-    fun importAppSettings(db: ToyDatabase, jsonContent: String): Int {
-        GcLog.d(TAG, "Importing app settings...")
+    fun importAppSettings(
+        db: ToyDatabase,
+        jsonContent: String,
+        keyFilter: (String) -> Boolean = { true }
+    ): Int {
+        GcLog.d("ImportExportService: Importing app settings...")
         val parsed = json.decodeFromString<JsonAppSettingsFile>(jsonContent)
         var count = 0
         parsed.settings.forEach { s ->
-            db.execute(
-                """
-                INSERT OR REPLACE INTO app_settings (key, value)
-                VALUES (?, ?)
-                """.trimIndent(),
-                listOf(s.key, s.value)
-            )
-            count++
+            if (keyFilter(s.key)) {
+                db.execute(
+                    """
+                    INSERT OR REPLACE INTO app_settings (key, value)
+                    VALUES (?, ?)
+                    """.trimIndent(),
+                    listOf(s.key, s.value)
+                )
+                count++
+            }
         }
-        GcLog.d(TAG, "Imported $count app settings.")
+        GcLog.d("ImportExportService: Imported $count app settings.")
         return count
     }
 
-    fun exportAppSettings(db: ToyDatabase): String {
-        GcLog.d(TAG, "Exporting app settings...")
+    fun exportAppSettings(
+        db: ToyDatabase,
+        keyFilter: (String) -> Boolean = { true }
+    ): String {
+        GcLog.d("ImportExportService: Exporting app settings...")
         val cursor = db.query("SELECT * FROM app_settings ORDER BY key ASC")
         val list = mutableListOf<JsonAppSetting>()
         while (cursor.next()) {
-            list.add(
-                JsonAppSetting(
-                    key = cursor.getString("key") ?: "",
-                    value = cursor.getString("value") ?: ""
+            val key = cursor.getString("key") ?: ""
+            if (keyFilter(key)) {
+                list.add(
+                    JsonAppSetting(
+                        key = key,
+                        value = cursor.getString("value") ?: ""
+                    )
                 )
-            )
+            }
         }
         cursor.close()
         val fileObj = JsonAppSettingsFile(settings = list)

@@ -64,6 +64,7 @@ fun SettingsScreen(
     onCategoriesChanged: () -> Unit,
     onNavigate: (Destination) -> Unit = {},
     onAppTitleChanged: (String) -> Unit = {},
+    onCollectionRestored: () -> Unit = {},
 ) {
     val repository = remember { ToyRepository(db) }
     val readyText = stringResource(Res.string.status_ready)
@@ -1193,7 +1194,20 @@ fun SettingsScreen(
                                     syncProgress = sftpSyncProgress
                                 )
                                 Spacer(modifier = Modifier.height(GcSpacing.Standard))
-                                ImportExportActions(
+                                BackupRestoreCard(
+                                    db = db,
+                                    dataPath = dataPath,
+                                    onCollectionRestored = {
+                                        categoriesList = repository.getCategorySettings()
+                                        appTitle = repository.getAppTitleSetting()
+                                        htmlBaseUrl = repository.getBaseUrlSetting() ?: ""
+                                        dataPath = repository.getDataPathSetting()
+                                        onCollectionRestored()
+                                    },
+                                    onSetStatus = { statusText = it }
+                                )
+                                Spacer(modifier = Modifier.height(GcSpacing.Standard))
+                                WebsitePagesActions(
                                     customImportExportPath = dataPath,
                                     db = db,
                                     onHtmlExportComplete = { path, count ->
@@ -1411,7 +1425,20 @@ fun SettingsScreen(
                                 syncProgress = sftpSyncProgress
                             )
                             Spacer(modifier = Modifier.height(GcSpacing.Standard))
-                            ImportExportActions(
+                            BackupRestoreCard(
+                                db = db,
+                                dataPath = dataPath,
+                                onCollectionRestored = {
+                                    categoriesList = repository.getCategorySettings()
+                                    appTitle = repository.getAppTitleSetting()
+                                    htmlBaseUrl = repository.getBaseUrlSetting() ?: ""
+                                    dataPath = repository.getDataPathSetting()
+                                    onCollectionRestored()
+                                },
+                                onSetStatus = { statusText = it }
+                            )
+                            Spacer(modifier = Modifier.height(GcSpacing.Standard))
+                            WebsitePagesActions(
                                 customImportExportPath = dataPath,
                                 db = db,
                                 onHtmlExportComplete = { path, count ->
@@ -1600,7 +1627,7 @@ fun DataDirectorySettings(
 }
 
 @Composable
-fun ImportExportActions(
+fun WebsitePagesActions(
     customImportExportPath: String?,
     db: ToyDatabase,
     onHtmlExportComplete: (path: String, count: Int) -> Unit,
@@ -1621,14 +1648,14 @@ fun ImportExportActions(
                 if (selectedDir != null) {
                     coroutineScope.launch {
                         isExportingHtml = true
-                        onSetStatus("Generating HTML pages to $selectedDir...")
+                        onSetStatus(getString(Res.string.website_status_creating, selectedDir))
                         try {
                             val generatedCount = withContext(ioDispatcher) {
                                 ImportExportService.exportHtml(db, selectedDir)
                             }
                             isExportingHtml = false
                             onHtmlExportComplete(selectedDir, generatedCount)
-                            onSetStatus("HTML generation completed! Generated $generatedCount files in $selectedDir.")
+                            onSetStatus(getString(Res.string.website_status_done, generatedCount, selectedDir))
                         } catch (e: Exception) {
                             isExportingHtml = false
                             onSetStatus(getString(Res.string.error_html, e.message ?: ""))

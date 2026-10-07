@@ -1,6 +1,6 @@
 # SFTP Server Setup Guide
 
-This guide explains how to set up an **SFTP server** to synchronize and back up your Toy Database across multiple devices.
+This guide explains how to set up an **SFTP server** to synchronize your Toy Database across multiple devices.
 
 ---
 
@@ -8,7 +8,7 @@ This guide explains how to set up an **SFTP server** to synchronize and back up 
 An **SFTP (Secure File Transfer Protocol) Server** is a secure, private storage space on the internet. 
 
 ### Why do I need one?
-1. **Automatic Backup**: Your collection data is stored safely on your private server. If you lose or reset your phone or computer, your data is never lost.
+1. **Automatic Sync**: Your collection data is stored safely on your private server. If you lose or reset your phone or computer, your data is never lost.
 2. **Multi-Device Synchronization**: You can run this app on your computer, tablet, and phone, and sync the same database among all of them via your server.
 
 ---

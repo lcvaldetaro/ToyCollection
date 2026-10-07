@@ -12,6 +12,7 @@ import io.ktor.client.statement.*
 import io.ktor.http.HttpHeaders
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -46,8 +47,9 @@ object HtmlSyncService {
         }
         
         return withContext(club.gepetto.utils.ioDispatcher) {
-            try {
-                GcLog.d(TAG, "Starting HTML Sync check. Base URL: $baseUrl")
+            CollectionWriteLock.mutex.withLock {
+                try {
+                    GcLog.d(TAG, "Starting HTML Sync check. Base URL: $baseUrl")
                 // 1. Download category_settings.json
                 val catSettingsUrl = if (baseUrl.endsWith("/")) "${baseUrl}category_settings.json" else "$baseUrl/category_settings.json"
                 val catResponse = client.get(catSettingsUrl)
@@ -194,34 +196,36 @@ object HtmlSyncService {
                 GcLog.i(TAG, "HTML Server has newer backups. Performing clean import...")
                 
                 // 4. Perform clean import in a transaction / thread-safe manner
-                db.execute("DELETE FROM toys")
-                db.execute("DELETE FROM makers")
-                db.execute("DELETE FROM category_settings")
-                
-                // Import category settings
-                ImportExportService.importCategorySettings(db, catContent)
-                
-                // Import makers
-                ImportExportService.importMakers(db, makersContent)
-                
-                // Import toys
-                for (item in categoryFilesToDownload) {
-                    ImportExportService.importToys(db, item.first, item.third)
-                }
-                
-                // 5. Save the new imported date strings and hashes to metadata
-                saveMetadataSetting(db, "html_sync_imported_date_category_settings.json", catDateStr)
-                saveMetadataSetting(db, "html_sync_imported_hash_category_settings.json", catServerHash)
+                db.transaction {
+                    db.execute("DELETE FROM toys")
+                    db.execute("DELETE FROM makers")
+                    db.execute("DELETE FROM category_settings")
+                    
+                    // Import category settings
+                    ImportExportService.importCategorySettings(db, catContent)
+                    
+                    // Import makers
+                    ImportExportService.importMakers(db, makersContent)
+                    
+                    // Import toys
+                    for (item in categoryFilesToDownload) {
+                        ImportExportService.importToys(db, item.first, item.third)
+                    }
+                    
+                    // 5. Save the new imported date strings and hashes to metadata
+                    saveMetadataSetting(db, "html_sync_imported_date_category_settings.json", catDateStr)
+                    saveMetadataSetting(db, "html_sync_imported_hash_category_settings.json", catServerHash)
 
-                saveMetadataSetting(db, "html_sync_imported_date_makers", makersDateStr)
-                saveMetadataSetting(db, "html_sync_imported_hash_makers", makersServerHash)
+                    saveMetadataSetting(db, "html_sync_imported_date_makers", makersDateStr)
+                    saveMetadataSetting(db, "html_sync_imported_hash_makers", makersServerHash)
 
-                for (item in categoryFilesToDownload) {
-                    val listJson = json.parseToJsonElement(item.third) as? JsonObject
-                    val listDateStr = listJson?.get("date")?.jsonPrimitive?.content ?: ""
-                    val listServerHash = calculateHash(item.third)
-                    saveMetadataSetting(db, "html_sync_imported_date_${item.first}", listDateStr)
-                    saveMetadataSetting(db, "html_sync_imported_hash_${item.first}", listServerHash)
+                    for (item in categoryFilesToDownload) {
+                        val listJson = json.parseToJsonElement(item.third) as? JsonObject
+                        val listDateStr = listJson?.get("date")?.jsonPrimitive?.content ?: ""
+                        val listServerHash = calculateHash(item.third)
+                        saveMetadataSetting(db, "html_sync_imported_date_${item.first}", listDateStr)
+                        saveMetadataSetting(db, "html_sync_imported_hash_${item.first}", listServerHash)
+                    }
                 }
                 
                 GcLog.i(TAG, "HTML Startup Sync completed successfully.")
@@ -231,6 +235,7 @@ object HtmlSyncService {
                 GcLog.e(TAG, "Error performing HTML startup sync: ${e.message}", e)
                 // Ktor's JS engine throws JsError, which is a Throwable but not an Exception.
                 throw if (e is Exception) e else Exception(e.message, e)
+            }
             }
         }
     }
