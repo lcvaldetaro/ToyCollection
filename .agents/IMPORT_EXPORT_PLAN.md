@@ -1,7 +1,7 @@
 # Toy Collection: Backup & Restore Implementation Plan
 
 **Target Document**: `ToyCollection/.agents/IMPORT_EXPORT_PLAN.md` (file name kept so existing links in `TODO.txt` stay valid)
-**Document Version**: 2.1.0
+**Document Version**: 2.2.0
 **Target Module**: `:composeApp`
 **Target Platforms**: Desktop (macOS, Windows), Android. Web: compile-only stubs, feature hidden.
 **Document Status**: **LIVING DOCUMENT** — Update this plan during implementation. Log every change and bug.
@@ -36,7 +36,7 @@ In the same change:
 Obey `~/valdetaro/.agents/AGENTS.md` and `ToyCollection/.agents/AGENTS.md`. The most important rules for this work:
 
 > [!IMPORTANT]
-> **R1 — User-facing words.** The user does not want technical words in the UI. In every user-visible text use **"Back Up"**, **"Backup"**, **"Restore"**, **"collection"**, **"photos"**, **"website pages"**. Do **not** use "import", "export", "database", "JSON", "zip" or "HTML" in user-visible text. (The Android file name `toy_collection_backup.zip` is the only exception, because the user must find that file.)
+> **R1 — User-facing words.** The user does not want technical words in the UI. In every user-visible text use **"Back Up"**, **"Backup"**, **"Restore"**, **"collection"**, **"photos"**, **"website pages"**. Do **not** use "import", "export", "database", "JSON", "zip" or "HTML" in user-visible text. (The Android file name `toy_collection_backup.zip` is the only exception, because the user must find that file.) Do not put the app name "Toy Database Manager" in new texts, because it contains "Database"; say "the app" instead.
 
 > [!IMPORTANT]
 > **R2 — `commonMain` stays pure KMP.** No `java.*`, `javax.*` or `android.*` imports in `commonMain`. Use `okio` (already a `commonMain` dependency) for paths and streams. Put zip, dialogs and MediaStore code behind `expect`/`actual`.
@@ -60,13 +60,16 @@ Obey `~/valdetaro/.agents/AGENTS.md` and `ToyCollection/.agents/AGENTS.md`. The 
 > **R8 — Git.** Never `git commit`, `git push` or `git add` unless the user orders it.
 
 > [!IMPORTANT]
-> **R9 — Build.** Never run `./gradlew assemble`. Use the commands in Section 9.
+> **R9 — Build.** Never run the plain `./gradlew assemble` task (it also builds release versions). `:composeApp:assembleDebug` is allowed. Use the commands in Section 9.
 
 > [!IMPORTANT]
 > **R10 — Tests.** If an existing test fails, first assume the new code is wrong. Temporary test files go in a temp directory, never in the module root.
 
 > [!IMPORTANT]
 > **R11 — Living document.** Check off Section 10 items as you finish them. Add every code change to Section 11 and every problem to Section 12.
+
+> [!IMPORTANT]
+> **R12 — Android API 24–25.** minSdk is 24. In `androidMain` do **not** use `java.nio.file.*` (`Files`, `Paths`, `StandardCopyOption`) or `java.nio.file.attribute.FileTime` (all need API 26). Use `java.io.File` (`renameTo`, `delete`, `setLastModified`) and okio.
 
 ---
 
@@ -76,15 +79,24 @@ Obey `~/valdetaro/.agents/AGENTS.md` and `ToyCollection/.agents/AGENTS.md`. The 
 |---|---|---|
 | D1 | UI name | **"Backup & Restore"**. Buttons: **"Back Up Collection"** and **"Restore Collection"**. |
 | D2 | HTML card | Rename user-visible text from "HTML Generation" to **"Create Website Pages"**. |
-| D3 | Android restore source | Same as Race Director: read only `Downloads/toy_collection_backup.zip`. If it is not found, show the "Backup File Not Found" dialog. No file picker. |
+| D3 | Android restore source | Same as Race Director: read only the backup file in `Downloads` (`toy_collection_backup.zip`, or the name Android gave it, for example `toy_collection_backup (1).zip`, see Section 6.4). If it is not found, show the "Backup File Not Found" dialog. No file picker. |
 | D4 | Android 9 and below | Add `WRITE_EXTERNAL_STORAGE` / `READ_EXTERNAL_STORAGE` with `maxSdkVersion="28"` and ask for the permission at run time. |
-| D5 | Settings that are not in the backup | All `sftp_*` keys, `images_path`, `data_path`, `import_export_path`, and all `html_sync_imported_*` keys. |
+| D5 | Settings that are not in the backup | All `sftp_*` keys, `images_path`, `data_path`, `import_export_path`, and all `html_sync_imported_*` keys. (Restore **writes new** `html_sync_imported_*` values from the backup itself, see D7. They are never copied from `app_settings.json`.) |
 | D6 | Architecture | Keep today's pattern (Rule R7). |
-| D7 | Startup web sync | Accepted: the web sync at app start can still replace a restored collection when the server has newer data. No change. |
+| D7 | Startup web sync | *(Changed 2026-10-07, v2.2.0.)* The web sync at app start may replace a restored collection **only when the server has data newer than the backup**. To do this, restore sets the sync markers (`html_sync_imported_date_*` / `html_sync_imported_hash_*`) from the backup's own JSON files (Section 6.7, step 4.6). Without this, empty markers (fresh install, `HtmlSyncService.kt:76`) would make the sync replace the restored collection at the next start. |
 | D8 | Info tab name | The Info screen tab "Backup" (SFTP guide) becomes **"Server Sync"**. Text only. |
+| D9 | Restore vs. web sync at the same time | Add `CollectionWriteLock` (a shared `Mutex`). Restore and `HtmlSyncService.syncIfNewer` both hold it, so they never run at the same time (Section 6.8). This is a small change to `HtmlSyncService.kt`. |
+| D10 | Android free space | Before Android copies the backup to `cacheDir`, check the free space. If it is too small, show `restore_no_space` (Section 6.4). |
+| D11 | Desktop backup without a data directory | **Back Up** also requires a data directory on desktop. If there is none, show `backup_no_data_dir` (same as Restore). No backup without photos. |
+| D12 | Photo modified times | Store the exact modified time (milliseconds) of each photo in `photos.json` inside the backup, and set it on restore. Do not depend on the zip entry time (2-second, local time zone; `FileTime` needs API 26). Reason: `DesktopSftpService` compares modified times in seconds; a time shift makes the next SFTP sync send all photos again. |
 
-### Known limitation (accepted with D3)
-On Android 10 and later, the app can only find a file in Downloads that **this installation** created. After the app is reinstalled, or when the file was copied from a computer, restore reports "not found". This is the same as Race Director. Record it in `HOW_IT_WORKS.md` (Phase 7).
+### Known limitations (accepted)
+1. **Android 10 and later (D3):** the app can only find a file in Downloads that **this installation** created. After the app is reinstalled, or when the file was copied from a computer, restore reports "not found". This is the same as Race Director.
+2. **Android 10 and later, name change:** if a `toy_collection_backup.zip` that this installation did not create is already in Downloads, Android saves the new backup as `toy_collection_backup (1).zip`. The "Backup Complete" dialog shows the real name, and restore finds it (Section 6.4).
+3. **Android 10 and later, overwrite:** when this installation already made the backup file, a new backup writes over the same file (mode `"wt"`). If that write fails, the old backup is damaged. Same as Race Director.
+4. **Main photo flag:** `importToys` sets `has_picture = 'n'` when `picture` is blank (`ImportExportService.kt:234-258`). A toy with `has_picture = 'y'` and a blank `picture` loses its main photo after restore. Current data has **0** such toys (checked 2026-10-07 in all `*list.json` files and `default_toydb.db`).
+
+Record all four in `HOW_IT_WORKS.md` (Phase 7).
 
 ---
 
@@ -97,20 +109,29 @@ The executing agent depends on these facts. Check them before Phase 2.
 | `ToyDatabase` has only `execute`, `query`, `close`. No transaction support. | `commonMain/.../database/Database.kt:17` |
 | Platform databases: JDBC (`DesktopDatabase.kt`), Android `SQLiteDatabase` (`AndroidDatabase.kt`), sql.js (`WasmDatabase.wasmJs.kt`). | `*/database/` |
 | JSON envelope classes and import/export functions for each table already exist: `exportCategorySettings`, `exportMakers`, `exportToys(db, toyType)`, `exportAppSettings`, `importCategorySettings`, `importMakers`, `importToys(db, toyType, json)`, `importAppSettings`. | `commonMain/.../service/ImportExportService.kt` |
-| `importToys` and `processBitmaps` read size and timestamp **from the photo file on disk** in the folder `getImagesPath(db)` returns (`app_settings.images_path`). If the file is not there, they use the values in the JSON. | `ImportExportService.kt:122-305` |
-| The existing JSON file names are `category_settings.json`, `carmaker.json` (makers), `{imagePrefix}list.json` (one per category). The web sync and the headless CLI use the same names. | `HtmlSyncService.kt`, `desktopMain/kotlin/Main.kt:144-180` |
-| The web sync already does a "clean restore": `DELETE FROM toys/makers/category_settings`, then imports categories, makers, toys. | `HtmlSyncService.kt` (~line 195) |
-| `SyncImage` downloads a photo from the server again when the DB timestamp is **newer** than the file's modified time. | `ui/SyncImage.kt:118` |
+| `importToys` and `processBitmaps` read size and timestamp **from the photo file on disk** in the folder `getImagesPath(db)` returns. `getImagesPath` reads **only** `app_settings.images_path` (not `data_path`). If the file is not there, they use the values in the JSON; if those are empty, the photo name is dropped. | `ImportExportService.kt:122-305` |
+| The existing JSON file names are `category_settings.json`, `carmaker.json` (makers), `{imagePrefix}list.json` (one per category). The web sync and the headless CLI use the same names. Every JSON envelope has a `date` field made by `getCurrentDateString()` (day precision, for example `October 7, 2026`). | `HtmlSyncService.kt`, `desktopMain/kotlin/Main.kt:144-180`, `ImportExportServiceDesktop.kt:7` |
+| The web sync already does a "clean restore": `DELETE FROM toys/makers/category_settings`, then imports categories, makers, toys, then writes the sync markers. No transaction and no lock. | `HtmlSyncService.kt:196-225` |
+| The web sync treats the server data as newer when the stored marker is **empty**, when the server `date` is later, or when the dates are equal and the hash differs. Markers: `html_sync_imported_date_category_settings.json`, `html_sync_imported_hash_category_settings.json`, `html_sync_imported_date_makers`, `html_sync_imported_hash_makers`, `html_sync_imported_date_{category}`, `html_sync_imported_hash_{category}`. Hash = `HtmlSyncService.calculateHash(fileText)`. A fresh install deletes all markers. | `HtmlSyncService.kt:67-76, 104-113, 150-159, 213-224`; `Main.kt:71`; `AppMainActivity.kt:52` |
+| The startup web sync runs on `ioDispatcher` at app start; "Save" in the Base URL card runs it again. A restore started at the same time would share the one JDBC connection with it. | `ui/ToyDbNavigation.kt:149-167`, `ui/SettingsScreen.kt:1064-1088` |
+| The UI shows a toy's **main photo by the name `{imagePrefix}{refNum}.{ext}`** (`resolveImageUri(prefix, refNum)`), not by `toys.picture`. The app names new main photos the same way (`ToyForm.kt:108`). In all current data `picture` equals that name. | `ui/SyncImage.kt:88`, `ui/ToyForm.kt:108` |
+| `resolveImageUri` (desktop) also searches fallback folders (`~/valdetaro/ToyCollection/ToyDb/images`, `images`, `../images`, ...) and returns an absolute path. **Do not use it for the backup.** | `desktopMain/.../utils/ImageResolver.kt:9-40` |
+| `SyncImage` downloads a photo from the server again when the DB timestamp is **newer** than the file's modified time. | `ui/SyncImage.kt:119` |
+| SFTP sync compares local and remote modified times in **seconds** (and sizes). A changed modified time makes it plan "Newer Timestamp" transfers. | `desktopMain/.../service/DesktopSftpService.kt:157-170, 208-224` |
+| Coil caches images by path. After a photo file is replaced with the same name, the app must clear the cache (`ToyForm` does it for one photo). | `ui/ToyForm.kt:128-136` |
 | Real `app_settings` keys: `app_title`, `base_url`, `theme`, `data_path`, `images_path`, `import_export_path`, `sftp_host`, `sftp_port`, `sftp_username`, `sftp_auth_type`, `sftp_password`, `sftp_key_path`, `sftp_key_passphrase`, `sftp_remote_dir`, `sftp_approved_fingerprints`, `html_sync_imported_date_*`, `html_sync_imported_hash_*`. | user's desktop DB |
-| Data directory: `ToyRepository.getDataPathSetting()` (falls back to `images_path` / `import_export_path` and writes `images_path`). Android sets it to `filesDir/data` at start. Desktop can have no data directory. | `ToyRepository.kt:528`, `AppMainActivity.kt` |
+| A new database (`checkUpgrade` on an empty file) gets 5 default categories (`slot`, `train`, `static`, `kit`, `misc`) and the settings `theme = 0` and `base_url`. Tests must allow for this. | `database/Database.kt:120-209, 237-243` |
+| Data directory: `ToyRepository.getDataPathSetting()` returns `data_path`; if it is missing it falls back to `images_path` / `import_export_path` and then calls `setDataPathSetting`, which writes **all three** keys. Android sets it to `filesDir/data` at start. Desktop asks for it at first start (`showSetupPrompt`), but the user can clear it later. | `ToyRepository.kt:528-549`, `AppMainActivity.kt:59-70`, `ToyDbNavigation.kt:142-146` |
 | `ImportExportActions` (the HTML card) is called **twice** in `SettingsScreen` — wide layout (~line 1196) and narrow layout (~line 1414). Both calls are inside `if (!isWebPlatform())`. | `ui/SettingsScreen.kt` |
 | `ImportExportActions` has two hard-coded English status texts. | `SettingsScreen.kt:1624, 1631` |
-| After a full data change, lists refresh only when `syncTrigger` changes. Settings only has `onCategoriesChanged`, which reloads categories. | `ui/ToyDbNavigation.kt:139, 159, 419-429, 498` |
+| After a full data change, lists refresh only when `syncTrigger` changes. Settings only has `onCategoriesChanged`, which reloads categories. The Settings entry is `entry<Destination.Settings>` at line 489. | `ui/ToyDbNavigation.kt:139, 159, 419-429, 489-507` |
 | Desktop already has a LOAD file dialog: `selectFileDialog(title, allowedExtensions)`. Use it for restore. | `desktopMain/.../utils/ImageResolver.kt` |
 | `GcAppInfo.application_Context` is **not** set in this app today. | `androidMain/.../AppMainActivity.kt` |
 | `AndroidManifest.xml` has only `INTERNET`. minSdk 24, targetSdk 37. | `androidMain/AndroidManifest.xml`, `gradle/libs.versions.toml` |
 | No ViewModels exist in the app. | — |
-| Gradle tasks that exist: `:composeApp:desktopTest`, `:composeApp:compileKotlinDesktop`, `:composeApp:compileDebugKotlinAndroid`, `:composeApp:compileKotlinWasmJs`. (`testDesktopUnitTest` does **not** exist.) | `./gradlew :composeApp:tasks --all` |
+| Gradle tasks expected: `:composeApp:desktopTest`, `:composeApp:compileKotlinDesktop`, `:composeApp:compileDebugKotlinAndroid`, `:composeApp:compileKotlinWasmJs`, `:composeApp:assembleDebug`. (`testDesktopUnitTest` does **not** exist.) The v2.2.0 review could not run Gradle (sandbox). **Confirm the names** with `./gradlew :composeApp:tasks --all` before Phase 2 and correct Section 9.2 if needed. | `./gradlew :composeApp:tasks --all` |
+| The SFTP guide shown in the Info tab is `composeResources/files/sftp_setup.md` (English only). There are **no** `{lang}_sftp_setup.md` files; `InfoScreen` tries them and falls back to `sftp_setup.md`. `SftpSetupScreen` reads `sftp_setup.md` directly. | `ui/InfoScreen.kt:73-88`, `ui/SftpSetupScreen.kt:32` |
+| `SCHEMA.md` does not list `app_settings` keys. | `SCHEMA.md` |
 
 ---
 
@@ -121,6 +142,7 @@ The executing agent depends on these facts. Check them before Phase 2.
 ```
 toy_collection_backup.zip
 ├── manifest.json                 # format id, version, counts (Section 5.2)
+├── photos.json                   # exact size and modified time of every photo (Section 5.5, D12)
 ├── data/
 │   ├── category_settings.json    # ImportExportService.exportCategorySettings(db)
 │   ├── carmaker.json             # ImportExportService.exportMakers(db)
@@ -133,16 +155,22 @@ toy_collection_backup.zip
     └── ...
 ```
 
+- Write all text entries (`manifest.json`, `photos.json`, `data/*`) **before** the photos.
 - Use the existing JSON envelopes and file names. Do **not** add a combined `toys.json` (it would copy every toy twice and make it unclear which copy wins).
 - The `data/` JSON files are the same files the web server uses, so a backup can also be used to feed the server.
 
-### 5.2 `manifest.json`
+### 5.2 `manifest.json` and `photos.json`
+
+Put these declarations in `BackupRestoreService.kt` (package `com.gepetto.toydb.service`):
 
 ```kotlin
+const val BACKUP_FORMAT_ID = "gepetto-toy-collection-backup"
+const val BACKUP_FORMAT_VERSION = 1
+
 @Serializable
 data class BackupManifest(
-    val format: String = BACKUP_FORMAT_ID,      // "gepetto-toy-collection-backup"
-    val formatVersion: Int = BACKUP_FORMAT_VERSION, // 1
+    val format: String = BACKUP_FORMAT_ID,
+    val formatVersion: Int = BACKUP_FORMAT_VERSION,
     val createdAt: String = getCurrentDateString(),
     val appVersionCode: String = CommonConfig.versionCodeString,
     val categories: Int,
@@ -150,9 +178,21 @@ data class BackupManifest(
     val toys: Int,
     val photos: Int
 )
+
+@Serializable
+data class BackupPhotoInfo(val name: String, val size: Long, val modified: Long)   // modified = epoch milliseconds
+
+@Serializable
+data class BackupPhotoIndex(val photos: List<BackupPhotoInfo>)
 ```
 
-On restore, the file is valid only if `manifest.json` exists, `format == BACKUP_FORMAT_ID`, `formatVersion <= BACKUP_FORMAT_VERSION`, and `data/category_settings.json` and `data/carmaker.json` exist and parse. Otherwise show `restore_invalid_file`.
+Size and modified time come from okio `systemFileSystem.metadataOrNull(path)` (`size`, `lastModifiedAtMillis`), so this stays in `commonMain`.
+
+On restore, the file is valid only if all of these are true. Otherwise show `restore_invalid_file`:
+- `manifest.json` exists and parses, `format == BACKUP_FORMAT_ID`, `1 <= formatVersion <= BACKUP_FORMAT_VERSION`.
+- `photos.json` exists and parses.
+- `data/category_settings.json` and `data/carmaker.json` exist and parse.
+- Every other `data/*.json` that is present parses (Section 6.7).
 
 ### 5.3 Settings Filter
 
@@ -167,26 +207,29 @@ internal fun isPortableSettingKey(key: String): Boolean =
 
 - **Backup**: write only portable keys to `data/app_settings.json`.
 - **Restore**: apply only portable keys (protects against a backup made by an older or edited file).
-- Restore does **not** delete `app_settings` rows. It only updates the portable keys that are in the backup.
+- Restore does **not** delete `app_settings` rows, except the `html_sync_imported_*` rows that step 4.6 of Section 6.7 replaces. It only updates the portable keys that are in the backup.
 
 ### 5.4 Which Photos Go Into the Backup
 
-`imagesDir` = `ToyRepository(db).getDataPathSetting()`. If it is null or blank, back up the data with no photos and log a warning (Android always has it; desktop may not).
+`imagesDir` = `ToyRepository(db).getDataPathSetting()`. It must not be null or blank (D11): the UI checks it first (Section 7.3); the service throws `IllegalStateException("no data directory")` if it is.
 
 Build one map `lowercaseName -> actual file name` from `systemFileSystem.listOrNull(imagesDir)` once, so a name that differs only in letter case is still found.
 
 Collect names in a `LinkedHashSet<String>` (no duplicates):
 1. **Makers**: every space-separated token in `makers.bitmaps`.
-2. **Toys, main photo**: `toys.picture` when not blank. When `picture` is blank and `has_picture == "y"`, use the file name part of `resolveImageUri(prefix, refNum)` (prefix from `category_settings.image_prefix`).
+2. **Toys, main photo**:
+   - `toys.picture` when not blank.
+   - Also the file the UI shows (Section 4): look up `{imagePrefix}{refNum}.{jpg,jpeg,png,gif,webp}` (in this order) in the case-insensitive map; add the first one found. `imagePrefix` comes from `category_settings.image_prefix`. Usually this is the same name as `picture`, and the set removes the copy.
+   - Do **not** call `resolveImageUri()` (it searches other folders, Section 4).
 3. **Toys, other photos**: every space-separated token in `toys.bitmaps`.
 
-For each name: if `imagesDir/name` is a regular file, add entry `images/<name>`; else, if the case-insensitive map has it, add `images/<name as written in the DB>` with the actual file as source. If the file is missing, skip it and count it in `missingPhotos` (log with `GcLog.w`). The entry name is the name **as written in the DB**, so restore finds it by exact name.
+For each name: if `imagesDir/name` is a regular file, add entry `images/<name>`; else, if the case-insensitive map has it, add `images/<name as written in the DB>` with the actual file as source. If the file is missing, skip it and count it in `missingPhotos` (log with `GcLog.w`). The entry name is the name **as written in the DB**, so restore finds it by exact name. Add one `BackupPhotoInfo(name = <entry name without "images/">, size, modified)` for each photo that goes in.
 
 ### 5.5 Archive Rules
 
-- Keep each photo's modified time: `ZipEntry.time = file.lastModified()` on backup; `File.setLastModified(entry.time)` on restore. This keeps `SyncImage` from downloading photos again (Section 4).
+- **Modified times (D12):** the exact time is in `photos.json`. On restore, call `File.setLastModified(photoIndex[name])`; use `entry.time` only when the name is not in the index and `entry.time > 0`. Also set `ZipEntry.time = modified` on backup (for other zip tools only). Do not use `ZipEntry.setLastModifiedTime(FileTime)` (API 26, R12). Keeping the exact time stops `SyncImage` from downloading photos again and stops SFTP sync from sending all photos again (Section 4).
 - JSON entries: `Deflater.DEFAULT_COMPRESSION`. Photo entries: `Deflater.BEST_SPEED` (JPEG/PNG do not compress more).
-- **Unsafe names**: on restore, accept only entries `images/<name>` where `<name>` is not empty, has no `/`, `\`, or `..`, and is not `.` or `..`. Skip and log every other entry outside `manifest.json` and `data/`.
+- **Unsafe names**: on restore, accept only entries `images/<name>` where `<name>` is not empty, has no `/`, `\`, or `..`, and is not `.` or `..`. Skip and log every other entry outside `manifest.json`, `photos.json` and `data/`.
 - Restore writes photos into `imagesDir`. A photo with the same name is replaced. Photos that are not in the backup stay.
 
 ---
@@ -206,12 +249,14 @@ For each name: if `imagesDir/name` is a regular file, add entry `images/<name>`;
 | `androidMain/.../platform/BackupFileHelper.android.kt` | **New** actual (6.4). |
 | `wasmJsMain/.../platform/BackupFileHelper.wasmJs.kt` | **New** actual: every call returns `Failed("not supported on web")`. Never return success. |
 | `commonMain/.../platform/BackupArchive.kt` | **New** `expect object` (6.5). |
-| `desktopMain/.../platform/BackupArchive.desktop.kt` and `androidMain/.../platform/BackupArchive.android.kt` | **New**, same JVM code in both (no shared `jvmMain` source set exists; do not add one). |
+| `desktopMain/.../platform/BackupArchive.desktop.kt` and `androidMain/.../platform/BackupArchive.android.kt` | **New**, same JVM code in both (no shared `jvmMain` source set exists; do not add one). Use only `java.io` + `java.util.zip` + okio so the same code is valid on Android API 24 (R12). |
 | `wasmJsMain/.../platform/BackupArchive.wasmJs.kt` | **New**: every function throws `UnsupportedOperationException`. |
 | `commonMain/.../platform/StoragePermission.kt` + 3 actuals | **New** `@Composable expect fun rememberStoragePermissionRequest(): suspend () -> Boolean` (6.6). |
-| `commonMain/.../service/BackupRestoreService.kt` | **New** service object (6.7). |
+| `commonMain/.../service/BackupRestoreService.kt` | **New** service object, constants and `@Serializable` classes (5.2, 6.7). |
+| `commonMain/.../service/CollectionWriteLock.kt` | **New** shared lock (6.8, D9). |
+| `commonMain/.../service/HtmlSyncService.kt` | Hold `CollectionWriteLock` in `syncIfNewer` (6.8, D9). No other change. |
 | `commonMain/.../service/ImportExportService.kt` | Add an optional key filter to `importAppSettings` and `exportAppSettings`: `keyFilter: (String) -> Boolean = { true }`. No other change. |
-| `commonMain/.../ui/BackupRestoreCard.kt` | **New** composable with its own state and dialogs (Section 7). |
+| `commonMain/.../ui/BackupRestoreCard.kt` | **New** composable with its own state and dialogs (Section 7). Clears the Coil image cache after a restore (7.5). |
 | `commonMain/.../ui/SettingsScreen.kt` | Show `BackupRestoreCard` in both layouts; new parameter `onCollectionRestored`; rename HTML card text (7.6). |
 | `commonMain/.../ui/ToyDbNavigation.kt` | Pass `onCollectionRestored` (7.5). |
 | `androidMain/AndroidManifest.xml` | Add permissions (D4). |
@@ -242,6 +287,7 @@ sealed interface BackupOpenResult {
     data class Opened(val path: Path, val isTemporary: Boolean) : BackupOpenResult
     data object Cancelled : BackupOpenResult
     data object NotFound : BackupOpenResult      // Android only
+    data object NoSpace : BackupOpenResult       // Android only (D10)
     data class Failed(val message: String) : BackupOpenResult
 }
 
@@ -271,38 +317,49 @@ Call both functions from `ioDispatcher`.
 ### 6.4 Android Actual
 
 Context: `club.gepetto.utils.GcAppInfo.application_Context as? Context`; if null return `Failed("no context")`.
-Always use `ANDROID_BACKUP_FILE_NAME`; ignore `suggestedName` and `dialogTitle`.
+Use `ANDROID_BACKUP_FILE_NAME` as the base name; ignore `suggestedName` and `dialogTitle`. Obey R12 (no `java.nio.file`).
+
+Shared query for API 29+ (`MediaStore.Downloads.EXTERNAL_CONTENT_URI`), projection `_ID, DISPLAY_NAME, SIZE`:
+- selection `"${DISPLAY_NAME} LIKE ? AND ${RELATIVE_PATH} LIKE ?"`, args `["toy_collection_backup%.zip", "Download%"]`, sort `"${DATE_MODIFIED} DESC"`. This finds `toy_collection_backup.zip` and the names Android makes when the name is taken (`toy_collection_backup (1).zip`). (`_` is a one-character wildcard in `LIKE`; that is acceptable.) Without the READ permission, the query returns only files this installation created.
 
 - `saveBackup`:
-  - **API 29+**: same MediaStore logic as Race Director's `FileExportHelper.android.kt` (find existing entry in `MediaStore.Downloads` with `DISPLAY_NAME = ?` and `RELATIVE_PATH LIKE 'Download%'`; else insert with `IS_PENDING = 1`). Open `resolver.openOutputStream(uri, "wt")`, wrap with okio `.sink()`, call `write`, close, then set `IS_PENDING = 0` for a new entry. On error after insert of a new entry, delete that entry.
-  - **API 24–28**: `File(Environment.getExternalStoragePublicDirectory(DIRECTORY_DOWNLOADS), ANDROID_BACKUP_FILE_NAME)`, write with `.partial` + rename as on desktop.
-  - Return `Saved("Downloads/$ANDROID_BACKUP_FILE_NAME")`.
+  - **API 29+**:
+    1. Run the shared query. If there is a row whose `DISPLAY_NAME` is exactly `ANDROID_BACKUP_FILE_NAME`, use it; else use the first row; else insert a new entry (`DISPLAY_NAME = ANDROID_BACKUP_FILE_NAME`, `MIME_TYPE = "application/zip"`, `RELATIVE_PATH = Environment.DIRECTORY_DOWNLOADS`, `IS_PENDING = 1`).
+    2. Open `resolver.openOutputStream(uri, "wt")`, wrap with okio `.sink()`, call `write`, close. For a new entry set `IS_PENDING = 0`. On error after the insert of a new entry, delete that entry.
+    3. Read back `DISPLAY_NAME` of `uri` (Android can change the name to `toy_collection_backup (1).zip`). Return `Saved("Downloads/<that name>")`.
+  - **API 24–28**: `target = File(Environment.getExternalStoragePublicDirectory(DIRECTORY_DOWNLOADS), ANDROID_BACKUP_FILE_NAME)`. Write to `File(target.path + ".partial")` with okio `.sink()`, close, then `target.delete()` and `partial.renameTo(target)`; if `renameTo` returns false, throw `IOException`. On any error delete the `.partial` file and return `Failed(message)`. Return `Saved("Downloads/$ANDROID_BACKUP_FILE_NAME")`.
 - `openBackup`:
-  - **API 29+**: query as above, sorted by `DATE_MODIFIED DESC`. No row → `NotFound`. Copy `openInputStream(uri)` to `File(context.cacheDir, "restore_backup.zip")` with streaming copy (`source().buffer().readAll(sink)`), return `Opened(path, isTemporary = true)`.
-  - **API 24–28**: public Downloads file; missing → `NotFound`; else `Opened(path, isTemporary = false)`.
+  - **API 29+**: run the shared query and take the first row. No row → `NotFound`.
+    - **Free space (D10):** `size` = the row's `SIZE` (if 0 or null, use `openFileDescriptor(uri, "r").statSize`). If `context.cacheDir.usableSpace < 2 * size + 50 MB`, return `NoSpace`. (The temp copy and the photos go to internal storage; 2 × is the copy plus the extracted photos.)
+    - Copy `openInputStream(uri)` to `File(context.cacheDir, "restore_backup.zip")` with a streaming copy (`source().buffer().readAll(sink)`). Return `Opened(path, isTemporary = true)`. On error delete the temp file and return `Failed(message)`.
+  - **API 24–28**: public Downloads file; missing → `NotFound`; else `Opened(path, isTemporary = false)` (no copy, so no space check).
 - `release`: delete the file if it is inside `context.cacheDir`.
 
 ### 6.5 `BackupArchive` (commonMain contract, JVM actuals)
 
 ```kotlin
-data class BackupPhoto(val entryName: String, val source: Path)   // entryName = "images/<name>"
+data class BackupPhoto(val entryName: String, val source: Path, val modified: Long)   // entryName = "images/<name>", modified = epoch ms
 
 expect object BackupArchive {
-    /** Streams [textEntries] (UTF-8) then [photos] into [sink]. Calls [onPhoto] after each photo. Closes [sink]. */
+    /** Streams [textEntries] (UTF-8) then [photos] into [sink]. Sets ZipEntry.time = photo.modified. Calls [onPhoto] after each photo. Closes [sink]. */
     fun write(sink: Sink, textEntries: Map<String, String>, photos: List<BackupPhoto>, onPhoto: (done: Int, total: Int) -> Unit)
-    /** Returns the text of "manifest.json" and every "data/*.json" entry. Does not read photos. */
+    /** Returns the text of "manifest.json", "photos.json" and every "data/*.json" entry. Does not read photos. */
     fun readTextEntries(archive: Path): Map<String, String>
     /** Number of "images/" entries that pass the name check (Section 5.5). */
     fun countPhotos(archive: Path): Int
-    /** Streams every valid "images/" entry into [targetDir]; keeps modified time. Returns the count written. */
-    fun extractPhotos(archive: Path, targetDir: Path, onPhoto: (done: Int, total: Int) -> Unit): Int
+    /**
+     * Streams every valid "images/" entry into [targetDir]. Sets the modified time to [modifiedTimes][name]
+     * (name without "images/"); falls back to entry.time when the name is missing and entry.time > 0.
+     * Returns the count written.
+     */
+    fun extractPhotos(archive: Path, targetDir: Path, modifiedTimes: Map<String, Long>, onPhoto: (done: Int, total: Int) -> Unit): Int
 }
 ```
 
-JVM actual:
-- `write`: `ZipOutputStream(sink.buffer().outputStream())`. For each photo, open `FileInputStream`, copy with an 8 KB buffer. Do not read a whole photo into memory.
-- Read functions: `java.util.zip.ZipFile(archive.toFile())` (random access; the file is on disk). Read JSON with `zip.getInputStream(entry).readBytes().decodeToString()`.
-- `extractPhotos`: create `targetDir` if missing; write each photo to `<name>.partial` then rename over `<name>` (so a stopped restore never leaves a half photo with the real name); then `setLastModified(entry.time)` when `entry.time > 0`.
+JVM actual (same code in desktop and Android; R12):
+- `write`: `ZipOutputStream(sink.buffer().outputStream())`. For each photo, open `FileInputStream`, copy with an 8 KB buffer. Do not read a whole photo into memory. Use `ZipEntry.time`, never `setLastModifiedTime(FileTime)`.
+- Read functions: `java.util.zip.ZipFile(archive.toFile())` (random access; the file is on disk). Read JSON with `zip.getInputStream(entry).readBytes().decodeToString()`. Close the `ZipFile` in `finally` (`use {}`).
+- `extractPhotos`: create `targetDir` if missing; write each photo to `<name>.partial`, then `File(<name>).delete()` and `partial.renameTo(File(<name>))` (throw `IOException` if it returns false), so a stopped restore never leaves a half photo with the real name; then `setLastModified(time)`. Do not use `java.nio.file.Files.move`.
 
 ### 6.6 Storage Permission (D4)
 
@@ -321,11 +378,16 @@ JVM actual:
 object BackupRestoreService {
     data class BackupSummary(val categories: Int, val makers: Int, val toys: Int, val photos: Int, val missingPhotos: Int = 0)
     class InvalidBackupException(message: String) : Exception(message)
-    class ValidatedBackup internal constructor(val archive: Path, val manifest: BackupManifest, internal val texts: Map<String, String>)
+    class ValidatedBackup internal constructor(
+        val archive: Path,
+        val manifest: BackupManifest,
+        internal val texts: Map<String, String>,
+        internal val photoTimes: Map<String, Long>      // from photos.json
+    )
 
     data class BackupContent(val textEntries: Map<String, String>, val photos: List<BackupPhoto>, val summary: BackupSummary)
 
-    /** Builds all JSON texts (incl. manifest.json) and the photo list. Writes nothing. Easy to unit test. */
+    /** Builds all JSON texts (manifest.json, photos.json, data/*) and the photo list. Writes nothing. Easy to unit test. */
     fun collectBackupContent(db: ToyDatabase): BackupContent
 
     fun writeBackup(db: ToyDatabase, sink: Sink, onPhoto: (Int, Int) -> Unit): BackupSummary
@@ -333,25 +395,50 @@ object BackupRestoreService {
     /** Reads and checks the archive. Throws InvalidBackupException. Changes nothing. */
     fun readBackup(archive: Path): ValidatedBackup
 
-    /** Throws on error. On error the DB is unchanged (transaction rollback); photos may be partly copied. */
-    fun restoreBackup(db: ToyDatabase, backup: ValidatedBackup, imagesDir: Path, onPhoto: (Int, Int) -> Unit): BackupSummary
+    /** Throws on error. On error the DB is unchanged (transaction rollback); photos may be partly copied. Holds CollectionWriteLock. */
+    suspend fun restoreBackup(db: ToyDatabase, backup: ValidatedBackup, imagesDir: Path, onPhoto: (Int, Int) -> Unit): BackupSummary
 }
 ```
 
-`readBackup` must parse every `data/*.json` with the existing serializers (`JsonCategorySettingsFile`, `JsonMakersFile`, `JsonToysFile`, `JsonAppSettingsFile`) so a broken file fails **before** anything changes. The manifest counts are used in the confirm dialog.
+`readBackup` must parse `manifest.json`, `photos.json` and every `data/*.json` with the serializers (`BackupManifest`, `BackupPhotoIndex`, `JsonCategorySettingsFile`, `JsonMakersFile`, `JsonToysFile`, `JsonAppSettingsFile`) so a broken file fails **before** anything changes (Section 5.2). The manifest counts are used in the confirm dialog.
 
-`restoreBackup` order (**the order is required**, see Section 4 `SyncImage` fact):
-1. Check `imagesDir == ToyRepository(db).getDataPathSetting()`; else throw.
-2. `BackupArchive.extractPhotos(backup.archive, imagesDir, onPhoto)`.
-3. `db.transaction { ... }`:
+`restoreBackup` order (**the order is required**, see Section 4 `SyncImage` and `importToys` facts):
+1. Run everything below inside `CollectionWriteLock.mutex.withLock { ... }` (6.8) and `withContext(ioDispatcher)`.
+2. Check `imagesDir.toString() == ToyRepository(db).getDataPathSetting()`; else throw. Then call `ToyRepository(db).setDataPathSetting(imagesDir.toString())`, so `images_path` (which `importToys` reads) has the same value as `data_path`.
+3. `BackupArchive.extractPhotos(backup.archive, imagesDir, backup.photoTimes, onPhoto)`.
+4. `db.transaction { ... }`:
    1. `DELETE FROM toys`, `DELETE FROM makers`, `DELETE FROM category_settings` (in this order).
    2. `importCategorySettings(db, data/category_settings.json)`.
    3. `importMakers(db, data/carmaker.json)`.
    4. For each category in the restored `category_settings`: if `data/{imagePrefix}list.json` exists, `importToys(db, category, it)`.
    5. If `data/app_settings.json` exists: `importAppSettings(db, it, keyFilter = ::isPortableSettingKey)`.
-4. Count rows after the commit and return the summary.
+   6. **Sync markers (D7):** `DELETE FROM app_settings WHERE key LIKE 'html_sync_imported_%'`, then write (with `INSERT OR REPLACE`):
+      - `html_sync_imported_date_category_settings.json` = the `date` field of `data/category_settings.json`; `html_sync_imported_hash_category_settings.json` = `HtmlSyncService.calculateHash(<that text>)`.
+      - `html_sync_imported_date_makers` / `html_sync_imported_hash_makers` from `data/carmaker.json`.
+      - For each category imported in step 4.4: `html_sync_imported_date_{category}` / `html_sync_imported_hash_{category}` from `data/{imagePrefix}list.json`.
+      - Read `date` with `Json.parseToJsonElement(text).jsonObject["date"]?.jsonPrimitive?.content ?: ""` (the same way `HtmlSyncService` does). Result: the startup sync replaces the restored collection only when the server `date` is later than the backup date (or the same day with a different hash).
+5. Count rows after the commit and return the summary.
 
-Do not run steps 2–3 on the main thread.
+Do not run steps 2–5 on the main thread.
+
+### 6.8 `CollectionWriteLock` (D9)
+
+New file `commonMain/.../service/CollectionWriteLock.kt`:
+
+```kotlin
+package com.gepetto.toydb.service
+
+import kotlinx.coroutines.sync.Mutex
+
+/** Only one full collection replacement (restore or web sync) runs at a time. Not re-entrant: never call one from inside the other. */
+object CollectionWriteLock {
+    val mutex = Mutex()
+}
+```
+
+- `BackupRestoreService.restoreBackup`: holds the lock for the whole restore (6.7 step 1).
+- `HtmlSyncService.syncIfNewer`: wrap the **whole** body inside `withContext(ioDispatcher) { ... }` (today lines 49–234, the `try`/`catch`) in `CollectionWriteLock.mutex.withLock { ... }`. The lock must cover the marker comparison **and** the clean import; if it covered only the import, a sync that waited for a restore would still delete the restored data with its old decision. `withLock` is `inline`, so the existing `return@withContext` statements still work.
+- Effect: a restore started during the startup sync waits until the sync ends (the progress dialog shows). A sync started during a restore waits, then sees the new markers (6.7 step 4.6) and skips.
 
 ---
 
@@ -392,15 +479,16 @@ fun BackupRestoreCard(
 ### 7.2 State (local `remember`, Rule R7)
 
 ```kotlin
-private enum class BackupPhase { Idle, Saving, Saved, SaveFailed, Opening, Confirm, Restoring, Restored, RestoreFailed, NotFound, Invalid, NoDataDir, PermissionDenied }
+private enum class BackupPhase { Idle, Saving, Saved, SaveFailed, Opening, Confirm, Restoring, Restored, RestoreFailed, NotFound, Invalid, NoDataDir, NoSpace, PermissionDenied }
 ```
 Plus: `progressDone`, `progressTotal`, `resultMessage: String`, `pendingBackup: ValidatedBackup?`, `pendingOpen: BackupOpenResult.Opened?`.
 
 ### 7.3 Back Up Flow
 
+0. Desktop only (D11): if `dataPath` is null or blank → `NoDataDir` dialog (`backup_no_data_dir`). Do not continue.
 1. Request storage permission (6.6). Denied → `PermissionDenied`.
 2. Phase `Saving` (progress dialog, not dismissible). On `ioDispatcher`: `BackupFileHelper.saveBackup("toy_collection_backup.zip", getString(backup_save_dialog_title)) { sink -> summary = BackupRestoreService.writeBackup(db, sink) { d, t -> progress } }`. Update progress state on the main thread.
-3. `Saved` → dialog `backup_done_title` / `backup_done_msg(toys, photos, location)`. `Cancelled` → back to `Idle` with no dialog. `Failed` or exception → `backup_failed`.
+3. `Saved` → dialog `backup_done_title` / `backup_done_msg(toys, photos, location)`. Use the `location` from `Saved` (on Android it can be `toy_collection_backup (1).zip`, Section 6.4). `Cancelled` → back to `Idle` with no dialog. `Failed` or exception → `backup_failed`.
 4. Set the status banner text through `onSetStatus`.
 
 ### 7.4 Restore Flow
@@ -408,17 +496,24 @@ Plus: `progressDone`, `progressTotal`, `resultMessage: String`, `pendingBackup: 
 1. Desktop only: if `dataPath` is null or blank → `NoDataDir` dialog (`backup_no_data_dir`).
 2. Request storage permission. Denied → `PermissionDenied`.
 3. `BackupFileHelper.openBackup(getString(restore_open_dialog_title))` on `ioDispatcher`:
-   - `Cancelled` → `Idle`. `NotFound` → `NotFound` dialog (`restore_missing_title` / `restore_missing_msg`). `Failed` → `RestoreFailed`.
+   - `Cancelled` → `Idle`. `NotFound` → `NotFound` dialog (`restore_missing_title` / `restore_missing_msg`). `NoSpace` → `NoSpace` dialog (`restore_no_space`, D10). `Failed` → `RestoreFailed`.
 4. `BackupRestoreService.readBackup(path)`. `InvalidBackupException` → `Invalid` dialog (`restore_invalid_file`).
 5. `Confirm` dialog: title `restore_confirm_title`, text `restore_confirm_msg(toys, makers, photos)` from the manifest. Buttons: `OutlinedButton` `cancel` (existing key), `Button` with `containerColor = MaterialTheme.colorScheme.error` and text `restore_confirm_btn`.
-6. Phase `Restoring` (progress dialog, not dismissible; show `backup_progress` while photos are copied). Run `restoreBackup(db, backup, dataPath.toPath(), ...)` on `ioDispatcher`.
-7. Success → call `onCollectionRestored()` on the main thread, then `Restored` dialog (`restore_done_title` / `restore_done_msg`). Error → `RestoreFailed` with `restore_failed(message)`.
+6. Phase `Restoring` (progress dialog, not dismissible; show `restore_running`, and `backup_progress` while photos are copied). In a coroutine (`rememberCoroutineScope().launch`), call the `suspend` function `restoreBackup(db, backup, dataPath.toPath(), ...)`. It moves to `ioDispatcher` and holds `CollectionWriteLock` itself (6.7, 6.8). If the startup web sync runs, the restore waits and the progress dialog stays on the screen. Do not add a time-out.
+7. Success → on the main thread: clear the Coil caches (7.5), call `onCollectionRestored()`, then show the `Restored` dialog (`restore_done_title` / `restore_done_msg`). Error → `RestoreFailed` with `restore_failed(message)`.
 8. In a `finally`, if the opened file was temporary, call `BackupFileHelper.release(path)`. Also release it when the user cancels the confirm dialog.
 
 ### 7.5 Refresh After Restore
 
+- **Coil caches:** a restored photo can have the same file name as an old photo, so Coil can show the old image from its cache (`ToyForm.kt:128-136`). In `BackupRestoreCard`, read the context in the composable body (`val platformContext = coil3.compose.LocalPlatformContext.current`). After a successful restore, and before `onCollectionRestored()`, call:
+  ```kotlin
+  val loader = coil3.SingletonImageLoader.get(platformContext)
+  loader.memoryCache?.clear()
+  loader.diskCache?.clear()
+  ```
+  Do this on all platforms where the card shows (desktop and Android).
 - `SettingsScreen`: new parameter `onCollectionRestored: () -> Unit = {}`. Inside the `BackupRestoreCard` callback, first reload local state: `categoriesList = repository.getCategorySettings()`, `appTitle = repository.getAppTitleSetting()`, `htmlBaseUrl = repository.getBaseUrlSetting()`; then call `onCollectionRestored()`.
-- `ToyDbNavigation` (`entry<Destination.Settings>`, ~line 490): pass
+- `ToyDbNavigation` (`entry<Destination.Settings>`, line 489): pass
   ```kotlin
   onCollectionRestored = {
       categoriesSettings = repository.getCategorySettings()
@@ -443,7 +538,7 @@ All new dialogs: `AlertDialog` with `containerColor = sysBackgroundColor()`, tex
 ### 7.8 Info Tab "Server Sync" (D8)
 
 - `ui/InfoScreen.kt`: the tab label comes from `InfoTopic.BACKUP.titleRes = Res.string.info_tab_backup`. Change only the **value** of `info_tab_backup` in all 6 files (Section 8.2).
-- Do not rename the enum constant `InfoTopic.BACKUP`, its id `"backup"`, the composable `BackupTabContent`, or the file `{lang}_sftp_setup.md`. Other code can open the tab by the id `"backup"`.
+- Do not rename the enum constant `InfoTopic.BACKUP`, its id `"backup"`, the composable `BackupTabContent`, or the file `sftp_setup.md` (English only; there are no `{lang}_sftp_setup.md` files). Other code can open the tab by the id `"backup"`.
 - Do not change the tab content heading `backup_sync_title` ("Backup &amp; Synchronization") or `backup_sync_description` unless the user approves it (see Section 12, ISSUE-01).
 
 ### 7.9 Previews
@@ -474,11 +569,12 @@ All new dialogs: `AlertDialog` with `containerColor = sysBackgroundColor()`, tex
 | `restore_done_title` | Restore Complete | Restauração Concluída | Wiederherstellung abgeschlossen | Restauración completada | Restauration terminée | Ripristino completato |
 | `restore_done_msg` | Your collection was restored: %1$d toys, %2$d makers, %3$d photos. | Sua coleção foi restaurada: %1$d brinquedos, %2$d fabricantes, %3$d fotos. | Ihre Sammlung wurde wiederhergestellt: %1$d Spielzeuge, %2$d Hersteller, %3$d Fotos. | Su colección se restauró: %1$d juguetes, %2$d fabricantes, %3$d fotos. | Votre collection a été restaurée : %1$d jouets, %2$d fabricants, %3$d photos. | La collezione è stata ripristinata: %1$d giocattoli, %2$d produttori, %3$d foto. |
 | `restore_failed` | The collection could not be restored: %1$s. Your toys, makers and categories were not changed. | Não foi possível restaurar a coleção: %1$s. Seus brinquedos, fabricantes e categorias não foram alterados. | Die Sammlung konnte nicht wiederhergestellt werden: %1$s. Ihre Spielzeuge, Hersteller und Kategorien wurden nicht geändert. | No se pudo restaurar la colección: %1$s. Sus juguetes, fabricantes y categorías no se modificaron. | La collection n\'a pas pu être restaurée : %1$s. Vos jouets, fabricants et catégories n\'ont pas été modifiés. | Impossibile ripristinare la collezione: %1$s. Giocattoli, produttori e categorie non sono stati modificati. |
-| `restore_invalid_file` | This file is not a Toy Database Manager backup. | Este arquivo não é um backup do Toy Database Manager. | Diese Datei ist keine Sicherung von Toy Database Manager. | Este archivo no es una copia de seguridad de Toy Database Manager. | Ce fichier n\'est pas une sauvegarde de Toy Database Manager. | Questo file non è un backup di Toy Database Manager. |
+| `restore_invalid_file` | This file is not a backup of a toy collection. | Este arquivo não é um backup de uma coleção de brinquedos. | Diese Datei ist keine Sicherung einer Spielzeugsammlung. | Este archivo no es una copia de seguridad de una colección de juguetes. | Ce fichier n\'est pas une sauvegarde d\'une collection de jouets. | Questo file non è un backup di una collezione di giocattoli. |
 | `restore_missing_title` | Backup File Not Found | Arquivo de Backup Não Encontrado | Sicherungsdatei nicht gefunden | Archivo de copia no encontrado | Fichier de sauvegarde introuvable | File di backup non trovato |
 | `restore_missing_msg` | The file \'toy_collection_backup.zip\' is not in the Downloads folder. Put the backup file in Downloads, then try again. | O arquivo \'toy_collection_backup.zip\' não está na pasta Downloads. Coloque o arquivo de backup em Downloads e tente novamente. | Die Datei \'toy_collection_backup.zip\' ist nicht im Ordner „Downloads“. Legen Sie die Sicherungsdatei in „Downloads“ ab und versuchen Sie es erneut. | El archivo \'toy_collection_backup.zip\' no está en la carpeta Descargas. Coloque el archivo de copia en Descargas e inténtelo de nuevo. | Le fichier \'toy_collection_backup.zip\' ne se trouve pas dans le dossier Téléchargements. Placez le fichier de sauvegarde dans Téléchargements, puis réessayez. | Il file \'toy_collection_backup.zip\' non è nella cartella Download. Inserisci il file di backup in Download e riprova. |
 | `backup_no_data_dir` | Select a data directory first. Your photos are kept there. | Selecione primeiro um diretório de dados. Suas fotos ficam nele. | Wählen Sie zuerst ein Datenverzeichnis. Dort werden Ihre Fotos gespeichert. | Seleccione primero un directorio de datos. Allí se guardan sus fotos. | Sélectionnez d\'abord un dossier de données. Vos photos y sont conservées. | Seleziona prima una cartella dati. Le foto sono conservate lì. |
-| `backup_permission_denied` | Toy Database Manager needs permission to use the Downloads folder. | O Toy Database Manager precisa de permissão para usar a pasta Downloads. | Toy Database Manager benötigt die Berechtigung, den Ordner „Downloads“ zu verwenden. | Toy Database Manager necesita permiso para usar la carpeta Descargas. | Toy Database Manager a besoin d\'une autorisation pour utiliser le dossier Téléchargements. | Toy Database Manager ha bisogno dell\'autorizzazione per usare la cartella Download. |
+| `restore_no_space` | There is not enough free space on this device to restore the backup. Delete some files, then try again. | Não há espaço livre suficiente neste dispositivo para restaurar o backup. Apague alguns arquivos e tente novamente. | Auf diesem Gerät ist nicht genug freier Speicher, um die Sicherung wiederherzustellen. Löschen Sie einige Dateien und versuchen Sie es erneut. | No hay suficiente espacio libre en este dispositivo para restaurar la copia de seguridad. Elimine algunos archivos e inténtelo de nuevo. | Il n\'y a pas assez d\'espace libre sur cet appareil pour restaurer la sauvegarde. Supprimez quelques fichiers, puis réessayez. | Spazio libero insufficiente su questo dispositivo per ripristinare il backup. Elimina alcuni file e riprova. |
+| `backup_permission_denied` | The app needs permission to use the Downloads folder. | O app precisa de permissão para usar a pasta Downloads. | Die App benötigt die Berechtigung, den Ordner „Downloads“ zu verwenden. | La aplicación necesita permiso para usar la carpeta Descargas. | L\'application a besoin d\'une autorisation pour utiliser le dossier Téléchargements. | L\'app ha bisogno dell\'autorizzazione per usare la cartella Download. |
 | `backup_save_dialog_title` | Save Backup | Salvar Backup | Sicherung speichern | Guardar copia de seguridad | Enregistrer la sauvegarde | Salva backup |
 | `restore_open_dialog_title` | Choose a Backup File | Escolha um Arquivo de Backup | Sicherungsdatei auswählen | Elija un archivo de copia | Choisir un fichier de sauvegarde | Scegli un file di backup |
 | `website_status_creating` | Creating website pages in %1$s... | Criando páginas do site em %1$s... | Webseiten werden in %1$s erstellt... | Creando páginas web en %1$s... | Création des pages du site dans %1$s... | Creazione delle pagine del sito in %1$s... |
@@ -508,31 +604,51 @@ Reuse existing keys `ok` and `cancel`. Do not add keys for "Import"/"Export".
 ### 9.1 Unit Tests
 
 File: `composeApp/src/desktopTest/kotlin/com/gepetto/toydb/service/BackupRestoreServiceTest.kt` (`kotlin.test`, class PascalCase, methods `testXxx`).
-Use `DesktopToyDatabase` on a DB file inside `java.nio.file.Files.createTempDirectory(...)`, and a photos folder in the same temp directory. Delete the temp directory in `finally`.
+Use `DesktopToyDatabase` on a DB file inside `java.nio.file.Files.createTempDirectory(...)`, and a photos folder in the same temp directory. Call `ToyRepository(db).setDataPathSetting(photosDir.toString())` in the setup.
 
-1. `testBackupAndRestoreRoundTrip` — seed 2 categories, 3 makers (one with `bitmaps`), 5 toys (with `picture` and `bitmaps`), 4 photo files. Back up to a temp zip, clear the DB and photo folder, restore. Every column must match the values `importToys`/`importMakers` produce (they recompute `maker_combo` and read photo metadata), photo bytes must match, and photo modified times must match.
-2. `testSecretsAreNotBackedUp` — seed `sftp_password`, `sftp_host`, `images_path`, `html_sync_imported_hash_slot`, `app_title`. Only `app_title` is in `data/app_settings.json`.
-3. `testRestoreDoesNotOverwriteLocalOnlySettings` — a backup zip whose `app_settings.json` contains `images_path` and `sftp_password` must not change those keys.
+General rules for all tests:
+- A new DB already has 5 default categories and the settings `theme` and `base_url` (Section 4). Delete the default categories (`DELETE FROM category_settings`) before you seed the test data, or include them in the expected values.
+- `restoreBackup` is `suspend`: call it in `runBlocking { ... }`.
+- In `finally`: close the DB and the `ZipFile` (`backup.archive`) first, then delete the temp directory. (On Windows, an open file cannot be deleted.)
+
+1. `testBackupAndRestoreRoundTrip` — seed 2 categories, 3 makers (one with `bitmaps`), 5 toys (with `picture` and `bitmaps`), 4 photo files. Give each photo a modified time with milliseconds that are not 0 (for example `1_700_000_123_457`). Back up to a temp zip, clear the DB and photo folder, restore. Every column must match the values `importToys`/`importMakers` produce (they recompute `maker_combo` and read photo metadata), photo bytes must match, and each photo `lastModified()` must be **exactly** equal to the original value (from `photos.json`, D12).
+2. `testSecretsAreNotBackedUp` — seed `sftp_password`, `sftp_host`, `images_path`, `data_path`, `import_export_path`, `html_sync_imported_hash_slot`, `app_title`. In `data/app_settings.json`: none of the `sftp_*`, path or `html_sync_imported_*` keys are present; `app_title`, `theme` and `base_url` are present.
+3. `testRestoreDoesNotOverwriteLocalOnlySettings` — a backup zip whose `app_settings.json` contains `images_path`, `data_path` and `sftp_password` with other values. After restore: `sftp_password` keeps the local value, and `images_path` and `data_path` both equal the local `imagesDir` (6.7 step 2).
 4. `testInvalidBackupChangesNothing` — zip without `manifest.json`, and a zip with a broken `carmaker.json`: `readBackup` throws `InvalidBackupException`, DB and photo folder are unchanged.
-5. `testUnsafeEntryNamesAreSkipped` — entries `images/../evil.jpg`, `images/a/b.jpg`, `../x.jpg` are not written anywhere.
-6. `testFailedRestoreRollsBack` — wrap the test DB in a `ToyDatabase` that delegates every call but throws on the first `INSERT OR REPLACE INTO toys`. Run `restoreBackup` and check that toys, makers and categories are unchanged.
-7. `testMissingPhotoIsSkipped` — a toy refers to a missing file: backup succeeds and `missingPhotos == 1`.
+5. `testPhotosJsonRequired` — a zip with a valid `manifest.json` and `data/*` but no `photos.json`: `readBackup` throws `InvalidBackupException`.
+6. `testUnsafeEntryNamesAreSkipped` — entries `images/../evil.jpg`, `images/a/b.jpg`, `../x.jpg` are not written anywhere.
+7. `testFailedRestoreRollsBack` — wrap the test DB in a `ToyDatabase` that delegates every call, **including `transaction`**, to the real DB, but throws on the first `INSERT OR REPLACE INTO toys`. Run `restoreBackup` and check that toys, makers, categories and the `html_sync_imported_*` rows are unchanged.
+8. `testMissingPhotoIsSkipped` — a toy refers to a missing file: backup succeeds and `missingPhotos == 1`.
+9. `testRestoreSetsSyncMarkers` — before restore, write old values in `html_sync_imported_date_slot`, `html_sync_imported_hash_slot` and `html_sync_imported_date_obsolete`. After restore: for `category_settings.json`, `makers` and each restored category, `html_sync_imported_date_*` equals the `date` field of the backup JSON file and `html_sync_imported_hash_*` equals `HtmlSyncService.calculateHash(<file text>)`. `html_sync_imported_date_obsolete` does not exist.
+10. *(Optional)* `testRestoreWaitsForLock` — hold `CollectionWriteLock.mutex` in the test, start `restoreBackup` in another coroutine, check that the DB is not changed yet, release the lock, then check that the restore completes.
 
 Run existing tests too (`JsonDateParserParityTest`, `JsonDateParserTest`, `HtmlSyncServiceHashTest`).
 
 ### 9.2 Build Commands
+
+First confirm the task names (they were not run during the review, Section 4):
+```bash
+./gradlew :composeApp:tasks --all | grep -E "desktopTest|compileKotlinDesktop|compileDebugKotlinAndroid|compileKotlinWasmJs|assembleDebug"
+```
+If a name is different, use the real name and correct this section and Section 10.
 
 ```bash
 ./gradlew :composeApp:desktopTest
 ./gradlew :composeApp:compileKotlinDesktop
 ./gradlew :composeApp:compileDebugKotlinAndroid
 ./gradlew :composeApp:compileKotlinWasmJs
+./gradlew :composeApp:assembleDebug   # also checks the merged AndroidManifest (permissions, 6.6)
 ```
 
 ### 9.3 Manual Checks
 
-- **Desktop**: back up with the real data directory (~1.5 GB). Check memory stays normal and the progress moves. Restore on a copy of the app data, check toys, makers, categories, photos, app title and theme refresh without restart. Cancel both dialogs: nothing happens. No data directory: `backup_no_data_dir`.
+- **Desktop**: back up with the real data directory (~1.5 GB). Check memory stays normal and the progress moves. Restore on a copy of the app data, check toys, makers, categories, photos, app title and theme refresh without restart. Cancel both dialogs: nothing happens. No data directory: **Back Up** and **Restore** both show `backup_no_data_dir`.
+- **Desktop, photos refresh**: replace one photo file with a different image of the same name in a backup, restore, and open that toy: the new image shows (no old image from the cache, 7.5).
+- **Desktop, SFTP after restore**: restore, then open the SFTP sync plan. Photos must **not** all show as "Newer Timestamp" (D12).
+- **Desktop or Android, restore during startup sync**: start the app with a server `base_url` and start a restore while the startup sync runs. The progress dialog stays until the sync ends; then the restore completes and the restored data is still there after the next start (D7, D9).
 - **Android emulator, API 34+**: back up → file in Downloads; restore; delete the file → "Backup File Not Found".
+- **Android emulator, API 34+, name change**: copy a `toy_collection_backup.zip` into Downloads with `adb push` (so this installation did not create it), then back up. The "Backup Complete" dialog shows `toy_collection_backup (1).zip`, and restore finds it.
+- **Android emulator, low space**: fill the emulator storage until the free space is less than 2 × the backup size, then restore → `restore_no_space`.
 - **Android emulator, API 28**: permission prompt appears; deny → `backup_permission_denied`; allow → back up and restore work.
 - **Web**: the card is not shown; the app still builds and runs.
 - **Dark and light mode**: all new dialogs readable, border in dark mode.
@@ -543,48 +659,51 @@ Run existing tests too (`JsonDateParserParityTest`, `JsonDateParserTest`, `HtmlS
 ## 10. Execution Checklist
 
 - [ ] **Phase 1 — Strings**
-  - [ ] Add Section 8.1 keys to all 6 `strings.xml` files.
+  - [ ] Add Section 8.1 keys to all 6 `strings.xml` files (includes `restore_no_space` and the reworded `restore_invalid_file` / `backup_permission_denied`, R1).
   - [ ] Change Section 8.2 values in all 6 files.
 - [ ] **Phase 2 — Database transaction**
   - [ ] Add `transaction` to `ToyDatabase` and implement it for Desktop, Android, Wasm.
 - [ ] **Phase 3 — Platform layer**
   - [ ] `GcAppInfo.application_Context = application` in `AppMainActivity.onCreate`.
   - [ ] Manifest permissions (6.6).
-  - [ ] `BackupFileHelper` common + desktop + android + wasm.
-  - [ ] `BackupArchive` common + desktop + android + wasm.
+  - [ ] `BackupFileHelper` common + desktop + android + wasm (Android: shared MediaStore query, "(1)" name, `NoSpace` check, 6.4).
+  - [ ] `BackupArchive` common + desktop + android + wasm (`photos.json` times, 6.5).
   - [ ] `rememberStoragePermissionRequest` common + desktop + android + wasm.
+  - [ ] Android actuals obey R12: no `java.nio.file.*` and no `FileTime`.
   - [ ] Build all 3 targets.
 - [ ] **Phase 4 — Service**
   - [ ] `keyFilter` parameter in `importAppSettings` / `exportAppSettings`.
-  - [ ] `BackupManifest`, `isPortableSettingKey`, `BackupRestoreService` (6.7, 5.x).
+  - [ ] `BackupManifest`, `BackupPhotoIndex`, `isPortableSettingKey`, `BackupRestoreService` (6.7, 5.x), including `photos.json` and the sync markers (6.7 step 4.6).
+  - [ ] `CollectionWriteLock` and the `withLock` wrap in `HtmlSyncService.syncIfNewer` (6.8).
 - [ ] **Phase 5 — UI**
-  - [ ] `BackupRestoreCard.kt` with dialogs and previews.
+  - [ ] `BackupRestoreCard.kt` with dialogs and previews (`NoDataDir` for Back Up and Restore, `NoSpace`).
+  - [ ] Clear the Coil caches after a restore (7.5).
   - [ ] Add the card to both layouts in `SettingsScreen`.
   - [ ] `onCollectionRestored` in `SettingsScreen` and `ToyDbNavigation`.
   - [ ] Website pages changes (7.6): new status keys, rename `ImportExportActions` → `WebsitePagesActions`.
   - [ ] Info tab "Server Sync" (7.8): check the tab label in all 6 languages.
 - [ ] **Phase 6 — Tests and builds**
   - [ ] `BackupRestoreServiceTest` (9.1).
-  - [ ] Section 9.2 commands all pass.
+  - [ ] Section 9.2 commands all pass (confirm the task names first).
   - [ ] Section 9.3 manual checks (desktop at minimum; Android on emulator when available).
 - [ ] **Phase 7 — Documentation** (use ASD-STE100 Simplified Technical English)
   - [ ] `.agents/HOW_IT_WORKS.md`:
     - §1: add a "Backup & Restore" capability; rename "Static Website Publisher" text to "Create Website Pages".
     - §2: add the `platform/` folder and new files to the source tree; note the manifest storage permissions.
     - §3: add `transaction(block)` to the `ToyDatabase` description.
-    - §5: add a subsection "Backup & Restore" (file layout from Section 5, excluded settings, restore order, Android limitation from Section 3).
+    - §5: add a subsection "Backup & Restore": file layout from Section 5 (with `photos.json`), excluded settings, restore order, `CollectionWriteLock` (6.8), the sync markers that restore writes (D7), and the 4 known limitations from Section 3.
     - §8: add the Android backup location `Downloads/toy_collection_backup.zip`.
     - §7: the navigation diagram labels `SettingsScreen` as "Backup/Restore" and `InfoScreen` as "App info & user guide"; make sure the Info tabs are listed as About, Server Sync, Privacy Policy, Terms of Use.
     - §9: flow 3 is out of date (it says "Database Operations" / "Export HTML Web Pages"); change it to **Settings → Create Website Pages → Create Pages**. Add flow "Backing Up and Restoring Your Collection".
-    - §11: add `:composeApp:desktopTest` and `:composeApp:compileKotlinWasmJs`.
+    - §11: add `:composeApp:desktopTest`, `:composeApp:compileKotlinWasmJs` and `:composeApp:assembleDebug`.
   - [ ] `README.md`: add a "Backup & Restore" key feature; change "importing and exporting ... JSON" wording to plain words.
   - [ ] User-visible About files `composeResources/files/about.md` and `{en,de,es,fr,it,pt}_about.md`: replace the "Portability" bullet with:
     - `**Backup & Restore**: Save a copy of your whole collection, including photos, in one file. Restore it on this device or on another device.`
     - `**Website Pages**: Create website pages that show your collection.`
-    Translate both bullets into each language file.
-  - [ ] `SCHEMA.md`: if it lists `app_settings` keys, mark which keys are not in a backup (D5).
+    Translate both bullets into each language file. Note: `about.md` and `en_about.md` are not the same (`en_about.md` has an extra "Cloud & Network Synchronization" bullet). Edit each file on its own; do not copy one over the other.
+  - [ ] `SCHEMA.md`: no change needed. It does not list `app_settings` keys (checked 2026-10-07).
   - [ ] `.agents/TODO.txt`: mark `[x]` on the backup item and on "change info tab "Backup" to "Server Sync"".
-  - [ ] User-visible guide `composeResources/files/{en,de,es,fr,it,pt}_sftp_setup.md` (and `sftp_setup.md` if it exists): if the text calls this tab "Backup", change it to "Server Sync" in each language.
+  - [ ] User-visible guide `composeResources/files/sftp_setup.md` (English only): if the text calls this tab "Backup", change it to "Server Sync". Do not change the "Automatic Backup" bullet (line 11) unless the user approves it (ISSUE-01).
   - [ ] This plan: Sections 10, 11, 12.
 
 ---
@@ -596,6 +715,7 @@ Run existing tests too (`JsonDateParserParityTest`, `JsonDateParserTest`, `HtmlS
 | 2026-10-07 | 1.0.0 | Antigravity Agent | Initial plan. |
 | 2026-10-07 | 2.0.0 | Claude (Opus 5.5) review | Reviewed against current code. Streaming design (no in-memory archive, ~1.5 GB photos); settings filter (no SFTP secrets or local paths in backups); DB transaction API; required restore order and photo timestamps (SyncImage); reuse existing JSON names (`carmaker.json`, `{prefix}list.json`), removed `toys.json`; `manifest.json`; unsafe entry names; Android permissions for API ≤ 28; full refresh after restore (`syncTrigger`); corrected Gradle tasks; user-friendly naming "Backup & Restore" (D1) and "Create Website Pages" (D2); complete strings in 6 languages; documentation phase. |
 | 2026-10-07 | 2.1.0 | Claude (Opus 5.5) review | Added D8: Info tab "Backup" (SFTP guide) renamed to "Server Sync" (Section 7.8, string, checklist, docs, ISSUE-01). |
+| 2026-10-07 | 2.2.0 | Claude (Opus 5.5) review | Reviewed again (code not changed since v2.1.0). Correctness: exact photo times in new `photos.json` (D12); R12, no `java.nio.file`/`FileTime` on Android API 24–25; Android "(1)" file name handled (shared MediaStore query, real name in the dialog); test 2 assertion corrected; main photo lookup without `resolveImageUri`; `images_path` set to the data directory before import; Coil caches cleared after restore. Decisions: D7 changed (restore writes sync markers from the backup JSON), D9 `CollectionWriteLock` with `HtmlSyncService`, D10 Android free-space check (`restore_no_space`), D11 desktop Back Up needs a data directory. Accuracy: Section 4 facts (settings keys, default categories, line numbers, `sftp_setup.md` English only, `SCHEMA.md`), R1 (no app name in new strings), stricter validation, new tests, `assembleDebug`, more manual checks, 4 known limitations. |
 
 ---
 
@@ -603,4 +723,4 @@ Run existing tests too (`JsonDateParserParityTest`, `JsonDateParserTest`, `HtmlS
 
 | Issue ID | Date | Affected Component | Description & Root Cause | Resolution Status | Fix Description |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| ISSUE-01 | 2026-10-07 | `InfoScreen` Server Sync tab | The tab content heading `backup_sync_title` still says "Backup & Synchronization", and `backup_sync_description` starts with "If you want to back up your collection data safely to the cloud...". After D8 the tab name and its heading do not match. | Open — waiting for user decision | Not in scope until the user approves. |
+| ISSUE-01 | 2026-10-07 | `InfoScreen` Server Sync tab; `sftp_setup.md` | The tab content heading `backup_sync_title` still says "Backup & Synchronization", and `backup_sync_description` starts with "If you want to back up your collection data safely to the cloud...". After D8 the tab name and its heading do not match. Also, `composeResources/files/sftp_setup.md` line 11 says "**Automatic Backup**: Your collection data is stored safely on your private server…". After this feature, users can think that server sync is the same as Backup & Restore. | Open — waiting for user decision | Not in scope until the user approves. |
