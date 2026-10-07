@@ -62,7 +62,6 @@ val generateCommonConfig = tasks.register("generateCommonConfig") {
 val prepareAndroidResources = tasks.register<Copy>("prepareAndroidResources") {
     from("src/commonMain/composeResources") {
         include("values*/**")
-        include("drawable/**")
     }
     into(layout.buildDirectory.dir("generated/android/res"))
 }

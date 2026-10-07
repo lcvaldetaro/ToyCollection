@@ -7,13 +7,6 @@
 -renamesourcefileattribute SourceFile
 
 # ------------------------------------------------------------------------------
-# ToyDb Application Classes, Models, and Services
-# ------------------------------------------------------------------------------
--keep class com.gepetto.toydb.** { *; }
--keep interface com.gepetto.toydb.** { *; }
--keepclassmembers class com.gepetto.toydb.** { *; }
-
-# ------------------------------------------------------------------------------
 # Kotlinx Serialization
 # ------------------------------------------------------------------------------
 -keepclassmembers class * {
@@ -42,12 +35,10 @@
 # ------------------------------------------------------------------------------
 -keep class net.schmizz.sshj.** { *; }
 -keep interface net.schmizz.sshj.** { *; }
--keepclassmembers class net.schmizz.sshj.** { *; }
 -dontwarn net.schmizz.sshj.**
 
 -keep class org.bouncycastle.** { *; }
 -keep interface org.bouncycastle.** { *; }
--keepclassmembers class org.bouncycastle.** { *; }
 -dontwarn org.bouncycastle.**
 
 -dontwarn com.jcraft.jzlib.**
@@ -55,12 +46,9 @@
 # ------------------------------------------------------------------------------
 # Ktor Client, OkHttp Engine & Okio
 # ------------------------------------------------------------------------------
--keep class io.ktor.** { *; }
--keep interface io.ktor.** { *; }
+-keep class * implements io.ktor.client.engine.HttpClientEngineFactory { *; }
+-keep class io.ktor.client.plugins.** { *; }
 -dontwarn io.ktor.**
-
--keep class okhttp3.** { *; }
--keep interface okhttp3.** { *; }
 -dontwarn okhttp3.**
 -dontwarn okio.**
 -dontwarn org.conscrypt.**
@@ -69,15 +57,11 @@
 # ------------------------------------------------------------------------------
 # Coil 3 Image Loading
 # ------------------------------------------------------------------------------
--keep class coil3.** { *; }
--keep interface coil3.** { *; }
 -dontwarn coil3.**
 
 # ------------------------------------------------------------------------------
 # Compose Multiplatform, Navigation 3 & Resources
 # ------------------------------------------------------------------------------
--keep class androidx.compose.** { *; }
--keep class org.jetbrains.compose.** { *; }
 -keep class toydb.composeapp.generated.resources.** { *; }
 -keep class androidx.navigation3.** { *; }
 -keep class org.jetbrains.androidx.navigation3.** { *; }
@@ -86,10 +70,11 @@
 -dontwarn androidx.compose.**
 
 # ------------------------------------------------------------------------------
-# Gepetto Libraries
+# Gepetto & Circum Libraries
 # ------------------------------------------------------------------------------
--keep class club.gepetto.** { *; }
--keep interface club.gepetto.** { *; }
+-keep class club.gepetto.GcLog { *; }
+-keep class club.gepetto.composeutils.Res** { *; }
+-keep class * extends club.gepetto.circum.CircumIntentProcessor { *; }
 -dontwarn club.gepetto.**
 
 # ------------------------------------------------------------------------------
