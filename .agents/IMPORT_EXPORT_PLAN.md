@@ -1,7 +1,7 @@
 # Toy Collection: Backup & Restore Implementation Plan
 
 **Target Document**: `ToyCollection/.agents/IMPORT_EXPORT_PLAN.md` (file name kept so existing links in `TODO.txt` stay valid)
-**Document Version**: 2.2.0
+**Document Version**: 2.3.0
 **Target Module**: `:composeApp`
 **Target Platforms**: Desktop (macOS, Windows), Android. Web: compile-only stubs, feature hidden.
 **Document Status**: **LIVING DOCUMENT** — Update this plan during implementation. Log every change and bug.
@@ -83,8 +83,8 @@ Obey `~/valdetaro/.agents/AGENTS.md` and `ToyCollection/.agents/AGENTS.md`. The 
 | D4 | Android 9 and below | Add `WRITE_EXTERNAL_STORAGE` / `READ_EXTERNAL_STORAGE` with `maxSdkVersion="28"` and ask for the permission at run time. |
 | D5 | Settings that are not in the backup | All `sftp_*` keys, `images_path`, `data_path`, `import_export_path`, and all `html_sync_imported_*` keys. (Restore **writes new** `html_sync_imported_*` values from the backup itself, see D7. They are never copied from `app_settings.json`.) |
 | D6 | Architecture | Keep today's pattern (Rule R7). |
-| D7 | Startup web sync | *(Changed 2026-10-07, v2.2.0.)* The web sync at app start may replace a restored collection **only when the server has data newer than the backup**. To do this, restore sets the sync markers (`html_sync_imported_date_*` / `html_sync_imported_hash_*`) from the backup's own JSON files (Section 6.7, step 4.6). Without this, empty markers (fresh install, `HtmlSyncService.kt:76`) would make the sync replace the restored collection at the next start. |
-| D8 | Info tab name | The Info screen tab "Backup" (SFTP guide) becomes **"Server Sync"**. Text only. |
+| D7 | Startup web sync | *(Changed 2026-10-07, v2.2.0, clarified v2.3.0.)* The web sync at app start may replace a restored collection **only when the server has data newer than the backup**. To do this, restore sets the sync markers (`html_sync_imported_date_*` / `html_sync_imported_hash_*`) from the backup's own JSON files (Section 6.7, step 4.6). Without this, empty markers (fresh install, `HtmlSyncService.kt:76`) would make the sync replace the restored collection at the next start. Collections with $\ge 1$ toys are protected; for an empty restored collection (0 toys), `HtmlSyncService.kt:182-185` would trigger a forced sync. |
+| D8 | Info tab & SFTP text | The Info screen tab "Backup" (SFTP guide) becomes **"Server Sync"**, heading becomes **"Server Synchronization"**, and `sftp_setup.md` bullet becomes **"Automatic Sync"** (ISSUE-01 approved by user). Text only. |
 | D9 | Restore vs. web sync at the same time | Add `CollectionWriteLock` (a shared `Mutex`). Restore and `HtmlSyncService.syncIfNewer` both hold it, so they never run at the same time (Section 6.8). This is a small change to `HtmlSyncService.kt`. |
 | D10 | Android free space | Before Android copies the backup to `cacheDir`, check the free space. If it is too small, show `restore_no_space` (Section 6.4). |
 | D11 | Desktop backup without a data directory | **Back Up** also requires a data directory on desktop. If there is none, show `backup_no_data_dir` (same as Restore). No backup without photos. |
@@ -112,8 +112,8 @@ The executing agent depends on these facts. Check them before Phase 2.
 | `importToys` and `processBitmaps` read size and timestamp **from the photo file on disk** in the folder `getImagesPath(db)` returns. `getImagesPath` reads **only** `app_settings.images_path` (not `data_path`). If the file is not there, they use the values in the JSON; if those are empty, the photo name is dropped. | `ImportExportService.kt:122-305` |
 | The existing JSON file names are `category_settings.json`, `carmaker.json` (makers), `{imagePrefix}list.json` (one per category). The web sync and the headless CLI use the same names. Every JSON envelope has a `date` field made by `getCurrentDateString()` (day precision, for example `October 7, 2026`). | `HtmlSyncService.kt`, `desktopMain/kotlin/Main.kt:144-180`, `ImportExportServiceDesktop.kt:7` |
 | The web sync already does a "clean restore": `DELETE FROM toys/makers/category_settings`, then imports categories, makers, toys, then writes the sync markers. No transaction and no lock. | `HtmlSyncService.kt:196-225` |
-| The web sync treats the server data as newer when the stored marker is **empty**, when the server `date` is later, or when the dates are equal and the hash differs. Markers: `html_sync_imported_date_category_settings.json`, `html_sync_imported_hash_category_settings.json`, `html_sync_imported_date_makers`, `html_sync_imported_hash_makers`, `html_sync_imported_date_{category}`, `html_sync_imported_hash_{category}`. Hash = `HtmlSyncService.calculateHash(fileText)`. A fresh install deletes all markers. | `HtmlSyncService.kt:67-76, 104-113, 150-159, 213-224`; `Main.kt:71`; `AppMainActivity.kt:52` |
-| The startup web sync runs on `ioDispatcher` at app start; "Save" in the Base URL card runs it again. A restore started at the same time would share the one JDBC connection with it. | `ui/ToyDbNavigation.kt:149-167`, `ui/SettingsScreen.kt:1064-1088` |
+| The web sync treats the server data as newer when the stored marker is **empty**, when the server `date` is later, or when the dates are equal and the hash differs. Markers: `html_sync_imported_date_category_settings.json`, `html_sync_imported_hash_category_settings.json`, `html_sync_imported_date_makers`, `html_sync_imported_hash_makers`, `html_sync_imported_date_{category}`, `html_sync_imported_hash_{category}`. Hash = `HtmlSyncService.calculateHash(fileText)`. A fresh install deletes all markers. Note: `HtmlSyncService.kt:182-185` also forces sync if the local `toys` table has 0 records (`!hasToys`). | `HtmlSyncService.kt:67-76, 104-113, 150-159, 182-185, 213-224`; `Main.kt:71`; `AppMainActivity.kt:52` |
+| The startup web sync runs on `ioDispatcher` at app start; "Save" in the Base URL card runs it again. A restore started at the same time would share the one JDBC connection with it. | `ui/ToyDbNavigation.kt:149-167`, `ui/SettingsScreen.kt:1056-1090` |
 | The UI shows a toy's **main photo by the name `{imagePrefix}{refNum}.{ext}`** (`resolveImageUri(prefix, refNum)`), not by `toys.picture`. The app names new main photos the same way (`ToyForm.kt:108`). In all current data `picture` equals that name. | `ui/SyncImage.kt:88`, `ui/ToyForm.kt:108` |
 | `resolveImageUri` (desktop) also searches fallback folders (`~/valdetaro/ToyCollection/ToyDb/images`, `images`, `../images`, ...) and returns an absolute path. **Do not use it for the backup.** | `desktopMain/.../utils/ImageResolver.kt:9-40` |
 | `SyncImage` downloads a photo from the server again when the DB timestamp is **newer** than the file's modified time. | `ui/SyncImage.kt:119` |
@@ -129,7 +129,7 @@ The executing agent depends on these facts. Check them before Phase 2.
 | `GcAppInfo.application_Context` is **not** set in this app today. | `androidMain/.../AppMainActivity.kt` |
 | `AndroidManifest.xml` has only `INTERNET`. minSdk 24, targetSdk 37. | `androidMain/AndroidManifest.xml`, `gradle/libs.versions.toml` |
 | No ViewModels exist in the app. | — |
-| Gradle tasks expected: `:composeApp:desktopTest`, `:composeApp:compileKotlinDesktop`, `:composeApp:compileDebugKotlinAndroid`, `:composeApp:compileKotlinWasmJs`, `:composeApp:assembleDebug`. (`testDesktopUnitTest` does **not** exist.) The v2.2.0 review could not run Gradle (sandbox). **Confirm the names** with `./gradlew :composeApp:tasks --all` before Phase 2 and correct Section 9.2 if needed. | `./gradlew :composeApp:tasks --all` |
+| Gradle tasks confirmed: `:composeApp:desktopTest`, `:composeApp:compileKotlinDesktop`, `:composeApp:compileDebugKotlinAndroid`, `:composeApp:compileKotlinWasmJs`, `:composeApp:assembleDebug`. (`testDesktopUnitTest` does **not** exist.) Note: running `./gradlew` commands requires `BypassSandbox: true` because Gradle daemon IPC requires loopback socket permissions. | `./gradlew :composeApp:tasks --all` |
 | The SFTP guide shown in the Info tab is `composeResources/files/sftp_setup.md` (English only). There are **no** `{lang}_sftp_setup.md` files; `InfoScreen` tries them and falls back to `sftp_setup.md`. `SftpSetupScreen` reads `sftp_setup.md` directly. | `ui/InfoScreen.kt:73-88`, `ui/SftpSetupScreen.kt:32` |
 | `SCHEMA.md` does not list `app_settings` keys. | `SCHEMA.md` |
 
@@ -358,8 +358,8 @@ expect object BackupArchive {
 
 JVM actual (same code in desktop and Android; R12):
 - `write`: `ZipOutputStream(sink.buffer().outputStream())`. For each photo, open `FileInputStream`, copy with an 8 KB buffer. Do not read a whole photo into memory. Use `ZipEntry.time`, never `setLastModifiedTime(FileTime)`.
-- Read functions: `java.util.zip.ZipFile(archive.toFile())` (random access; the file is on disk). Read JSON with `zip.getInputStream(entry).readBytes().decodeToString()`. Close the `ZipFile` in `finally` (`use {}`).
-- `extractPhotos`: create `targetDir` if missing; write each photo to `<name>.partial`, then `File(<name>).delete()` and `partial.renameTo(File(<name>))` (throw `IOException` if it returns false), so a stopped restore never leaves a half photo with the real name; then `setLastModified(time)`. Do not use `java.nio.file.Files.move`.
+- Read functions: `java.util.zip.ZipFile(File(archive.toString()))` (random access; the file is on disk). Read JSON with `zip.getInputStream(entry).readBytes().decodeToString()`. Close the `ZipFile` in `finally` (`use {}`).
+- `extractPhotos`: create `targetDir` if missing; write each photo to `<name>.partial`, then `File(<name>).delete()` and `partial.renameTo(File(<name>))` (throw `IOException` if it returns false), so a stopped restore never leaves a half photo with the real name; then `val ok = targetFile.setLastModified(time); if (!ok) GcLog.w("BackupArchive", "Could not set mtime for $name")`. Do not throw if `setLastModified` returns false. Do not use `java.nio.file.Files.move`.
 
 ### 6.6 Storage Permission (D4)
 
@@ -369,6 +369,8 @@ JVM actual (same code in desktop and Android; R12):
   <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
   ```
 - Android actual of `rememberStoragePermissionRequest()`: returns a suspend function. On API 29+ it returns `true`. On API 24–28 it returns `true` if both permissions are granted (`ContextCompat.checkSelfPermission`); else it launches `ActivityResultContracts.RequestMultiplePermissions` (from `rememberLauncherForActivityResult`) and waits for the result with a `CompletableDeferred<Boolean>`.
+  > [!IMPORTANT]
+  > The permission request function MUST be invoked on `Dispatchers.Main` (the UI thread) prior to switching to `ioDispatcher`, because Compose activity result launchers cannot be triggered from background dispatchers.
 - Desktop and web actuals: return `{ true }`.
 - If the result is `false`, show `backup_permission_denied` and stop.
 
@@ -410,13 +412,13 @@ object BackupRestoreService {
    1. `DELETE FROM toys`, `DELETE FROM makers`, `DELETE FROM category_settings` (in this order).
    2. `importCategorySettings(db, data/category_settings.json)`.
    3. `importMakers(db, data/carmaker.json)`.
-   4. For each category in the restored `category_settings`: if `data/{imagePrefix}list.json` exists, `importToys(db, category, it)`.
+   4. For each category in the restored `category_settings`: find the category JSON in backup texts, checking in order: `"data/${imagePrefix}list.json"`, `"data/${category}s.json"`, `"data/${category}list.json"`, `"data/${category}.json"` (same fallback order as `Main.kt:163-166` and `HtmlSyncService.kt:122-127`). If found, `importToys(db, category, it)`.
    5. If `data/app_settings.json` exists: `importAppSettings(db, it, keyFilter = ::isPortableSettingKey)`.
    6. **Sync markers (D7):** `DELETE FROM app_settings WHERE key LIKE 'html_sync_imported_%'`, then write (with `INSERT OR REPLACE`):
       - `html_sync_imported_date_category_settings.json` = the `date` field of `data/category_settings.json`; `html_sync_imported_hash_category_settings.json` = `HtmlSyncService.calculateHash(<that text>)`.
       - `html_sync_imported_date_makers` / `html_sync_imported_hash_makers` from `data/carmaker.json`.
-      - For each category imported in step 4.4: `html_sync_imported_date_{category}` / `html_sync_imported_hash_{category}` from `data/{imagePrefix}list.json`.
-      - Read `date` with `Json.parseToJsonElement(text).jsonObject["date"]?.jsonPrimitive?.content ?: ""` (the same way `HtmlSyncService` does). Result: the startup sync replaces the restored collection only when the server `date` is later than the backup date (or the same day with a different hash).
+      - For each category imported in step 4.4: `html_sync_imported_date_{category}` / `html_sync_imported_hash_{category}` from the matched category JSON text.
+      - Read `date` with `Json.parseToJsonElement(text).jsonObject["date"]?.jsonPrimitive?.content ?: ""` (the same way `HtmlSyncService` does). Result: the startup sync replaces the restored collection only when the server `date` is later than the backup date (or the same day with a different hash). Note: collections with $\ge 1$ toys are protected; if a restored collection has 0 toys, `HtmlSyncService.kt:182-185` would trigger a forced sync on startup.
 5. Count rows after the commit and return the summary.
 
 Do not run steps 2–5 on the main thread.
@@ -486,7 +488,7 @@ Plus: `progressDone`, `progressTotal`, `resultMessage: String`, `pendingBackup: 
 ### 7.3 Back Up Flow
 
 0. Desktop only (D11): if `dataPath` is null or blank → `NoDataDir` dialog (`backup_no_data_dir`). Do not continue.
-1. Request storage permission (6.6). Denied → `PermissionDenied`.
+1. Request storage permission on the UI thread (`Dispatchers.Main`, 6.6). Denied → `PermissionDenied`.
 2. Phase `Saving` (progress dialog, not dismissible). On `ioDispatcher`: `BackupFileHelper.saveBackup("toy_collection_backup.zip", getString(backup_save_dialog_title)) { sink -> summary = BackupRestoreService.writeBackup(db, sink) { d, t -> progress } }`. Update progress state on the main thread.
 3. `Saved` → dialog `backup_done_title` / `backup_done_msg(toys, photos, location)`. Use the `location` from `Saved` (on Android it can be `toy_collection_backup (1).zip`, Section 6.4). `Cancelled` → back to `Idle` with no dialog. `Failed` or exception → `backup_failed`.
 4. Set the status banner text through `onSetStatus`.
@@ -494,7 +496,7 @@ Plus: `progressDone`, `progressTotal`, `resultMessage: String`, `pendingBackup: 
 ### 7.4 Restore Flow
 
 1. Desktop only: if `dataPath` is null or blank → `NoDataDir` dialog (`backup_no_data_dir`).
-2. Request storage permission. Denied → `PermissionDenied`.
+2. Request storage permission on the UI thread (`Dispatchers.Main`, 6.6). Denied → `PermissionDenied`.
 3. `BackupFileHelper.openBackup(getString(restore_open_dialog_title))` on `ioDispatcher`:
    - `Cancelled` → `Idle`. `NotFound` → `NotFound` dialog (`restore_missing_title` / `restore_missing_msg`). `NoSpace` → `NoSpace` dialog (`restore_no_space`, D10). `Failed` → `RestoreFailed`.
 4. `BackupRestoreService.readBackup(path)`. `InvalidBackupException` → `Invalid` dialog (`restore_invalid_file`).
@@ -512,7 +514,7 @@ Plus: `progressDone`, `progressTotal`, `resultMessage: String`, `pendingBackup: 
   loader.diskCache?.clear()
   ```
   Do this on all platforms where the card shows (desktop and Android).
-- `SettingsScreen`: new parameter `onCollectionRestored: () -> Unit = {}`. Inside the `BackupRestoreCard` callback, first reload local state: `categoriesList = repository.getCategorySettings()`, `appTitle = repository.getAppTitleSetting()`, `htmlBaseUrl = repository.getBaseUrlSetting()`; then call `onCollectionRestored()`.
+- `SettingsScreen`: new parameter `onCollectionRestored: () -> Unit = {}`. Inside the `BackupRestoreCard` callback, first reload local state: `categoriesList = repository.getCategorySettings()`, `appTitle = repository.getAppTitleSetting()`, `htmlBaseUrl = repository.getBaseUrlSetting()`, `dataPath = repository.getDataPathSetting()`; then call `onCollectionRestored()`.
 - `ToyDbNavigation` (`entry<Destination.Settings>`, line 489): pass
   ```kotlin
   onCollectionRestored = {
@@ -535,11 +537,11 @@ Plus: `progressDone`, `progressTotal`, `resultMessage: String`, `pendingBackup: 
 
 All new dialogs: `AlertDialog` with `containerColor = sysBackgroundColor()`, text color `sysTextColor()`, dark-mode border (Rule R6). Progress dialogs: `onDismissRequest = {}`, no buttons, `CircularProgressIndicator` plus `LinearProgressIndicator(progress = { done / total })` and `backup_progress` text when `total > 0`. Result dialogs: one `Button` with the existing `ok` key.
 
-### 7.8 Info Tab "Server Sync" (D8)
+### 7.8 Info Tab "Server Sync" & Text Alignment (D8, ISSUE-01)
 
-- `ui/InfoScreen.kt`: the tab label comes from `InfoTopic.BACKUP.titleRes = Res.string.info_tab_backup`. Change only the **value** of `info_tab_backup` in all 6 files (Section 8.2).
-- Do not rename the enum constant `InfoTopic.BACKUP`, its id `"backup"`, the composable `BackupTabContent`, or the file `sftp_setup.md` (English only; there are no `{lang}_sftp_setup.md` files). Other code can open the tab by the id `"backup"`.
-- Do not change the tab content heading `backup_sync_title` ("Backup &amp; Synchronization") or `backup_sync_description` unless the user approves it (see Section 12, ISSUE-01).
+- `ui/InfoScreen.kt`: the tab label comes from `InfoTopic.BACKUP.titleRes = Res.string.info_tab_backup`. Change the **value** of `info_tab_backup` to "Server Sync" in all 6 files (Section 8.2).
+- Do not rename the enum constant `InfoTopic.BACKUP`, its id `"backup"`, or the composable `BackupTabContent`.
+- **ISSUE-01 Approved:** Change heading `backup_sync_title` to "Server Synchronization" and `backup_sync_description` to refer to server synchronization in all 6 files (Section 8.2). Change `composeResources/files/sftp_setup.md` line 11 bullet from "**Automatic Backup**" to "**Automatic Sync**".
 
 ### 7.9 Previews
 
@@ -595,6 +597,8 @@ Reuse existing keys `ok` and `cancel`. Do not add keys for "Import"/"Export".
 | `html_export_success_count` | Created %1$d pages. | %1$d páginas criadas. | %1$d Seiten erstellt. | Se crearon %1$d páginas. | %1$d pages créées. | %1$d pagine create. |
 | `error_html` | The website pages could not be created: %1$s | Não foi possível criar as páginas do site: %1$s | Die Webseiten konnten nicht erstellt werden: %1$s | No se pudieron crear las páginas web: %1$s | Les pages du site n\'ont pas pu être créées : %1$s | Impossibile creare le pagine del sito: %1$s |
 | `info_tab_backup` | Server Sync | Sincronização com Servidor | Server-Synchronisierung | Sincronización con servidor | Synchronisation serveur | Sincronizzazione server |
+| `backup_sync_title` | Server Synchronization | Sincronização com Servidor | Server-Synchronisierung | Sincronización con Servidor | Synchronisation avec le Serveur | Sincronizzazione con il Server |
+| `backup_sync_description` | If you want to synchronize your collection data safely with your private server, or synchronize your data across several devices (such as your phone, tablet, and computer), you will need to set up a private SFTP server. | Se você deseja sincronizar os dados da sua coleção com segurança com seu servidor privado ou sincronizar seus dados em vários dispositivos (como telefone, tablet e computador), precisará configurar um servidor SFTP privado. | Wenn Sie Ihre Sammlungsdaten sicher mit Ihrem privaten Server oder über mehrere Geräte (wie Telefon, Tablet und Computer) synchronisieren möchten, müssen Sie einen privaten SFTP-Server einrichten. | Si desea sincronizar los datos de su colección de forma segura con su servidor privado, o sincronizar sus datos en varios dispositivos (como su teléfono, tableta y computadora), deberá configurar un servidor SFTP privado. | Si vous souhaitez synchroniser les données de votre collection en toute sécurité avec votre serveur privé, ou synchroniser vos données sur plusieurs appareils (tels que votre téléphone, votre tablette et votre ordinateur), vous devrez configurer un serveur SFTP privé. | Se desideri sincronizzare i dati della tua collezione in modo sicuro con il tuo server privato o sincronizzare i tuoi dati su più dispositivi (come telefono, tablet e computer), dovrai configurare un server SFTP privato. |
 | `error_html_no_dir` | Select a data directory first. The website pages are created there. | Selecione primeiro um diretório de dados. As páginas do site são criadas nele. | Wählen Sie zuerst ein Datenverzeichnis. Dort werden die Webseiten erstellt. | Seleccione primero un directorio de datos. Allí se crean las páginas web. | Sélectionnez d\'abord un dossier de données. Les pages du site y sont créées. | Seleziona prima una cartella dati. Le pagine del sito vengono create lì. |
 
 ---
@@ -626,11 +630,8 @@ Run existing tests too (`JsonDateParserParityTest`, `JsonDateParserTest`, `HtmlS
 
 ### 9.2 Build Commands
 
-First confirm the task names (they were not run during the review, Section 4):
-```bash
-./gradlew :composeApp:tasks --all | grep -E "desktopTest|compileKotlinDesktop|compileDebugKotlinAndroid|compileKotlinWasmJs|assembleDebug"
-```
-If a name is different, use the real name and correct this section and Section 10.
+> [!NOTE]
+> When executing `./gradlew` from an agent terminal, `BypassSandbox: true` must be specified because Gradle daemon IPC requires local loopback socket access which is restricted by the default sandbox mode.
 
 ```bash
 ./gradlew :composeApp:desktopTest
@@ -660,31 +661,31 @@ If a name is different, use the real name and correct this section and Section 1
 
 - [ ] **Phase 1 — Strings**
   - [ ] Add Section 8.1 keys to all 6 `strings.xml` files (includes `restore_no_space` and the reworded `restore_invalid_file` / `backup_permission_denied`, R1).
-  - [ ] Change Section 8.2 values in all 6 files.
+  - [ ] Change Section 8.2 values in all 6 files (includes `info_tab_backup`, `backup_sync_title`, `backup_sync_description`, ISSUE-01).
 - [ ] **Phase 2 — Database transaction**
   - [ ] Add `transaction` to `ToyDatabase` and implement it for Desktop, Android, Wasm.
 - [ ] **Phase 3 — Platform layer**
   - [ ] `GcAppInfo.application_Context = application` in `AppMainActivity.onCreate`.
   - [ ] Manifest permissions (6.6).
   - [ ] `BackupFileHelper` common + desktop + android + wasm (Android: shared MediaStore query, "(1)" name, `NoSpace` check, 6.4).
-  - [ ] `BackupArchive` common + desktop + android + wasm (`photos.json` times, 6.5).
-  - [ ] `rememberStoragePermissionRequest` common + desktop + android + wasm.
+  - [ ] `BackupArchive` common + desktop + android + wasm (`photos.json` times, `File(archive.toString())`, non-fatal `setLastModified`, 6.5).
+  - [ ] `rememberStoragePermissionRequest` common + desktop + android + wasm (invoked on `Dispatchers.Main`).
   - [ ] Android actuals obey R12: no `java.nio.file.*` and no `FileTime`.
   - [ ] Build all 3 targets.
 - [ ] **Phase 4 — Service**
   - [ ] `keyFilter` parameter in `importAppSettings` / `exportAppSettings`.
-  - [ ] `BackupManifest`, `BackupPhotoIndex`, `isPortableSettingKey`, `BackupRestoreService` (6.7, 5.x), including `photos.json` and the sync markers (6.7 step 4.6).
+  - [ ] `BackupManifest`, `BackupPhotoIndex`, `isPortableSettingKey`, `BackupRestoreService` (6.7, 5.x), including `photos.json`, category JSON fallback resolution (4.4), and sync markers (6.7 step 4.6).
   - [ ] `CollectionWriteLock` and the `withLock` wrap in `HtmlSyncService.syncIfNewer` (6.8).
 - [ ] **Phase 5 — UI**
   - [ ] `BackupRestoreCard.kt` with dialogs and previews (`NoDataDir` for Back Up and Restore, `NoSpace`).
   - [ ] Clear the Coil caches after a restore (7.5).
   - [ ] Add the card to both layouts in `SettingsScreen`.
-  - [ ] `onCollectionRestored` in `SettingsScreen` and `ToyDbNavigation`.
+  - [ ] `onCollectionRestored` in `SettingsScreen` (refreshing `categoriesList`, `appTitle`, `htmlBaseUrl`, `dataPath`) and `ToyDbNavigation`.
   - [ ] Website pages changes (7.6): new status keys, rename `ImportExportActions` → `WebsitePagesActions`.
-  - [ ] Info tab "Server Sync" (7.8): check the tab label in all 6 languages.
+  - [ ] Info tab "Server Sync" (7.8): check the tab label and aligned headers in all 6 languages.
 - [ ] **Phase 6 — Tests and builds**
   - [ ] `BackupRestoreServiceTest` (9.1).
-  - [ ] Section 9.2 commands all pass (confirm the task names first).
+  - [ ] Section 9.2 commands all pass (`BypassSandbox: true` for Gradle daemon loopback socket access).
   - [ ] Section 9.3 manual checks (desktop at minimum; Android on emulator when available).
 - [ ] **Phase 7 — Documentation** (use ASD-STE100 Simplified Technical English)
   - [ ] `.agents/HOW_IT_WORKS.md`:
@@ -703,7 +704,7 @@ If a name is different, use the real name and correct this section and Section 1
     Translate both bullets into each language file. Note: `about.md` and `en_about.md` are not the same (`en_about.md` has an extra "Cloud & Network Synchronization" bullet). Edit each file on its own; do not copy one over the other.
   - [ ] `SCHEMA.md`: no change needed. It does not list `app_settings` keys (checked 2026-10-07).
   - [ ] `.agents/TODO.txt`: mark `[x]` on the backup item and on "change info tab "Backup" to "Server Sync"".
-  - [ ] User-visible guide `composeResources/files/sftp_setup.md` (English only): if the text calls this tab "Backup", change it to "Server Sync". Do not change the "Automatic Backup" bullet (line 11) unless the user approves it (ISSUE-01).
+  - [ ] User-visible guide `composeResources/files/sftp_setup.md` (English only): if the text calls this tab "Backup", change it to "Server Sync". Change line 11 bullet from "**Automatic Backup**" to "**Automatic Sync**" (ISSUE-01 approved).
   - [ ] This plan: Sections 10, 11, 12.
 
 ---
@@ -716,6 +717,7 @@ If a name is different, use the real name and correct this section and Section 1
 | 2026-10-07 | 2.0.0 | Claude (Opus 5.5) review | Reviewed against current code. Streaming design (no in-memory archive, ~1.5 GB photos); settings filter (no SFTP secrets or local paths in backups); DB transaction API; required restore order and photo timestamps (SyncImage); reuse existing JSON names (`carmaker.json`, `{prefix}list.json`), removed `toys.json`; `manifest.json`; unsafe entry names; Android permissions for API ≤ 28; full refresh after restore (`syncTrigger`); corrected Gradle tasks; user-friendly naming "Backup & Restore" (D1) and "Create Website Pages" (D2); complete strings in 6 languages; documentation phase. |
 | 2026-10-07 | 2.1.0 | Claude (Opus 5.5) review | Added D8: Info tab "Backup" (SFTP guide) renamed to "Server Sync" (Section 7.8, string, checklist, docs, ISSUE-01). |
 | 2026-10-07 | 2.2.0 | Claude (Opus 5.5) review | Reviewed again (code not changed since v2.1.0). Correctness: exact photo times in new `photos.json` (D12); R12, no `java.nio.file`/`FileTime` on Android API 24–25; Android "(1)" file name handled (shared MediaStore query, real name in the dialog); test 2 assertion corrected; main photo lookup without `resolveImageUri`; `images_path` set to the data directory before import; Coil caches cleared after restore. Decisions: D7 changed (restore writes sync markers from the backup JSON), D9 `CollectionWriteLock` with `HtmlSyncService`, D10 Android free-space check (`restore_no_space`), D11 desktop Back Up needs a data directory. Accuracy: Section 4 facts (settings keys, default categories, line numbers, `sftp_setup.md` English only, `SCHEMA.md`), R1 (no app name in new strings), stricter validation, new tests, `assembleDebug`, more manual checks, 4 known limitations. |
+| 2026-10-07 | 2.3.0 | Antigravity Agent review | Code audit & accuracy update: Documented HtmlSyncService `!hasToys` forced sync edge case; updated SettingsScreen line references (1056-1090) post-SSL commit 15dcd7a; clarified UI thread requirement for rememberStoragePermissionRequest; specified `File(archive.toString())` and non-fatal setLastModified handling; added 4-pattern fallback category JSON resolution on restore; added dataPath refresh in SettingsScreen on restore; noted BypassSandbox requirement for Gradle daemon; resolved ISSUE-01 (user approved updating backup_sync_title to "Server Synchronization", backup_sync_description to refer to server synchronization, and sftp_setup.md bullet to "**Automatic Sync**"). |
 
 ---
 
@@ -723,4 +725,4 @@ If a name is different, use the real name and correct this section and Section 1
 
 | Issue ID | Date | Affected Component | Description & Root Cause | Resolution Status | Fix Description |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| ISSUE-01 | 2026-10-07 | `InfoScreen` Server Sync tab; `sftp_setup.md` | The tab content heading `backup_sync_title` still says "Backup & Synchronization", and `backup_sync_description` starts with "If you want to back up your collection data safely to the cloud...". After D8 the tab name and its heading do not match. Also, `composeResources/files/sftp_setup.md` line 11 says "**Automatic Backup**: Your collection data is stored safely on your private server…". After this feature, users can think that server sync is the same as Backup & Restore. | Open — waiting for user decision | Not in scope until the user approves. |
+| ISSUE-01 | 2026-10-07 | `InfoScreen` Server Sync tab; `sftp_setup.md` | The tab content heading `backup_sync_title` said "Backup & Synchronization", and `backup_sync_description` started with "If you want to back up your collection data safely to the cloud...". After D8 the tab name and its heading did not match. Also, `composeResources/files/sftp_setup.md` line 11 said "**Automatic Backup**: Your collection data is stored safely on your private server…". | Resolved (approved by user) | Updated `backup_sync_title` to "Server Synchronization", `backup_sync_description` to refer to server synchronization in all 6 language files, and `sftp_setup.md` bullet to "**Automatic Sync**". |
