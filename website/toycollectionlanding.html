@@ -23,7 +23,7 @@
             --light-text: #ffffff;
         }
         body {
-            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--bg-color);
             display: flex;
             justify-content: center;
@@ -61,22 +61,22 @@
     </style>
     <script>
         (function() {
-            var userLang = (navigator.language || navigator.userLanguage).toLowerCase();
-            var targetPage = toycollectionlanding_en.html;
+            var userLang = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
+            var targetPage = "toycollectionlanding_en.html";
 
             if (userLang.startsWith('pt')) {
-                targetPage = toycollectionlanding_pt.html;
+                targetPage = "toycollectionlanding_pt.html";
             } else if (userLang.startsWith('fr')) {
-                targetPage = toycollectionlanding_fr.html;
+                targetPage = "toycollectionlanding_fr.html";
             } else if (userLang.startsWith('es')) {
-                targetPage = toycollectionlanding_es.html;
+                targetPage = "toycollectionlanding_es.html";
             } else if (userLang.startsWith('it')) {
-                targetPage = toycollectionlanding_it.html;
+                targetPage = "toycollectionlanding_it.html";
             } else if (userLang.startsWith('de')) {
-                targetPage = toycollectionlanding_de.html;
+                targetPage = "toycollectionlanding_de.html";
             }
 
-            window.location.href = targetPage;
+            window.location.replace(targetPage);
         })();
     </script>
 </head>
