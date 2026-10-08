@@ -21,6 +21,7 @@ private const val TAG_MAIN = "WebMain"
 fun main() {
     // ISSUE-27 (Rev 6): GcLog writes nothing until a tree is planted. On wasm, DebugTree prints to the browser console.
     GcLog.plant(GcLog.DebugTree())
+    com.gepetto.toydb.platform.SettingsStorage.initContext(null)
     SingletonImageLoader.setSafe { ImageLoader.Builder(PlatformContext.INSTANCE).build() }
     MainScope().launch {
         try {

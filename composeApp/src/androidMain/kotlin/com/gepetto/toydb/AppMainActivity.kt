@@ -26,6 +26,17 @@ class AppMainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         GcLog.plant(GcLog.DebugTree())
         club.gepetto.utils.GcAppInfo.application_Context = application
+        try {
+            com.gepetto.toydb.platform.SettingsStorage.initContext(applicationContext)
+        } catch (e: Throwable) {
+            GcLog.e("AppMainActivity", "Failed to initialize SettingsStorage: ${e.message}", e)
+        }
+        try {
+            club.gepetto.gcadslib.initAnalytics(applicationContext, "toy_collection_mobile_new_installation")
+            com.gepetto.toydb.platform.SettingsStorage.putBoolean(com.gepetto.toydb.analytics.ToyCollectionAnalytics.KEY_FIRST_RUN_LOGGED, true)
+        } catch (e: Throwable) {
+            GcLog.e("AppMainActivity", "Failed to initialize Analytics: ${e.message}", e)
+        }
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 

@@ -44,6 +44,7 @@ fun main(args: Array<String>) {
     }
 
     GcLog.plant(GcLog.DebugTree())
+    com.gepetto.toydb.platform.SettingsStorage.initContext(null)
 
     // Initialize Coil 3 Image Loader for Desktop
     SingletonImageLoader.setSafe {

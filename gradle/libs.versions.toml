@@ -2,8 +2,8 @@
 compileSdk = "37"
 targetSdk = "37"
 minSdk = "24"
-versionCode = "238"
-versionName = "3.0.38"
+versionCode = "239"
+versionName = "3.0.39"
 
 accompanistPager = "0.36.0"
 agp = "9.4.1"
@@ -38,6 +38,7 @@ appcompat = "1.8.0"
 gepettoUtilsVersion = "2.1.2"
 circumVersion = "2.1.1"
 gcLogVersion = "0.1.1"
+gepettoAdsLib = "0.4.1"
 googleServices = "4.5.0"
 activityCompose = "1.13.0"
 composeBom = "2026.09.00"
@@ -113,6 +114,7 @@ google-services = { module = "com.google.gms:google-services", version.ref = "go
 gepetto-utils = { module = "club.gepetto:gepetto-utils", version.ref = "gepettoUtilsVersion" }
 circum = { module = "club.gepetto:circum", version.ref = "circumVersion" }
 gepetto-gclog = { module = "club.gepetto:gclog", version.ref = "gcLogVersion" }
+gepetto-adslib = { module = "club.gepetto:gcadslib", version.ref = "gepettoAdsLib" }
 ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktorClientContentNegotiation" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktorClientCore" }
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktorClientOkhttp" }

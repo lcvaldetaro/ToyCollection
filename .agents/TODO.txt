@@ -25,3 +25,4 @@ BUGS:
 [x]-make sure all strings are localized
 [x]-db reset for new collections
 [x]-desktop must check if there is a new version to download
+[x]-Analytics: First Install

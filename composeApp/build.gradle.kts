@@ -109,6 +109,7 @@ kotlin {
             implementation(libs.circum)
             implementation(libs.gepetto.utils)
             implementation(libs.gepetto.gclog)
+            implementation(libs.gepetto.adslib)
 
             implementation(compose.runtime)
             implementation(compose.foundation)

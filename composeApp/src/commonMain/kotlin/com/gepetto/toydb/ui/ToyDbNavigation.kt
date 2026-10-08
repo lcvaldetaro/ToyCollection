@@ -148,6 +148,8 @@ fun ToyDbNavigation(
 
     // Initialize the global images path resolver config on startup
     LaunchedEffect(repository) {
+        com.gepetto.toydb.analytics.ToyCollectionAnalytics.checkAndLogFirstRun()
+        com.gepetto.toydb.analytics.ToyCollectionAnalytics.logMainLoad()
         com.gepetto.toydb.utils.ImageResolverConfig.imagesPath = repository.getDataPathSetting()
         
         if (runStartupSync) {
