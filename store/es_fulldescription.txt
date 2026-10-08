@@ -1,0 +1,51 @@
+Gepetto Toy Database Manager es una aplicación completa de gestión de colecciones para coleccionistas y aficionados. La aplicación te ayuda a catalogar, organizar y mantener tus colecciones con fichas detalladas y fotografías.
+
+Utiliza la aplicación para registrar slot cars (autorama), trenes a escala, modelos estáticos, maquetas y colecciones personalizadas.
+
+Comparte tus comentarios o sugerencias a través del enlace de Play Store. Las versiones de escritorio para macOS y Windows están disponibles en https://gepetto.club.
+
+Características Principales:
+
+• Organización en Múltiples Categorías:
+- Categorías predeterminadas: Slot Cars, Trenes a Escala, Modelos Estáticos, Maquetas y Otros.
+- Crea y gestiona categorías personalizadas con iconos propios, títulos y prefijos para fotos.
+- Consulta el recuento total del inventario y resúmenes de la colección en el panel principal.
+
+• Fichas Completas de Artículos:
+- Registra hasta 34 atributos detallados para cada pieza coleccionable.
+- Guarda números de referencia, nombres de modelos, fabricantes, escalas y años de producción.
+- Registra componentes mecánicos, detalles del chasis, tipos de carrocería y motores.
+- Administra el historial de adquisición, precios de compra, valoraciones de mercado y ventas.
+- Registra el estado de conservación, embalaje original, piezas de reproducción y notas.
+
+• Directorio de Fabricantes:
+- Mantén un directorio completo de fabricantes con país de origen e historia de la marca.
+- Asocia logotipos de fabricantes e imágenes de fábricas.
+- Renombra fabricantes de forma segura con actualización automática de todos los artículos asociados.
+
+• Gestión de Fotos y Multimedia:
+- Añade fotos principales y galerías de imágenes secundarias a cada artículo.
+- Vincula fotos automáticamente mediante prefijos de archivo y números de referencia.
+- Visualiza imágenes en alta resolución con el visor integrado.
+
+• Copia de Seguridad y Restauración Completa:
+- Exporta tu colección entera en un único archivo comprimido ZIP.
+- La copia incluye todos los registros de la base de datos, categorías, fabricantes y fotos.
+- Restaura tu colección en el mismo dispositivo o transfiérela a uno nuevo.
+- Procesa archivos grandes de forma segura sin consumir memoria excesiva.
+
+• Sincronización en la Nube y en Red:
+- Sincroniza datos y fotos de tu colección entre teléfonos, tabletas y ordenadores.
+- Conexión directa con tu servidor privado SFTP mediante autenticación segura.
+- Sincronización diferencial inteligente que transfiere solo archivos nuevos o modificados.
+- Sincroniza datos desde servidores web remotos con verificación automática de integridad.
+
+• Creación de Catálogo Web:
+- Genera páginas web HTML estáticas directamente desde tu base de datos.
+- Crea índices por categoría, galerías por fabricante y páginas individuales de artículos.
+- Publica las páginas generadas en tu servidor web para mostrar tu colección en línea.
+
+• Gratis, Sin Registro y con Privacidad Total:
+- Sin cuentas de usuario, sin registros y sin inicio de sesión.
+- Sin anuncios publicitarios y sin seguimiento de datos.
+- Toda la información de tu colección permanece en tu dispositivo local y almacenamiento privado.

@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gepetto Toy Database Manager - Gestión de Colecciones de Juguetes y Modelos</title>
+    <meta name="description" content="Cataloga, organiza y gestiona tus colecciones de juguetes, modelos y fotos. Aplicación de base de datos para macOS, Windows y Android.">
+    <link rel="canonical" href="https://gepetto.club/toycollection/toycollectionlanding_es.html">
+    <link rel="alternate" hreflang="en" href="https://gepetto.club/toycollection/toycollectionlanding_en.html">
+    <link rel="alternate" hreflang="pt" href="https://gepetto.club/toycollection/toycollectionlanding_pt.html">
+    <link rel="alternate" hreflang="es" href="https://gepetto.club/toycollection/toycollectionlanding_es.html">
+    <link rel="alternate" hreflang="fr" href="https://gepetto.club/toycollection/toycollectionlanding_fr.html">
+    <link rel="alternate" hreflang="it" href="https://gepetto.club/toycollection/toycollectionlanding_it.html">
+    <link rel="alternate" hreflang="de" href="https://gepetto.club/toycollection/toycollectionlanding_de.html">
+    <link rel="alternate" hreflang="x-default" href="https://gepetto.club/toycollection/toycollectionlanding.html">
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EJY2W0NXGF"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EJY2W0NXGF');
+      gtag('event', 'website_toycollection_main_load');
+    </script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary-color: #2b5c8f;
+            --primary-hover: #1d436c;
+            --secondary-color: #1d3557;
+            --accent-color: #2a9d8f;
+            --accent-light: #e0f2f1;
+            --bg-color: #f8fafc;
+            --text-color: #1e293b;
+            --text-muted: #64748b;
+            --light-text: #ffffff;
+            --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            --card-hover: 0 18px 40px rgba(0, 0, 0, 0.12);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            overflow-x: hidden;
+        }
+
+        /* Language Switcher */
+        .lang-nav {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.6rem 1rem;
+            background: rgba(0, 0, 0, 0.2);
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .lang-nav a {
+            color: rgba(255, 255, 255, 0.85);
+            text-decoration: none;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .lang-nav a:hover, .lang-nav a.active {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .lang-nav span.sep {
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.75rem;
+        }
+
+        /* Header / Hero Section */
+        header {
+            background: linear-gradient(135deg, #1d3557 0%, #2b5c8f 50%, #457b9d 100%);
+            color: var(--light-text);
+            padding: 3.5rem 1.5rem 4rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 2;
+            max-width: 920px;
+            margin: 0 auto;
+        }
+
+        .app-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            padding: 0.45rem 1.25rem;
+            border-radius: 50px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            text-transform: uppercase;
+        }
+
+        .app-icon {
+            width: 100px;
+            height: 100px;
+            border-radius: 22px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+            margin-bottom: 1.25rem;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: white;
+            object-fit: cover;
+        }
+
+        header h1 {
+            font-size: 3.2rem;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            line-height: 1.15;
+            font-weight: 800;
+        }
+
+        header p.subtitle {
+            font-size: 1.3rem;
+            opacity: 0.95;
+            margin: 0 auto 2rem;
+            line-height: 1.6;
+            max-width: 800px;
+            color: #f1faee;
+        }
+
+        .hero-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1.2rem;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+
+        .cta-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            background-color: #e63946;
+            color: white;
+            padding: 0.9rem 1.8rem;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1.05rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(230, 57, 70, 0.35);
+        }
+
+        .cta-button:hover {
+            background-color: #d62839;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(230, 57, 70, 0.45);
+        }
+
+        .cta-button.secondary {
+            background-color: rgba(255, 255, 255, 0.15);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: none;
+        }
+
+        .cta-button.secondary:hover {
+            background-color: rgba(255, 255, 255, 0.25);
+            border-color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Pillars Banner */
+        .pillars-section {
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 2.5rem 1.5rem;
+        }
+
+        .pillars-grid {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 2rem;
+            text-align: center;
+        }
+
+        .pillar-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            text-align: left;
+        }
+
+        .pillar-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            background: #eef4f8;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            flex-shrink: 0;
+        }
+
+        .pillar-text h4 {
+            font-size: 1.05rem;
+            color: var(--secondary-color);
+            margin-bottom: 0.2rem;
+        }
+
+        .pillar-text p {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 4rem 1.5rem;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.3rem;
+            color: var(--secondary-color);
+            margin-bottom: 0.75rem;
+            font-weight: 700;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            font-size: 1.15rem;
+            color: var(--text-muted);
+            max-width: 780px;
+            margin: 0 auto 3rem;
+            line-height: 1.6;
+        }
+
+        /* Adaptive Showcase Section */
+        .showcase-card {
+            background: white;
+            border-radius: 22px;
+            padding: 2.5rem;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 4rem;
+        }
+
+        .showcase-hero-img-wrap {
+            max-width: 1000px;
+            margin: 0 auto 2rem;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+            border: 1px solid #e2e8f0;
+            background: #1e293b;
+        }
+
+        .showcase-hero-img-wrap img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .showcase-hero-caption {
+            text-align: center;
+            padding: 1rem 1.5rem;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            font-weight: 500;
+        }
+
+        /* Eco Grid */
+        .eco-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .eco-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-left: 4px solid var(--primary-color);
+            border-radius: 12px;
+            padding: 1.25rem 1.4rem;
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .eco-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+        }
+
+        .eco-card h4 {
+            font-size: 1.05rem;
+            color: var(--secondary-color);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .eco-card h4 i {
+            color: var(--primary-color);
+        }
+
+        .eco-card p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+            margin-bottom: 4rem;
+        }
+
+        .feature-card {
+            background: white;
+            border-radius: 18px;
+            padding: 2.2rem 1.8rem;
+            box-shadow: var(--card-shadow);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(0,0,0,0.04);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--card-hover);
+        }
+
+        .feature-icon-wrap {
+            width: 58px;
+            height: 58px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(43, 92, 143, 0.1) 0%, rgba(42, 157, 143, 0.15) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.4rem;
+            color: var(--primary-color);
+            font-size: 1.6rem;
+        }
+
+        .feature-card h3 {
+            font-size: 1.25rem;
+            color: var(--secondary-color);
+            margin-bottom: 0.75rem;
+            font-weight: 700;
+        }
+
+        .feature-card p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        /* Screenshots Carousel Section */
+        .screenshots-section {
+            background: linear-gradient(135deg, #1d3557 0%, #17252a 100%);
+            color: white;
+            text-align: center;
+            padding: 4.5rem 1.5rem;
+            border-radius: 26px;
+            margin-bottom: 4.5rem;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+        }
+
+        .screenshots-section h2 {
+            margin-bottom: 0.5rem;
+            color: #ffffff;
+            font-size: 2.3rem;
+            font-weight: 700;
+        }
+
+        .screenshots-section p.sub {
+            color: #a8dadc;
+            font-size: 1.1rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .screenshot-container {
+            display: flex;
+            overflow-x: auto;
+            gap: 1.8rem;
+            padding: 1.5rem 0.5rem 2rem;
+            scrollbar-width: thin;
+            scrollbar-color: #457b9d #1d3557;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .screenshot-container::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .screenshot-container::-webkit-scrollbar-thumb {
+            background-color: #457b9d;
+            border-radius: 4px;
+        }
+
+        .screenshot-card {
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .screenshot-card img {
+            height: 480px;
+            border-radius: 18px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            transition: transform 0.3s ease;
+        }
+
+        .screenshot-card img:hover {
+            transform: scale(1.02);
+        }
+
+        .screenshot-caption {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: #f1faee;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+
+        /* Platform Downloads Section */
+        .downloads-section {
+            background: linear-gradient(135deg, #1d3557 0%, #2b5c8f 100%);
+            color: white;
+            border-radius: 26px;
+            padding: 4.5rem 2rem;
+            text-align: center;
+            margin-bottom: 4.5rem;
+            box-shadow: 0 15px 40px rgba(29, 53, 87, 0.25);
+        }
+
+        .downloads-section h2 {
+            font-size: 2.4rem;
+            margin-bottom: 0.75rem;
+            color: #ffffff;
+            font-weight: 800;
+        }
+
+        .downloads-section p.sub {
+            max-width: 650px;
+            margin: 0 auto 3rem;
+            color: #e0f2f1;
+            font-size: 1.1rem;
+        }
+
+        .downloads-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+            max-width: 950px;
+            margin: 0 auto;
+            text-align: left;
+        }
+
+        .download-card {
+            background: white;
+            color: var(--text-color);
+            border-radius: 20px;
+            padding: 2.5rem 2rem;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.3s ease;
+        }
+
+        .download-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .download-card h3 {
+            font-size: 1.35rem;
+            margin-bottom: 0.6rem;
+            color: var(--secondary-color);
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            font-weight: 700;
+        }
+
+        .download-card p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 1.8rem;
+            line-height: 1.55;
+        }
+
+        .download-btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .btn-download {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            padding: 0.85rem 1.4rem;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.95rem;
+            transition: all 0.25s ease;
+        }
+
+        .btn-android {
+            background-color: #2a9d8f;
+            color: white;
+            box-shadow: 0 4px 14px rgba(42, 157, 143, 0.3);
+        }
+
+        .btn-android:hover {
+            background-color: #21867a;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(42, 157, 143, 0.4);
+        }
+
+        .btn-mac {
+            background-color: #1d3557;
+            color: white;
+            box-shadow: 0 4px 14px rgba(29, 53, 87, 0.25);
+        }
+
+        .btn-mac:hover {
+            background-color: #152740;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(29, 53, 87, 0.35);
+        }
+
+        .btn-windows {
+            background-color: #457b9d;
+            color: white;
+            box-shadow: 0 4px 14px rgba(69, 123, 157, 0.25);
+        }
+
+        .btn-windows:hover {
+            background-color: #366582;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(69, 123, 157, 0.35);
+        }
+
+        /* How it works */
+        .how-it-works {
+            background-color: #fff;
+            border-radius: 22px;
+            padding: 3rem 2.5rem;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 4rem;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 2.5rem;
+            margin-bottom: 3.5rem;
+        }
+
+        .step:last-child {
+            margin-bottom: 0;
+        }
+
+        .step:nth-child(even) {
+            flex-direction: row-reverse;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            font-weight: 800;
+            font-size: 1.25rem;
+            margin-bottom: 1.2rem;
+            box-shadow: 0 4px 12px rgba(43, 92, 143, 0.35);
+        }
+
+        .step h3 {
+            font-size: 1.4rem;
+            margin-bottom: 0.75rem;
+            color: var(--secondary-color);
+            font-weight: 700;
+        }
+
+        .step p {
+            color: var(--text-muted);
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        .step-image {
+            flex: 1;
+            max-width: 440px;
+            text-align: center;
+        }
+
+        .step-image img {
+            max-width: 100%;
+            height: auto;
+            max-height: 420px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+            border: 1px solid #e2e8f0;
+        }
+
+        /* Footer */
+        footer {
+            background: #111e2e;
+            color: #94a3b8;
+            padding: 3.5rem 1.5rem 2.5rem;
+            text-align: center;
+            font-size: 0.95rem;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.8rem;
+        }
+
+        .footer-links a {
+            color: #f1faee;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+
+        .footer-links a:hover {
+            color: #a8dadc;
+        }
+
+        footer p.copy {
+            font-size: 0.88rem;
+            opacity: 0.8;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            header h1 {
+                font-size: 2.5rem;
+            }
+            .step {
+                flex-direction: column !important;
+                text-align: center;
+                gap: 1.8rem;
+            }
+            .step-image {
+                max-width: 320px;
+                margin: 0 auto;
+            }
+            .step-number {
+                margin: 0 auto 1rem;
+            }
+            .screenshot-card img {
+                height: 380px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            header {
+                padding: 3rem 1rem 2.5rem;
+            }
+            header h1 {
+                font-size: 2rem;
+            }
+            header p.subtitle {
+                font-size: 1.05rem;
+            }
+            .hero-buttons {
+                flex-direction: column;
+                gap: 0.8rem;
+            }
+            .cta-button {
+                width: 100%;
+                justify-content: center;
+            }
+            .container {
+                padding: 2.5rem 1rem;
+            }
+            .downloads-section {
+                padding: 3rem 1.2rem;
+            }
+            .screenshot-card img {
+                height: 320px;
+            }
+            .lang-nav {
+                flex-wrap: wrap;
+                gap: 0.4rem;
+                font-size: 0.78rem;
+            }
+        }
+</style>
+</head>
+<body>
+
+    <!-- Language Selector Nav -->
+    <div class="lang-nav">
+        <a href="toycollectionlanding_en.html">English</a>
+            <span class="sep">&bull;</span>
+            <a href="toycollectionlanding_de.html">Deutsch</a>
+            <span class="sep">&bull;</span>
+            <a href="toycollectionlanding_es.html" class="active">Español</a>
+            <span class="sep">&bull;</span>
+            <a href="toycollectionlanding_fr.html">Français</a>
+            <span class="sep">&bull;</span>
+            <a href="toycollectionlanding_it.html">Italiano</a>
+            <span class="sep">&bull;</span>
+            <a href="toycollectionlanding_pt.html">Português</a>
+    </div>
+
+    <!-- Header / Hero Section -->
+    <header>
+        <div class="header-content">
+            <img src="icon.png" alt="Gepetto Toy Database Manager Icon" class="app-icon">
+            <div>
+                <span class="app-badge"><i class="fas fa-shield-alt"></i> 100% Gratis &bull; Sin Registro &bull; Datos Abiertos</span>
+            </div>
+            <h1>Gepetto Toy Database Manager</h1>
+            <p class="subtitle">La base de datos integral de inventario y catalogación para coleccionistas de juguetes y modelos. Organiza, rastrea y conserva slot cars (autorama), trenes a escala, modelos estáticos, maquetas y colecciones personalizadas con especificaciones detalladas y fotos de alta resolución.</p>
+
+            <div class="hero-buttons">
+                <a href="#downloads" class="cta-button" onclick="if(typeof gtag === 'function') { gtag('event', 'website_toycollection_hero_click_downloads'); }"><i class="fas fa-download"></i> Descargar App</a>
+                <a href="#features" class="cta-button secondary" onclick="if(typeof gtag === 'function') { gtag('event', 'website_toycollection_hero_click_features'); }"><i class="fas fa-layer-group"></i> Características</a>
+                <a href="#screenshots" class="cta-button secondary" onclick="if(typeof gtag === 'function') { gtag('event', 'website_toycollection_hero_click_screenshots'); }"><i class="fas fa-images"></i> Capturas de Pantalla</a>
+                <a href="#how-it-works" class="cta-button secondary" onclick="if(typeof gtag === 'function') { gtag('event', 'website_toycollection_hero_click_how_it_works'); }"><i class="fas fa-info-circle"></i> Cómo Funciona</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Value Pillars Banner -->
+    <section class="pillars-section">
+        <div class="pillars-grid">
+            <div class="pillar-item">
+                <div class="pillar-icon"><i class="fas fa-database"></i></div>
+                <div class="pillar-text">
+                    <h4>34 Atributos Detallados</h4>
+                    <p>Registra mecánica, dimensiones, valoraciones y estado de conservación.</p>
+                </div>
+            </div>
+            <div class="pillar-item">
+                <div class="pillar-icon"><i class="fas fa-tags"></i></div>
+                <div class="pillar-text">
+                    <h4>Categorías Dinámicas</h4>
+                    <p>Slot cars, trenes, modelos estáticos, maquetas o categorías propias.</p>
+                </div>
+            </div>
+            <div class="pillar-item">
+                <div class="pillar-icon"><i class="fas fa-box-archive"></i></div>
+                <div class="pillar-text">
+                    <h4>Copias de Seguridad ZIP</h4>
+                    <p>Exporta copias completas con fotos y registros en un único archivo.</p>
+                </div>
+            </div>
+            <div class="pillar-item">
+                <div class="pillar-icon"><i class="fas fa-cloud-arrow-up"></i></div>
+                <div class="pillar-text">
+                    <h4>Sincronización SFTP Privada</h4>
+                    <p>Sincroniza tus datos de forma segura entre móviles, tabletas y ordenadores.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Container -->
+    <div class="container">
+
+        <!-- Adaptive UI Showcase -->
+        <section class="showcase-card">
+            <h2 class="section-title">Diseñado para Coleccionistas Exigentes</h2>
+            <p class="section-subtitle">Las hojas de cálculo y las notas básicas no son suficientes para colecciones de gran valor. Gepetto Toy Database Manager proporciona fichas estructuradas, categorías dinámicas, galerías y máxima integridad de datos.</p>
+
+            <div class="showcase-hero-img-wrap">
+                <img src="home_landscape.png" alt="Gepetto Toy Database Manager Adaptive Desktop &amp; Tablet Layout">
+                <div class="showcase-hero-caption">Interfaz Multiplataforma Adaptativa &mdash; Barra de navegación lateral con vista multipanel, búsqueda rápida y recuentos por categoría en escritorio y tableta.</div>
+            </div>
+
+            <div class="eco-grid">
+                <div class="eco-card">
+                    <h4><i class="fab fa-android"></i> Android Móvil y Tableta</h4>
+                    <p>Lleva tu inventario a ferias de coleccionismo, tiendas y clubes. Revisa tu catálogo y consulta datos y fotos al instante.</p>
+                </div>
+                <div class="eco-card">
+                    <h4><i class="fas fa-desktop"></i> Potencia en Escritorio</h4>
+                    <p>Aplicaciones nativas para macOS (Apple Silicon e Intel) y Windows. Ideales para introducción masiva de datos, gestión de fotos y publicación web.</p>
+                </div>
+                <div class="eco-card">
+                    <h4><i class="fas fa-link"></i> Renombrado Seguro de Fabricantes</h4>
+                    <p>Modifica nombres de fabricantes con total tranquilidad. La aplicación actualiza automáticamente todas las piezas vinculadas.</p>
+                </div>
+                <div class="eco-card">
+                    <h4><i class="fas fa-shield-halved"></i> Sin Ataduras de Proveedor</h4>
+                    <p>Todos los datos se almacenan en SQLite y JSON estándar. Exporta archivos completos cuando quieras y mantén el control total de tu información.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Grid -->
+        <section id="features">
+            <h2 class="section-title">Funcionalidades Integrales</h2>
+            <p class="section-subtitle">Todo lo necesario para catalogar, valorar y compartir tus modelos y juguetes de colección.</p>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon-wrap"><i class="fas fa-layer-group"></i></div>
+                    <h3>Organización por Categorías</h3>
+                    <p>Configurado para Slot Cars, Trenes a Escala, Modelos Estáticos, Maquetas y Otros. Crea y gestiona categorías personalizadas con iconos y prefijos fotográficos.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon-wrap"><i class="fas fa-list-check"></i></div>
+                    <h3>34 Especificaciones por Pieza</h3>
+                    <p>Registra número de referencia, fabricante, escala, año, chasis, carrocería, motor, fechas de compra, precios pagados, valoraciones, embalaje y notas.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon-wrap"><i class="fas fa-industry"></i></div>
+                    <h3>Directorio de Fabricantes</h3>
+                    <p>Mantén un directorio completo con países de origen e historia de cada marca. Guarda logotipos y fotos históricas con renombrado en cascada.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon-wrap"><i class="fas fa-camera"></i></div>
+                    <h3>Gestión de Fotos y Multimedia</h3>
+                    <p>Asocia fotos principales y galerías múltiples a cualquier artículo. Vinculación automática por prefijo y referencia con visor de alta resolución.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon-wrap"><i class="fas fa-file-zipper"></i></div>
+                    <h3>Copia de Seguridad y Restauración</h3>
+                    <p>Protege toda tu colección en un archivo comprimido .zip que incluye base de datos, categorías, fabricantes y fotografías sin saturar la memoria.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon-wrap"><i class="fas fa-network-wired"></i></div>
+                    <h3>Sincronización en la Nube y Red</h3>
+                    <p>Sincroniza tus datos y fotografías entre teléfono, tableta y ordenador. Conexión directa a tu servidor privado SFTP con transferencia diferencial.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon-wrap"><i class="fas fa-code"></i></div>
+                    <h3>Generador de Catálogo Web</h3>
+                    <p>Crea páginas web HTML estáticas directamente desde tu base de datos con índices por categoría, galerías de fabricantes y fichas individuales.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon-wrap"><i class="fas fa-lock"></i></div>
+                    <h3>100% Gratis y Privacidad Total</h3>
+                    <p>Sin cuentas, sin registros obligatorios y sin recopilación de datos personales. Tu información y valoraciones permanecen siempre en tus dispositivos.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Screenshots Carousel -->
+        <section id="screenshots" class="screenshots-section">
+            <h2>La Interfaz del Coleccionista</h2>
+            <p class="sub">Descubre las pantallas de Gepetto Toy Database Manager</p>
+
+            <div class="screenshot-container">
+                <div class="screenshot-card">
+                    <img src="home_portrait.png" alt="Category Hub Navigation">
+                    <span class="screenshot-caption">Navegación por Categorías</span>
+                </div>
+                <div class="screenshot-card">
+                    <img src="dashboard_portrait.png" alt="Collection Dashboard">
+                    <span class="screenshot-caption">Panel de Colección y Métricas</span>
+                </div>
+                <div class="screenshot-card">
+                    <img src="explorer_portrait.png" alt="Visual Toy Explorer">
+                    <span class="screenshot-caption">Explorador Visual en Cuadrícula</span>
+                </div>
+                <div class="screenshot-card">
+                    <img src="toy_portrait.png" alt="Detailed Toy Specifications">
+                    <span class="screenshot-caption">Ficha Detallada de 34 Atributos</span>
+                </div>
+                <div class="screenshot-card">
+                    <img src="rename_portrait.png" alt="Manufacturer Directory &amp; Renaming">
+                    <span class="screenshot-caption">Renombrado en Cascada de Fabricantes</span>
+                </div>
+                <div class="screenshot-card">
+                    <img src="home_landscape.png" alt="Adaptive Landscape View" style="width: auto; max-width: 680px; object-fit: cover;">
+                    <span class="screenshot-caption">Diseño Adaptativo en Tableta y PC</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Downloads Section -->
+        <section id="downloads" class="downloads-section">
+            <h2>Descargar Gepetto Toy Database Manager</h2>
+            <p class="sub">Descarga la aplicación nativa para tus dispositivos y empieza a catalogar tu colección hoy mismo.</p>
+
+            <div class="downloads-grid">
+                <!-- Android -->
+                <div class="download-card">
+                    <div>
+                        <h3><i class="fab fa-android" style="color: #2a9d8f;"></i> Aplicación Android</h3>
+                        <p>Gestor completo de bolsillo. Explora piezas, toma fotos con la cámara de tu teléfono y consulta referencias en cualquier lugar.</p>
+                    </div>
+                    <div class="download-btn-group">
+                        <a href="https://play.google.com/store/apps/details?id=com.gepetto.slotcarscollection" class="btn-download btn-android" onclick="if(typeof gtag === 'function') { gtag('event', 'website_toycollection_download_android'); }"><i class="fab fa-google-play"></i> Disponible en Google Play</a>
+                    </div>
+                </div>
+
+                <!-- Desktop (macOS & Windows) -->
+                <div class="download-card">
+                    <div>
+                        <h3><i class="fas fa-desktop" style="color: #457b9d;"></i> Escritorio (macOS y Windows)</h3>
+                        <p>Aplicación de alto rendimiento para ordenador. Gestiona grandes colecciones, crea copias ZIP y genera catálogos web.</p>
+                    </div>
+                    <div class="download-btn-group">
+                        <a href="toydatabasemanager-m1.dmg" class="btn-download btn-mac" onclick="if(typeof gtag === 'function') { gtag('event', 'website_toycollection_download_mac_m1'); }"><i class="fab fa-apple"></i> macOS (Apple Silicon)</a>
+                        <a href="toydatabasemanager-intel.dmg" class="btn-download btn-mac" onclick="if(typeof gtag === 'function') { gtag('event', 'website_toycollection_download_mac_intel'); }"><i class="fab fa-apple"></i> macOS (Intel)</a>
+                        <a href="toydatabasemanager.msi" class="btn-download btn-windows" onclick="if(typeof gtag === 'function') { gtag('event', 'website_toycollection_download_windows'); }"><i class="fab fa-windows"></i> Windows (.msi)</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- How It Works Section -->
+        <section id="how-it-works">
+            <h2 class="section-title">Organización Fácil y Sistemática</h2>
+            <p class="section-subtitle">Catalogar y proteger tu colección solo requiere 3 sencillos pasos.</p>
+
+            <div class="how-it-works">
+                <div class="step">
+                    <div class="step-content">
+                        <div class="step-number">1</div>
+                        <h3>Configura Categorías y Fabricantes</h3>
+                        <p>Empieza con las categorías incluidas o crea las tuyas propias con prefijos fotográficos. Añade fabricantes con su origen e historia.</p>
+                    </div>
+                    <div class="step-image">
+                        <img src="rename_portrait.png" alt="Setup Categories &amp; Manufacturers">
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-content">
+                        <div class="step-number">2</div>
+                        <h3>Registra Piezas con Todo Detalle</h3>
+                        <p>Añade juguetes con referencia, nombre y fabricante. Completa especificaciones técnicas, estado de conservación, precios y fotografías.</p>
+                    </div>
+                    <div class="step-image">
+                        <img src="toy_portrait.png" alt="Catalog Collectibles">
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-content">
+                        <div class="step-number">3</div>
+                        <h3>Explora, Respalda y Sincroniza</h3>
+                        <p>Analiza estadísticas en tu panel de control. Exporta copias ZIP completas o sincroniza con tu servidor SFTP para acceder desde PC y móvil.</p>
+                    </div>
+                    <div class="step-image">
+                        <img src="dashboard_portrait.png" alt="Explore, Backup &amp; Synchronize">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-links">
+            <a href="https://gepetto.club">Inicio de Gepetto's Club</a>
+            <a href="#features">Características</a>
+            <a href="#screenshots">Capturas</a>
+            <a href="#downloads">Descargas</a>
+            <a href="https://gepetto.club/privacypolicy.html">Política de Privacidad</a>
+        </div>
+        <p class="copy">&copy; 2026 Gepetto's Club Workshop. Creado con pasión para aficionados y coleccionistas.</p>
+    </footer>
+
+</body>
+</html>

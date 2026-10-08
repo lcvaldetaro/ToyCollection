@@ -1,0 +1,51 @@
+Gepetto Toy Database Manager is a complete collection management application for collectors and hobbyists. The application helps you catalog, organize, and maintain your collections with detailed records and photos.
+
+Use the application to track slot cars, model trains, static models, model kits, and custom collections.
+
+Please share feedback or suggestions through the Play Store link. Desktop versions for macOS and Windows are available at https://gepetto.club.
+
+Key Features & Capabilities:
+
+• Multi-Category Organization:
+- Built-in categories include Slot Cars, Model Trains, Static Models, Model Kits, and Others.
+- Create and manage custom categories with custom icons, titles, and photo prefix codes.
+- View total inventory counts and collection summaries on the main dashboard.
+
+• Comprehensive Item Records:
+- Record up to 34 detailed attributes for each collectible item.
+- Track reference numbers, model names, manufacturers, scales, and production years.
+- Record mechanical parts, chassis details, body types, and motor specifications.
+- Maintain acquisition history, purchase prices, current market values, and sales data.
+- Track item condition, packaging status, reproduction status, and personal notes.
+
+• Manufacturer Directory:
+- Maintain a complete directory of manufacturers with countries of origin and historical notes.
+- Attach manufacturer logos and factory images.
+- Rename manufacturers safely with automatic updates across all associated item records.
+
+• Photo & Media Management:
+- Attach primary photos and secondary image galleries to any collectible item.
+- Resolve photos automatically with smart filename prefixes and reference numbers.
+- View high-resolution photos in an integrated viewer.
+
+• Full Backup & Restore:
+- Export your entire collection into a single compressed ZIP archive.
+- Backup files include all database records, custom categories, manufacturers, and photos.
+- Restore your collection on the same device or transfer data to a new device.
+- Stream large archives safely without excessive device memory usage.
+
+• Cloud & Network Synchronization:
+- Synchronize your collection data and photos across phones, tablets, and computers.
+- Connect directly to your private SFTP server with secure authentication.
+- Perform smart differential synchronization that transfers only new or updated files.
+- Synchronize data from remote web servers with automatic hash verification.
+
+• Website Catalog Generation:
+- Generate complete static HTML web pages directly from your collection database.
+- Create category index pages, manufacturer galleries, and individual item detail pages.
+- Publish the generated files to your web server to share your collection online.
+
+• Free, Registration-Free & Privacy-Focused:
+- No user accounts, registration, or sign-ins required.
+- No advertisements and no analytics tracking.
+- All your collection data stays on your local device and your private storage.

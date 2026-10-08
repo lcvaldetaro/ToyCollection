@@ -1,0 +1,51 @@
+Gepetto Toy Database Manager ist eine vollständige Verwaltungs-App für Sammler und Hobbyisten. Die Anwendung hilft Ihnen, Ihre Sammlungen mit detaillierten Datensätzen und Fotos zu katalogisieren, zu organisieren und zu pflegen.
+
+Nutzen Sie die App zur Erfassung von Slotcars, Modelleisenbahnen, Standmodellen, Modellbausätzen und eigenen Sammlungen.
+
+Bitte teilen Sie Feedback oder Vorschläge über den Play Store Link mit. Desktop-Versionen für macOS und Windows sind unter https://gepetto.club verfügbar.
+
+Hauptfunktionen & Möglichkeiten:
+
+• Organisation in mehreren Kategorien:
+- Integrierte Kategorien umfassen Slotcars, Modelleisenbahnen, Standmodelle, Modellbausätze und Sonstige.
+- Erstellen und verwalten Sie benutzerdefinierte Kategorien mit eigenen Symbolen, Titeln und Foto-Präfixen.
+- Sehen Sie Gesamtzahlen und Übersichten direkt auf der Hauptübersicht.
+
+• Umfassende Artikeldatensätze:
+- Erfassen Sie bis zu 34 detaillierte Attribute für jeden Sammlerartikel.
+- Verfolgen Sie Referenznummern, Modellnamen, Hersteller, Maßstäbe und Produktionsjahre.
+- Speichern Sie mechanische Teile, Fahrgestelldetails, Karosserietypen und Motordaten.
+- Verwalten Sie Kaufhistorie, Einkaufspreise, Marktwerte und Verkaufsdaten.
+- Dokumentieren Sie Sammlerzustand, Verpackungsstatus, Reproduktionen und persönliche Notizen.
+
+• Herstellerverzeichnis:
+- Führen Sie ein vollständiges Verzeichnis von Herstellern mit Herkunftsländern und Firmenchronik.
+- Fügen Sie Herstellerlogos und Fabrikfotos hinzu.
+- Benennen Sie Hersteller sicher um mit automatischer Aktualisierung aller verknüpften Artikel.
+
+• Foto- und Medienverwaltung:
+- Fügen Sie Hauptfotos und Fotogalerien zu jedem Sammlerstück hinzu.
+- Finden Sie Fotos automatisch über intelligente Dateipräfixe und Referenznummern.
+- Betrachten Sie hochauflösende Fotos in der integrierten Großansicht.
+
+• Vollständiges Sichern & Wiederherstellen:
+- Exportieren Sie Ihre gesamte Sammlung in ein einziges komprimiertes ZIP-Archiv.
+- Die Sicherung enthält alle Datenbankeinträge, Kategorien, Hersteller und Fotos.
+- Stellen Sie Ihre Sammlung auf demselben Gerät oder auf einem neuen Gerät wieder her.
+- Große Archive werden sicher und speicherschonend verarbeitet.
+
+• Cloud- und Netzwerk-Synchronisierung:
+- Synchronisieren Sie Sammlungsdaten und Fotos zwischen Smartphones, Tablets und Computern.
+- Verbinden Sie sich direkt mit Ihrem privaten SFTP-Server mit sicherer Authentifizierung.
+- Die differenzielle Synchronisierung überträgt nur neue oder geänderte Dateien.
+- Synchronisieren Sie Daten von Webservern mit automatischer Hash-Prüfung.
+
+• Webseiten-Katalogerstellung:
+- Erstellen Sie vollständige statische HTML-Webseiten direkt aus Ihrer Datenbank.
+- Generieren Sie Kategorieübersichten, Herstellergalerien und Detailseiten für jeden Artikel.
+- Veröffentlichen Sie die erstellten Dateien auf Ihrem Webserver zur Online-Präsentation.
+
+• Kostenlos, ohne Registrierung & datenschutzfreundlich:
+- Keine Benutzerkonten, keine Registrierung und keine Anmeldung erforderlich.
+- Keine Werbung und keine Analysedienste.
+- Alle Ihre Daten verbleiben sicher auf Ihrem lokalen Gerät und Ihrem privaten Speicher.

@@ -1,0 +1,51 @@
+Gepetto Toy Database Manager est une application complète de gestion de collections pour les passionnés et collectionneurs. L'application vous aide à cataloguer, organiser et gérer vos collections avec des fiches détaillées et des photos.
+
+Utilisez l'application pour suivre vos circuits routiers (slot cars), trains miniatures, modèles statiques, maquettes et collections personnalisées.
+
+Partagez vos impressions et suggestions via le lien Play Store. Les versions pour ordinateurs macOS et Windows sont disponibles sur https://gepetto.club.
+
+Fonctionnalités principales :
+
+• Organisation multi-catégories :
+- Catégories intégrées : Circuits routiers, Trains miniatures, Modèles statiques, Maquettes et Autres.
+- Créez et gérez des catégories personnalisées avec icônes, titres et préfixes photos dédiés.
+- Consultez l'inventaire total et les statistiques de la collection sur le tableau de bord.
+
+• Fiches d'objets complètes :
+- Enregistrez jusqu'à 34 caractéristiques précises pour chaque pièce de collection.
+- Renseignez numéros de référence, noms de modèles, fabricants, échelles et années de production.
+- Notez les pièces mécaniques, détails du châssis, types de carrosserie et spécifications moteur.
+- Suivez l'historique d'acquisition, prix d'achat, estimations actuelles et ventes.
+- Notez l'état de conservation, présence de la boîte d'origine, reproductions et remarques.
+
+• Répertoire des fabricants :
+- Gérez un répertoire complet des fabricants avec pays d'origine et notes historiques.
+- Associez logos de marques et photos d'usines.
+- Renommez un fabricant en toute sécurité avec mise à jour automatique de tous les objets associés.
+
+• Gestion des photos et médias :
+- Associez des photos principales et des galeries secondaires à chaque objet.
+- Détection automatique des images par préfixes et numéros de référence.
+- Visualisez les photos en haute résolution avec la visionneuse intégrée.
+
+• Sauvegarde et restauration complètes :
+- Exportez l'ensemble de votre collection dans une seule archive ZIP compressée.
+- La sauvegarde comprend toute la base de données, catégories, fabricants et photos.
+- Restaurez votre collection sur le même appareil ou transférez-la vers un nouvel appareil.
+- Traitement sécurisé des archives volumineuses sans surcharge de la mémoire.
+
+• Synchronisation cloud et réseau :
+- Synchronisez votre collection et vos photos entre smartphones, tablettes et ordinateurs.
+- Connexion directe à votre serveur SFTP privé avec authentification sécurisée.
+- Synchronisation différentielle intelligente transférant uniquement les fichiers nouveaux ou modifiés.
+- Synchronisation depuis un serveur web avec vérification automatique d'empreinte numérique.
+
+• Génération de site web catalogue :
+- Générez des pages web HTML statiques complètes directement depuis votre collection.
+- Créez des pages d'index de catégories, des galeries de fabricants et des fiches d'objets.
+- Publiez les pages générées sur votre serveur web pour exposer votre collection en ligne.
+
+• Gratuit, sans inscription et respectueux de la vie privée :
+- Aucun compte utilisateur ni inscription requis.
+- Aucune publicité et aucun suivi analytique.
+- Toutes vos données restent stockées sur votre appareil local et votre serveur privé.

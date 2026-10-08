@@ -1,0 +1,51 @@
+Gepetto Toy Database Manager è un'applicazione completa per la gestione delle collezioni per collezionisti e appassionati. L'applicazione ti aiuta a catalogare, organizzare e gestire le tue collezioni con schede dettagliate e fotografie.
+
+Usa l'applicazione per gestire slot car, treni elettrici, modelli statici, kit di montaggio e collezioni personalizzate.
+
+Condividi feedback o suggerimenti tramite il link del Play Store. Le versioni desktop per macOS e Windows sono disponibili su https://gepetto.club.
+
+Caratteristiche e Funzionalità Principali:
+
+• Organizzazione Multi-Categoria:
+- Categorie predefinite: Slot Car, Treni Elettrici, Modelli Statici, Kit di Montaggio e Altro.
+- Crea e gestisci categorie personalizzate con icone, titoli e prefissi per le foto dedicati.
+- Visualizza il totale degli articoli e il riepilogo della collezione nel pannello principale.
+
+• Schede Articolo Dettagliate:
+- Registra fino a 34 attributi precisi per ogni pezzo da collezione.
+- Salva numero di riferimento, nome modello, produttore, scala e anno di produzione.
+- Registra componenti meccanici, dettagli del telaio, tipo di carrozzeria e dati del motore.
+- Gestisci cronologia di acquisto, prezzi pagati, valore attuale di mercato e vendite.
+- Annota stato di conservazione, presenza della scatola originale, riproduzioni e note personali.
+
+• Elenco dei Produttori:
+- Gestisci un elenco completo dei produttori con paese di origine e cenni storici.
+- Collega loghi dei produttori e immagini di fabbriche d'epoca.
+- Rinomina i produttori in sicurezza con aggiornamento automatico di tutti gli articoli collegati.
+
+• Gestione Foto e Galleria:
+- Associa foto principali e gallerie di immagini secondarie a qualsiasi articolo.
+- Riconoscimento automatico delle foto tramite prefisso e numero di riferimento.
+- Visualizza immagini ad alta risoluzione nel visualizzatore integrato.
+
+• Backup e Ripristino Completo:
+- Esporta l'intera collezione in un unico archivio compresso ZIP.
+- Il file include tutti i dati del database, categorie, produttori e fotografie.
+- Ripristina la collezione sullo stesso dispositivo o trasferiscila su un nuovo dispositivo.
+- Elaborazione sicura di archivi grandi con gestione ottimale della memoria.
+
+• Sincronizzazione Cloud e Rete:
+- Sincronizza i dati e le foto della collezione tra smartphone, tablet e computer.
+- Connessione diretta al tuo server SFTP privato con autenticazione sicura.
+- Sincronizzazione differenziale intelligente che trasferisce solo i file nuovi o modificati.
+- Sincronizzazione da server web remoti con verifica automatica dell'integrità.
+
+• Creazione Catalogo Web:
+- Genera pagine web HTML statiche complete direttamente dal tuo database.
+- Crea indici per categoria, gallerie per produttore e pagine di dettaglio dei singoli articoli.
+- Pubblica le pagine create sul tuo server web per mostrare la tua collezione online.
+
+• Gratuito, Senza Registrazione e a Tutela della Privacy:
+- Nessun account o registrazione richiesta.
+- Nessuna pubblicità e nessun tracciamento dei dati.
+- Tutti i dati della tua collezione rimangono sul tuo dispositivo locale e sul tuo server privato.

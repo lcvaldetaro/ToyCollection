@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gepetto Toy Database Manager - Redirecting...</title>
+    <link rel="canonical" href="https://gepetto.club/toycollection/toycollectionlanding_en.html">
+    <link rel="alternate" hreflang="en" href="https://gepetto.club/toycollection/toycollectionlanding_en.html">
+    <link rel="alternate" hreflang="pt" href="https://gepetto.club/toycollection/toycollectionlanding_pt.html">
+    <link rel="alternate" hreflang="es" href="https://gepetto.club/toycollection/toycollectionlanding_es.html">
+    <link rel="alternate" hreflang="fr" href="https://gepetto.club/toycollection/toycollectionlanding_fr.html">
+    <link rel="alternate" hreflang="it" href="https://gepetto.club/toycollection/toycollectionlanding_it.html">
+    <link rel="alternate" hreflang="de" href="https://gepetto.club/toycollection/toycollectionlanding_de.html">
+    <link rel="alternate" hreflang="x-default" href="https://gepetto.club/toycollection/toycollectionlanding.html">
+
+    <style>
+        :root {
+            --primary-color: #2b5c8f;
+            --secondary-color: #1d3557;
+            --accent-color: #2a9d8f;
+            --bg-color: #f8fafc;
+            --text-color: #1e293b;
+            --light-text: #ffffff;
+        }
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: var(--text-color);
+            text-align: center;
+        }
+        .redirect-container {
+            padding: 3rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            max-width: 420px;
+        }
+        a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: var(--primary-color);
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1.5rem;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+    <script>
+        (function() {
+            var userLang = (navigator.language || navigator.userLanguage).toLowerCase();
+            var targetPage = toycollectionlanding_en.html;
+
+            if (userLang.startsWith('pt')) {
+                targetPage = toycollectionlanding_pt.html;
+            } else if (userLang.startsWith('fr')) {
+                targetPage = toycollectionlanding_fr.html;
+            } else if (userLang.startsWith('es')) {
+                targetPage = toycollectionlanding_es.html;
+            } else if (userLang.startsWith('it')) {
+                targetPage = toycollectionlanding_it.html;
+            } else if (userLang.startsWith('de')) {
+                targetPage = toycollectionlanding_de.html;
+            }
+
+            window.location.href = targetPage;
+        })();
+    </script>
+</head>
+<body>
+    <div class="redirect-container">
+        <div class="spinner"></div>
+        <p>Redirecting to your language version...</p>
+        <p style="margin-top: 1rem; font-size: 0.9rem; color: #64748b;">
+            If you are not redirected, <a href="toycollectionlanding_en.html">click here</a>.
+        </p>
+    </div>
+</body>
+</html>
