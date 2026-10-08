@@ -624,11 +624,11 @@ class ToyRepository(val db: ToyDatabase) {
     fun getDefaultBaseUrlSetting(): String = com.gepetto.toydb.utils.getDefaultBaseUrl()
 
     fun getBaseUrlSetting(): String {
-        val setting = getAppSetting("base_url")?.takeIf { it.isNotBlank() }
-        if (com.gepetto.toydb.utils.isWebPlatform() && (setting == null || setting == "https://gepetto.club/database/")) {
+        val setting = getAppSetting("base_url") ?: return getDefaultBaseUrlSetting()
+        if (com.gepetto.toydb.utils.isWebPlatform() && setting == "https://gepetto.club/database/") {
             return getDefaultBaseUrlSetting()
         }
-        return setting ?: getDefaultBaseUrlSetting()
+        return setting
     }
     fun setBaseUrlSetting(url: String?) = setAppSetting("base_url", url)
 

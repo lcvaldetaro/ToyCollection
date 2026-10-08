@@ -168,6 +168,18 @@ fun SettingsScreen(
                                             },
                                             onSetStatus = {}
                                         )
+                                        Spacer(modifier = Modifier.height(GcSpacing.Standard))
+                                        DangerZoneCard(
+                                            db = db,
+                                            onCollectionReset = {
+                                                appTitle = repository.getAppTitleSetting()
+                                                dataPath = repository.getDataPathSetting()
+                                                restoreKey++
+                                                onAppTitleChanged(appTitle)
+                                                onCollectionRestored()
+                                            },
+                                            onSetStatus = {}
+                                        )
                                     } else {
                                         WebLocalDataNotice()
                                     }

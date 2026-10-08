@@ -353,4 +353,17 @@ All rights reserved.</string>
     <string name="select_private_key_file">Select Private Key File</string>
     <string name="select_image_dialog_title">Select Image to Upload</string>
     <string name="unknown_error">Unknown error</string>
+    <string name="danger_zone_title">Danger Zone</string>
+    <string name="danger_zone_desc">By default, this application displays Gepetto\'s Toy Collection. If you want to maintain your own collection, use this button to reset the database. This action deletes all toys, keeps all manufacturers, removes toy photos from your data directory, and disconnects the web synchronization URL.</string>
+    <string name="danger_zone_reset_btn">Reset Database to Defaults</string>
+    <string name="danger_zone_confirm_title">Reset Collection to Defaults?</string>
+    <string name="danger_zone_confirm_msg">This action will permanently delete all toys and disconnect the web synchronization URL. All manufacturers and their photos are kept. You cannot undo this action.</string>
+    <string name="danger_zone_confirm_btn">Reset Database</string>
+    <string name="danger_zone_resetting">Resetting database to defaults...</string>
+    <string name="danger_zone_done">Database reset complete. You can now maintain your own collection.</string>
+    <string name="danger_zone_failed">Failed to reset database: %1</string>
+    <string name="info_tab_your_collection">Your Collection</string>
+    <string name="home_banner_switch_pre">\n\n\tTo switch from Gepetto\'s collection to your own collection, see the </string>
+    <string name="home_banner_link_your_collection">Your Collection Guide</string>
+    <string name="home_banner_switch_post">.</string>
 </resources>

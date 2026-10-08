@@ -353,4 +353,17 @@ Tutti i diritti riservati.</string>
     <string name="select_private_key_file">Seleziona File di Chiave Privata</string>
     <string name="select_image_dialog_title">Seleziona Immagine da Caricare</string>
     <string name="unknown_error">Errore sconosciuto</string>
+    <string name="danger_zone_title">Zona Pericolosa</string>
+    <string name="danger_zone_desc">Per impostazione predefinita, questa applicazione mostra la Collezione di Giocattoli di Gepetto. Se desideri gestire la tua collezione personale, usa questo pulsante per reimpostare il database. Questa azione elimina tutti i giocattoli, conserva tutti i produttori, rimuove le foto dei giocattoli dalla cartella dati e disconnette l\'URL de sincronizzazione web.</string>
+    <string name="danger_zone_reset_btn">Reimposta Database sui Predefiniti</string>
+    <string name="danger_zone_confirm_title">Reimpostare la Collezione sui Predefiniti?</string>
+    <string name="danger_zone_confirm_msg">Questa azione eliminerà definitivamente tutti i giocattoli e disconnetterà l\'URL di sincronizzazione web. Tutti i produttori e le loro foto vengono conservati. Non è possibile annullare questa azione.</string>
+    <string name="danger_zone_confirm_btn">Reimposta Database</string>
+    <string name="danger_zone_resetting">Reimpostazione del database in corso...</string>
+    <string name="danger_zone_done">Reimpostazione completata. Ora puoi gestire la tua collezione.</string>
+    <string name="danger_zone_failed">Impossibile reimpostare il database: %1</string>
+    <string name="info_tab_your_collection">La Tua Collezione</string>
+    <string name="home_banner_switch_pre">\n\n\tPer passare dalla collezione di Gepetto alla tua collezione personale, consulta la </string>
+    <string name="home_banner_link_your_collection">Guida per la Tua Collezione</string>
+    <string name="home_banner_switch_post">.</string>
 </resources>

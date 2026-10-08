@@ -353,4 +353,17 @@ Alle Rechte vorbehalten.</string>
     <string name="select_private_key_file">Privaten Schlüssel auswählen</string>
     <string name="select_image_dialog_title">Bild zum Hochladen auswählen</string>
     <string name="unknown_error">Unbekannter Fehler</string>
+    <string name="danger_zone_title">Gefahrenbereich</string>
+    <string name="danger_zone_desc">Standardmäßig zeigt diese Anwendung Gepettos Spielzeugsammlung an. Wenn Sie Ihre eigene Sammlung verwalten möchten, verwenden Sie diese Schaltfläche, um die Datenbank zurückzusetzen. Diese Aktion löscht alle Spielzeuge, behält alle Hersteller bei, entfernt Spielzeugfotos aus Ihrem Datenordner und trennt die Web-Synchronisierungs-URL.</string>
+    <string name="danger_zone_reset_btn">Datenbank auf Standard zurücksetzen</string>
+    <string name="danger_zone_confirm_title">Sammlung auf Standard zurücksetzen?</string>
+    <string name="danger_zone_confirm_msg">Diese Aktion löscht dauerhaft alle Spielzeuge und trennt die Web-Synchronisierungs-URL. Alle Hersteller und deren Fotos bleiben erhalten. Sie können diese Aktion nicht rückgängig machen.</string>
+    <string name="danger_zone_confirm_btn">Datenbank zurücksetzen</string>
+    <string name="danger_zone_resetting">Datenbank wird zurückgesetzt...</string>
+    <string name="danger_zone_done">Zurücksetzen abgeschlossen. Sie können nun Ihre eigene Sammlung verwalten.</string>
+    <string name="danger_zone_failed">Fehler beim Zurücksetzen der Datenbank: %1</string>
+    <string name="info_tab_your_collection">Ihre Sammlung</string>
+    <string name="home_banner_switch_pre">\n\n\tUm von Gepettos Sammlung zu Ihrer eigenen Sammlung zu wechseln, lesen Sie den </string>
+    <string name="home_banner_link_your_collection">Leitfaden für Ihre Sammlung</string>
+    <string name="home_banner_switch_post">.</string>
 </resources>

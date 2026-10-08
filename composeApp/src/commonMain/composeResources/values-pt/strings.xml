@@ -353,4 +353,17 @@ Todos os direitos reservados.</string>
     <string name="select_private_key_file">Selecionar Arquivo de Chave Privada</string>
     <string name="select_image_dialog_title">Selecionar Imagem para Carregar</string>
     <string name="unknown_error">Erro desconhecido</string>
+    <string name="danger_zone_title">Zona de Perigo</string>
+    <string name="danger_zone_desc">Por padrão, este aplicativo exibe a Coleção de Brinquedos do Gepetto. Se você deseja manter sua própria coleção, use este botão para redefinir o banco de dados. Esta ação exclui todos os brinquedos, mantém todos os fabricantes, remove as fotos de brinquedos da sua pasta de dados e desconecta o URL de sincronização web.</string>
+    <string name="danger_zone_reset_btn">Redefinir Banco de Dados</string>
+    <string name="danger_zone_confirm_title">Redefinir Coleção para Padrões?</string>
+    <string name="danger_zone_confirm_msg">Esta ação excluirá permanentemente todos os brinquedos e desconectará o URL de sincronização web. Todos os fabricantes e suas fotos serão mantidos. Você não pode desfazer esta ação.</string>
+    <string name="danger_zone_confirm_btn">Redefinir Banco de Dados</string>
+    <string name="danger_zone_resetting">Redefinindo banco de dados...</string>
+    <string name="danger_zone_done">Redefinição concluída. Agora você pode gerenciar sua própria coleção.</string>
+    <string name="danger_zone_failed">Falha ao redefinir banco de dados: %1</string>
+    <string name="info_tab_your_collection">Sua Coleção</string>
+    <string name="home_banner_switch_pre">\n\n\tPara mudar da coleção do Gepetto para a sua própria coleção, consulte o </string>
+    <string name="home_banner_link_your_collection">Guia da Sua Coleção</string>
+    <string name="home_banner_switch_post">.</string>
 </resources>

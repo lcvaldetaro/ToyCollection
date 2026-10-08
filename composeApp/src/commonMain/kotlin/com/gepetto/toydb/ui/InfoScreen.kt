@@ -33,6 +33,7 @@ enum class InfoTopic(
     val titleRes: StringResource
 ) {
     ABOUT("about", Res.string.info_tab_about),
+    YOUR_COLLECTION("your_collection", Res.string.info_tab_your_collection),
     GENERAL("general", Res.string.tab_general),
     BACKUP_RESTORE("backup_restore", Res.string.backup_title),
     SERVER_SYNC("server_sync", Res.string.info_tab_backup),
@@ -94,6 +95,7 @@ fun InfoScreen(
         isLoading = true
         val baseName = when (currentTopic) {
             InfoTopic.ABOUT -> "about"
+            InfoTopic.YOUR_COLLECTION -> "your_collection"
             InfoTopic.GENERAL -> "general"
             InfoTopic.BACKUP_RESTORE -> "backup_restore"
             InfoTopic.SERVER_SYNC -> "server_sync"
@@ -114,6 +116,7 @@ fun InfoScreen(
             GcLog.e("InfoScreen", "Failed to load ${baseName}.md: ${e.message}", e)
             topicContent = when (currentTopic) {
                 InfoTopic.ABOUT -> getString(Res.string.failed_load_about)
+                InfoTopic.YOUR_COLLECTION,
                 InfoTopic.GENERAL,
                 InfoTopic.BACKUP_RESTORE,
                 InfoTopic.CATEGORIES -> getString(Res.string.failed_load_help)
@@ -166,6 +169,11 @@ fun InfoScreen(
                     when (currentTopic) {
                         InfoTopic.ABOUT -> AboutTabContent(
                             aboutText = topicContent,
+                            isLoading = isLoading
+                        )
+                        InfoTopic.YOUR_COLLECTION -> MarkdownTabContent(
+                            title = stringResource(Res.string.info_tab_your_collection),
+                            content = topicContent,
                             isLoading = isLoading
                         )
                         InfoTopic.GENERAL -> MarkdownTabContent(

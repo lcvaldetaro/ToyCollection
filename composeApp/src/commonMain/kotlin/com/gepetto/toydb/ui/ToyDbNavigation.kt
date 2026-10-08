@@ -405,8 +405,8 @@ fun ToyDbNavigation(
                                     onNavigateToDashboard = {
                                         backStack.add(Destination.Dashboard)
                                     },
-                                    onNavigateToInfo = {
-                                        backStack.add(Destination.Info())
+                                    onNavigateToInfo = { topicId ->
+                                        backStack.add(Destination.Info(topicId))
                                     },
                                     themeMode = themeMode
                                 )

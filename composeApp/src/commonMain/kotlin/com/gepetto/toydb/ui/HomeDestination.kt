@@ -40,7 +40,7 @@ import toydb.composeapp.generated.resources.Res
 @Composable
 fun HomeDestination(
     onNavigateToDashboard: () -> Unit,
-    onNavigateToInfo: () -> Unit,
+    onNavigateToInfo: (String?) -> Unit,
     title: String = stringResource(Res.string.app_name),
     themeMode: Int = 0,
     modifier: Modifier = Modifier
@@ -59,6 +59,9 @@ fun HomeDestination(
     }
 
     val p1 = stringResource(Res.string.home_banner_p1)
+    val pSwitchPre = stringResource(Res.string.home_banner_switch_pre)
+    val linkYourCollection = stringResource(Res.string.home_banner_link_your_collection)
+    val pSwitchPost = stringResource(Res.string.home_banner_switch_post)
     val p2Pre = stringResource(Res.string.home_banner_p2_pre)
     val linkDashboard = stringResource(Res.string.home_banner_link_dashboard)
     val p2Post = stringResource(Res.string.home_banner_p2_post)
@@ -69,9 +72,24 @@ fun HomeDestination(
 
     val linkColor = Color.Blue
 
-    val annotatedBannerText = remember(p1, p2Pre, linkDashboard, p2Post, p3Pre, linkInfo, p3Post, p4) {
+    val annotatedBannerText = remember(p1, pSwitchPre, linkYourCollection, pSwitchPost, p2Pre, linkDashboard, p2Post, p3Pre, linkInfo, p3Post, p4) {
         buildAnnotatedString {
             append(p1)
+
+            append(pSwitchPre)
+            pushStringAnnotation(tag = "ACTION", annotation = "your_collection")
+            withStyle(
+                SpanStyle(
+                    color = linkColor,
+                    textDecoration = TextDecoration.Underline,
+                    fontWeight = FontWeight.Bold
+                )
+            ) {
+                append(linkYourCollection)
+            }
+            pop()
+            append(pSwitchPost)
+
             append("\n")
             append(p2Pre)
 
@@ -126,7 +144,7 @@ fun HomeDestination(
 
         HomeTitle(
             title = title,
-            onTitleClick = onNavigateToInfo,
+            onTitleClick = { onNavigateToInfo(null) },
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
@@ -170,7 +188,7 @@ private fun ShowBanner(
     annotatedText: AnnotatedString,
     modifier: Modifier = Modifier,
     onNavigateToDashboard: () -> Unit,
-    onNavigateToInfo: () -> Unit,
+    onNavigateToInfo: (String?) -> Unit,
     onBannerStateChanged: (Boolean) -> Unit,
 ) {
     if (bannerState) {
@@ -196,7 +214,8 @@ private fun ShowBanner(
                             .firstOrNull()?.let { annotation ->
                                 when (annotation.item) {
                                     "dashboard" -> onNavigateToDashboard()
-                                    "info" -> onNavigateToInfo()
+                                    "info" -> onNavigateToInfo(null)
+                                    "your_collection" -> onNavigateToInfo("your_collection")
                                 }
                             }
                     }

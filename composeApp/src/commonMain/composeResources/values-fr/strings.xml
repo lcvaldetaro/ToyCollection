@@ -353,4 +353,17 @@ Tous droits réservés.</string>
     <string name="select_private_key_file">Sélectionner le Fichier de Clé Privée</string>
     <string name="select_image_dialog_title">Sélectionner une Image à Télécharger</string>
     <string name="unknown_error">Erreur inconnue</string>
+    <string name="danger_zone_title">Zone Dangereuse</string>
+    <string name="danger_zone_desc">Par défaut, cette application affiche la Collection de Jouets de Gepetto. Si vous souhaitez gérer votre propre collection, utilisez ce bouton pour réinitialiser la base de données. Cette action supprime tous les jouets, conserve tous les fabricants, supprime les photos de jouets de votre dossier de données et déconnecte l\'URL de synchronisation web.</string>
+    <string name="danger_zone_reset_btn">Réinitialiser la Base de Données</string>
+    <string name="danger_zone_confirm_title">Réinitialiser la Collection aux Valeurs par Défaut ?</string>
+    <string name="danger_zone_confirm_msg">Cette action supprimera définitivement tous les jouets et déconnectera l\'URL de synchronisation web. Tous les fabricants et leurs photos sont conservés. Vous ne pouvez pas annuler cette action.</string>
+    <string name="danger_zone_confirm_btn">Réinitialiser</string>
+    <string name="danger_zone_resetting">Réinitialisation de la base de données...</string>
+    <string name="danger_zone_done">Réinitialisation terminée. Vous pouvez maintenant gérer votre propre collection.</string>
+    <string name="danger_zone_failed">Échec de la réinitialisation de la base de données: %1</string>
+    <string name="info_tab_your_collection">Votre Collection</string>
+    <string name="home_banner_switch_pre">\n\n\tPour passer de la collection de Gepetto à votre propre collection, consultez le </string>
+    <string name="home_banner_link_your_collection">Guide de Votre Collection</string>
+    <string name="home_banner_switch_post">.</string>
 </resources>
