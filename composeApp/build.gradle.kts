@@ -41,6 +41,7 @@ val generateCommonConfig = tasks.register("generateCommonConfig") {
     
     inputs.property("versionName", vName)
     inputs.property("versionCode", vCode)
+    inputs.property("isWindows", isWindows)
     outputs.dir(outputDir)
 
     doLast {
@@ -51,6 +52,8 @@ val generateCommonConfig = tasks.register("generateCommonConfig") {
             object CommonConfig {
                 const val versionName = "$vName"
                 const val versionCode = ${vCode}L
+                const val desktopVersionCodeMac = ${vCode * 10 + 4}L
+                const val desktopVersionCodeWindows = ${vCode * 10 + 5}L
                 const val desktopVersionCode = ${desktopCode}L
                 const val webVersionCode = ${vCode * 10 + 6}L
                 const val versionCodeString = "$vCode"

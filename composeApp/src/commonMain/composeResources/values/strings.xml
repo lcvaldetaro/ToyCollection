@@ -366,4 +366,8 @@ All rights reserved.</string>
     <string name="home_banner_switch_pre">\n\n\tTo switch from Gepetto\'s collection to your own collection, see the </string>
     <string name="home_banner_link_your_collection">Your Collection Guide</string>
     <string name="home_banner_switch_post">.</string>
+    <string name="update_available_title">Update Available</string>
+    <string name="update_available_message">A new version of Gepetto Toy Database Manager (v%1$s) is available. Would you like to download it now?</string>
+    <string name="update_btn_update">Update</string>
+    <string name="update_btn_later">Later</string>
 </resources>

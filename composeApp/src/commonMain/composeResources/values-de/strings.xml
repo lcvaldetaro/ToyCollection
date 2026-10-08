@@ -366,4 +366,8 @@ Alle Rechte vorbehalten.</string>
     <string name="home_banner_switch_pre">\n\n\tUm von Gepettos Sammlung zu Ihrer eigenen Sammlung zu wechseln, lesen Sie den </string>
     <string name="home_banner_link_your_collection">Leitfaden für Ihre Sammlung</string>
     <string name="home_banner_switch_post">.</string>
+    <string name="update_available_title">Update verfügbar</string>
+    <string name="update_available_message">Eine neue Version von Gepetto Spielzeug-Datenbank-Manager (v%1$s) ist verfügbar. Möchten Sie sie jetzt herunterladen?</string>
+    <string name="update_btn_update">Aktualisieren</string>
+    <string name="update_btn_later">Später</string>
 </resources>

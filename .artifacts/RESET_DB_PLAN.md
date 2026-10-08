@@ -44,7 +44,7 @@ The user provided the following explicit instructions for this feature:
 9. **Wipe Remote Sync URL**: When wiping the database, the URL for web syncing (`base_url`) must be completely wiped out (cleared to empty), and sync import timestamps must be purged, cutting off any remote synchronization with Gepetto's server.
 10. **New User Guide Info Tab ("Your Collection")**: Create a dedicated tab in the Info screen (`InfoScreen.kt`) instructing a new user step-by-step on how to switch from Gepetto's collection to their own collection.
 11. **Main Screen Banner Link**: Place a quick, clear sentence on the main screen banner (`HomeDestination.kt`) with an interactive link taking the user directly to the new "Your Collection" Info tab.
-12. **Living Document**: This plan must be stored in `.agents/` of the app (`ToyCollection/.agents/RESET_DB_PLAN.md`), written with sufficient detail for any agent to execute, and maintained with a live change log and bug tracker.
+12. **Living Document**: This plan must be stored in `../.agents` of the app (`ToyCollection/.agents/RESET_DB_PLAN.md`), written with sufficient detail for any agent to execute, and maintained with a live change log and bug tracker.
 
 ---
 
@@ -77,7 +77,7 @@ The user provided the following explicit instructions for this feature:
 
 > [!IMPORTANT]
 > ### Directive 5: Dark Mode Dialog Borders
-> According to `.agents/AGENTS.md` (UI Standards, Rule 15): **"Every Dialog, when in dark mode, must have a border."**  
+> According to `../.agents/AGENTS.md` (UI Standards, Rule 15): **"Every Dialog, when in dark mode, must have a border."**  
 > The confirmation dialog in `DangerZoneCard` must apply a visible border (e.g., `BorderStroke(1.dp, MaterialTheme.colorScheme.outline)`) when `isSystemInDarkTheme()` is true.
 
 > [!IMPORTANT]
@@ -96,7 +96,7 @@ The user provided the following explicit instructions for this feature:
 
 > [!IMPORTANT]
 > ### Directive 8: Git Hygiene
-> NEVER commit or push to Git without an explicit direct order from the user (`.agents/AGENTS.md` Rule 1). Keep all changes in the working tree for user review.
+> NEVER commit or push to Git without an explicit direct order from the user (`../.agents/AGENTS.md` Rule 1). Keep all changes in the working tree for user review.
 
 > [!IMPORTANT]
 > ### Directive 9: Live Document Maintenance
@@ -202,12 +202,12 @@ graph TD
 ## 4. Component-by-Component Specifications
 
 ### 4.1 Bundled Resources (`composeResources`)
-- Copy `ToyCollection/json/category_settings.json` to `composeApp/src/commonMain/composeResources/files/category_settings.json`.
-- Copy `ToyCollection/json/carmaker.json` to `composeApp/src/commonMain/composeResources/files/carmaker.json`.
+- Copy `ToyCollection/json/category_settings.json` to `../composeApp/src/commonMain/composeResources/files/category_settings.json`.
+- Copy `ToyCollection/json/carmaker.json` to `../composeApp/src/commonMain/composeResources/files/carmaker.json`.
 - Standard categories can be verified and ensured using `ImportExportService.importCategorySettings`.
 
 ### 4.2 Repository Layer: Base URL & App Title Handling
-**Target File**: [`composeApp/src/commonMain/kotlin/com/gepetto/toydb/database/ToyRepository.kt`](file:///Users/luizvaldetaro/valdetaro/ToyCollection/composeApp/src/commonMain/kotlin/com/gepetto/toydb/database/ToyRepository.kt)
+**Target File**: [`../composeApp/src/commonMain/kotlin/com/gepetto/toydb/database/ToyRepository.kt`](file:///Users/luizvaldetaro/valdetaro/ToyCollection/composeApp/src/commonMain/kotlin/com/gepetto/toydb/database/ToyRepository.kt)
 
 **Base URL Adjustment**:
 ```kotlin
@@ -221,7 +221,7 @@ fun getBaseUrlSetting(): String {
 ```
 
 ### 4.3 Service Layer: `DatabaseResetService`
-**Target File**: `composeApp/src/commonMain/kotlin/com/gepetto/toydb/service/DatabaseResetService.kt` (New File)
+**Target File**: `../composeApp/src/commonMain/kotlin/com/gepetto/toydb/service/DatabaseResetService.kt` (New File)
 
 **Responsibilities**:
 1. Acquire `CollectionWriteLock.mutex.withLock`.
@@ -283,7 +283,7 @@ fun getBaseUrlSetting(): String {
 8. Log all actions with `GcLog.i("DatabaseResetService", ...)`.
 
 ### 4.4 UI Layer: `DangerZoneCard` & `SettingsScreen`
-**Target File**: `composeApp/src/commonMain/kotlin/com/gepetto/toydb/ui/DangerZoneCard.kt` (New File)
+**Target File**: `../composeApp/src/commonMain/kotlin/com/gepetto/toydb/ui/DangerZoneCard.kt` (New File)
 
 **Layout & Styling**:
 - Container: Material 3 `OutlinedCard` with a subtle destructive border:
@@ -304,14 +304,14 @@ fun getBaseUrlSetting(): String {
   - On complete: Snackbar or status message: `"Database reset complete. You can now maintain your own collection."`
 
 **Integration**:
-**Target File**: [`composeApp/src/commonMain/kotlin/com/gepetto/toydb/ui/SettingsScreen.kt`](file:///Users/luizvaldetaro/valdetaro/ToyCollection/composeApp/src/commonMain/kotlin/com/gepetto/toydb/ui/SettingsScreen.kt)
+**Target File**: [`../composeApp/src/commonMain/kotlin/com/gepetto/toydb/ui/SettingsScreen.kt`](file:///Users/luizvaldetaro/valdetaro/ToyCollection/composeApp/src/commonMain/kotlin/com/gepetto/toydb/ui/SettingsScreen.kt)
 - Inside `SettingsTab.BACKUP_RESTORE`, place `DangerZoneCard` directly below `BackupRestoreCard`.
 - Pass `onCollectionReset = { restoreKey++; onCollectionRestored() }`.
 
 ### 4.5 New User Guide Info Tab & Markdown Assets
 **Target Files**:
-- Code: [`composeApp/src/commonMain/kotlin/com/gepetto/toydb/ui/InfoScreen.kt`](file:///Users/luizvaldetaro/valdetaro/ToyCollection/composeApp/src/commonMain/kotlin/com/gepetto/toydb/ui/InfoScreen.kt)
-- Markdown Resources (`composeApp/src/commonMain/composeResources/files/`):
+- Code: [`../composeApp/src/commonMain/kotlin/com/gepetto/toydb/ui/InfoScreen.kt`](file:///Users/luizvaldetaro/valdetaro/ToyCollection/composeApp/src/commonMain/kotlin/com/gepetto/toydb/ui/InfoScreen.kt)
+- Markdown Resources (`../composeApp/src/commonMain/composeResources/files`):
   - `en_your_collection.md` (ASD-STE100)
   - `pt_your_collection.md`
   - `de_your_collection.md`
@@ -351,8 +351,8 @@ The guide must contain explicit step-by-step instructions:
 
 ### 4.6 Main Screen Banner Integration
 **Target Files**:
-- [`composeApp/src/commonMain/kotlin/com/gepetto/toydb/ui/HomeDestination.kt`](file:///Users/luizvaldetaro/valdetaro/ToyCollection/composeApp/src/commonMain/kotlin/com/gepetto/toydb/ui/HomeDestination.kt)
-- [`composeApp/src/commonMain/kotlin/com/gepetto/toydb/ui/ToyDbNavigation.kt`](file:///Users/luizvaldetaro/valdetaro/ToyCollection/composeApp/src/commonMain/kotlin/com/gepetto/toydb/ui/ToyDbNavigation.kt)
+- [`../composeApp/src/commonMain/kotlin/com/gepetto/toydb/ui/HomeDestination.kt`](file:///Users/luizvaldetaro/valdetaro/ToyCollection/composeApp/src/commonMain/kotlin/com/gepetto/toydb/ui/HomeDestination.kt)
+- [`../composeApp/src/commonMain/kotlin/com/gepetto/toydb/ui/ToyDbNavigation.kt`](file:///Users/luizvaldetaro/valdetaro/ToyCollection/composeApp/src/commonMain/kotlin/com/gepetto/toydb/ui/ToyDbNavigation.kt)
 
 **Banner Text Update**:
 ```kotlin
@@ -399,8 +399,8 @@ when (annotation.item) {
 Executing agents must work through these steps in order, marking each item `[x]` upon successful completion:
 
 - [x] **Phase 1: Bundled Resource Setup**
-  - [x] Copy `ToyCollection/json/category_settings.json` to `composeApp/src/commonMain/composeResources/files/category_settings.json`.
-  - [x] Copy `ToyCollection/json/carmaker.json` to `composeApp/src/commonMain/composeResources/files/carmaker.json`.
+  - [x] Copy `ToyCollection/json/category_settings.json` to `../composeApp/src/commonMain/composeResources/files/category_settings.json`.
+  - [x] Copy `ToyCollection/json/carmaker.json` to `../composeApp/src/commonMain/composeResources/files/carmaker.json`.
   - [x] Verify Gradle resource generation picks up the new files.
 
 - [x] **Phase 2: Repository Base URL & App Title Fix**
@@ -409,7 +409,7 @@ Executing agents must work through these steps in order, marking each item `[x]`
   - [x] Verify `SyncImage.kt` and `HtmlSyncService.kt` safely handle empty string `baseUrl` without crashing or attempting HTTP downloads.
 
 - [x] **Phase 3: Database Reset Service Implementation**
-  - [x] Create `composeApp/src/commonMain/kotlin/com/gepetto/toydb/service/DatabaseResetService.kt`.
+  - [x] Create `../composeApp/src/commonMain/kotlin/com/gepetto/toydb/service/DatabaseResetService.kt`.
   - [x] Implement `suspend fun resetDatabaseToDefaults(db: ToyDatabase, platformContext: Any?): Result<Unit>`.
   - [x] Include lock acquisition (`CollectionWriteLock.mutex.withLock`).
   - [x] Implement two-pass photo categorization:
@@ -433,12 +433,12 @@ Executing agents must work through these steps in order, marking each item `[x]`
   - [x] Add the 12 translated string resources to `values-es/strings.xml`.
   - [x] Add the 12 translated string resources to `values-fr/strings.xml`.
   - [x] Add the 12 translated string resources to `values-it/strings.xml`.
-  - [x] Create `composeApp/src/commonMain/composeResources/files/en_your_collection.md` (ASD-STE100).
-  - [x] Create `composeApp/src/commonMain/composeResources/files/pt_your_collection.md`.
-  - [x] Create `composeApp/src/commonMain/composeResources/files/de_your_collection.md`.
-  - [x] Create `composeApp/src/commonMain/composeResources/files/es_your_collection.md`.
-  - [x] Create `composeApp/src/commonMain/composeResources/files/fr_your_collection.md`.
-  - [x] Create `composeApp/src/commonMain/composeResources/files/it_your_collection.md`.
+  - [x] Create `../composeApp/src/commonMain/composeResources/files/en_your_collection.md` (ASD-STE100).
+  - [x] Create `../composeApp/src/commonMain/composeResources/files/pt_your_collection.md`.
+  - [x] Create `../composeApp/src/commonMain/composeResources/files/de_your_collection.md`.
+  - [x] Create `../composeApp/src/commonMain/composeResources/files/es_your_collection.md`.
+  - [x] Create `../composeApp/src/commonMain/composeResources/files/fr_your_collection.md`.
+  - [x] Create `../composeApp/src/commonMain/composeResources/files/it_your_collection.md`.
 
 - [x] **Phase 5: Info Screen & Navigation Updates**
   - [x] In `InfoScreen.kt`, add `InfoTopic.YOUR_COLLECTION("your_collection", Res.string.info_tab_your_collection)`.
@@ -447,7 +447,7 @@ Executing agents must work through these steps in order, marking each item `[x]`
   - [x] In `ToyDbNavigation.kt`, update `HomeDestination` `onNavigateToInfo` to pass `topicId` to `Destination.Info(topicId)`.
 
 - [x] **Phase 6: UI Implementation (`DangerZoneCard` & Settings Screen)**
-  - [x] Create `composeApp/src/commonMain/kotlin/com/gepetto/toydb/ui/DangerZoneCard.kt`.
+  - [x] Create `../composeApp/src/commonMain/kotlin/com/gepetto/toydb/ui/DangerZoneCard.kt`.
   - [x] Add the educational text explaining Gepetto's Collection vs. User's Collection.
   - [x] Add confirmation dialog with dark mode border (`if (isSystemInDarkTheme()) Modifier.border(...)`).
   - [x] Add `@PreviewLightDark` and `@Preview` landscape preview annotations.
@@ -455,7 +455,7 @@ Executing agents must work through these steps in order, marking each item `[x]`
   - [x] Wire up `onCollectionReset` to trigger UI reload and status reporting.
 
 - [x] **Phase 7: Automated Testing & Verification**
-  - [x] Create unit test `composeApp/src/desktopTest/kotlin/com/gepetto/toydb/service/DatabaseResetServiceTest.kt`.
+  - [x] Create unit test `../composeApp/src/desktopTest/kotlin/com/gepetto/toydb/service/DatabaseResetServiceTest.kt`.
   - [x] Test that initial populated DB (toys > 0) becomes 0 toys, makers count unchanged, title becomes "My Toy Collection", and empty `base_url` after reset.
   - [x] Test photo purging logic: verify maker photos and shared photos are kept, and only toy-only files deleted.
   - [x] Test `InfoScreen` topic resolution for `your_collection` in `InfoPlatformFilterTest.kt`.

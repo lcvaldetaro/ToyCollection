@@ -366,4 +366,8 @@ Tutti i diritti riservati.</string>
     <string name="home_banner_switch_pre">\n\n\tPer passare dalla collezione di Gepetto alla tua collezione personale, consulta la </string>
     <string name="home_banner_link_your_collection">Guida per la Tua Collezione</string>
     <string name="home_banner_switch_post">.</string>
+    <string name="update_available_title">Aggiornamento disponibile</string>
+    <string name="update_available_message">È disponibile una nuova versione di Gestore del Database dei Giocattoli Gepetto (v%1$s). Vuoi scaricarla ora?</string>
+    <string name="update_btn_update">Aggiorna</string>
+    <string name="update_btn_later">Più tardi</string>
 </resources>

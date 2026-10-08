@@ -3,7 +3,6 @@ HARD:
 [ ]-have a "file manager to manipulate a toy's image files"
 
 SIMPLE:
-[ ]-desktop must check if there is a new version to download
 
 BUGS:
 [ ]-Web version can't web sync from either http://valdetaro.com/database/ or https://gepetto.club/database/
@@ -24,3 +23,5 @@ BUGS:
 [x]-ability to change language locale (see .agents/LOCALE_PLAN.md)
 [x]-audit top screen icons and category labels for all languages (see .agents/LOCALE_PLAN.md Phase 10)
 [x]-make sure all strings are localized
+[x]-db reset for new collections
+[x]-desktop must check if there is a new version to download

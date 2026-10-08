@@ -19,6 +19,13 @@ import toydb.composeapp.generated.resources.Res
 import toydb.composeapp.generated.resources.icon
 import okio.FileSystem
 import okio.Path.Companion.toPath
+import club.gepetto.utils.GcAppInfo
+import com.gepetto.toydb.CommonConfig
+import com.gepetto.toydb.updater.DesktopUpdater
+import com.gepetto.toydb.updater.UpdateDialog
+import com.gepetto.toydb.updater.UpdateInfo
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 fun main(args: Array<String>) {
     // Override disabled algorithms to re-enable TLS_RSA_* ciphers if they are disabled by the JVM configuration
@@ -91,6 +98,16 @@ fun main(args: Array<String>) {
     val savedLang = startupRepo.getLanguageSetting()
     com.gepetto.toydb.platform.LocaleHelper.setAppLocale(savedLang)
 
+    val osName = System.getProperty("os.name").lowercase()
+    val isWindows = osName.contains("win")
+    val isMac = osName.contains("mac")
+
+    GcAppInfo.filesDir = appDataDir
+    GcAppInfo.appPackageFolder = appDataDir.absolutePath + File.separator
+    GcAppInfo.versionName = CommonConfig.versionName
+    GcAppInfo.versionCode = if (isWindows) CommonConfig.desktopVersionCodeWindows else CommonConfig.desktopVersionCodeMac
+    GcAppInfo.releaseVersion = false
+
     application {
         val windowState = rememberWindowState(
             width = 1200.dp,
@@ -109,8 +126,34 @@ fun main(args: Array<String>) {
             title = appTitle,
             icon = painterResource(Res.drawable.icon)
         ) {
+            var updateInfo by remember { mutableStateOf<UpdateInfo?>(null) }
+            var showUpdateDialog by remember { mutableStateOf(false) }
+
+            LaunchedEffect(Unit) {
+                val updateUrl = repository.getBaseUrlSetting().trimEnd('/') + "/version.json"
+                val info = withContext(Dispatchers.IO) {
+                    DesktopUpdater.checkForUpdates(updateUrl)
+                }
+                val currentVersionCode = GcAppInfo.versionCode ?: 0L
+                if (info != null && info.isNewerThan(currentVersionCode)) {
+                    updateInfo = info
+                    showUpdateDialog = true
+                }
+            }
+
             GcTheme {
                 ToyDbNavigation(database, sftpService, onAppTitleChanged = { appTitle = it })
+
+                if (showUpdateDialog && updateInfo != null) {
+                    UpdateDialog(
+                        newVersionName = updateInfo!!.versionName,
+                        onDismiss = { showUpdateDialog = false },
+                        onConfirm = {
+                            DesktopUpdater.openBrowser(updateInfo!!.downloadUrl)
+                            showUpdateDialog = false
+                        }
+                    )
+                }
             }
         }
     }
