@@ -1,6 +1,9 @@
 HARD:
 [ ]-ios conversion
 [ ]-have a "file manager to manipulate a toy's image files"
+[ ]-ability to sync with dropbox (see .agents/DROPBOX_SYNC_PLAN.md)
+[ ]-ability to sync with google drive (see .agents/GOOGLE_DRIVE_SYNC_PLAN.md)
+[ ]-ability to sync with microsoft onedrive (see .agents/ONEDRIVE_SYNC_PLAN.md)
 
 SIMPLE:
 
