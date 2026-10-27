@@ -200,21 +200,7 @@ android {
         }
     }
 
-    /*signingConfigs {
-        create("release") {
-            val customStoreFile = project.findProperty("gepetto.lapcounter.store_file") as String?
-            val targetFile = file(customStoreFile ?: "release.keystore")
-            if (targetFile.exists()) {
-                storeFile = targetFile
-                storePassword = project.findProperty("gepetto.store_psw") as String?
-                keyAlias = project.findProperty("gepetto.key_alias") as String?
-                keyPassword = project.findProperty("gepetto.key_psw") as String?
-            }
-        }
-    }*/
-
     defaultConfig {
-        // TODO change to "com.gepetto.slotcarscollection"
         applicationId = "com.gepetto.slotcarscollection"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
