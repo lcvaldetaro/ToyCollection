@@ -63,6 +63,8 @@ sshj = "0.41.2"
 slf4jSimple = "2.0.20"
 jetbrainsCompose = "1.12.2"
 sqlJs = "1.14.2"
+sqliteJdbc = "3.54.1.0"
+bouncycastle = "1.78.1"
 kotlincryptoHash = "0.8.0"
 copyWebpackPlugin = "13.0.0"
 
@@ -128,6 +130,8 @@ retrofit-converter = { module = "com.jakewharton.retrofit:retrofit2-kotlinx-seri
 squareup-retrofit2 = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit2" }
 retrofit-kotlin-deserializer = { module = "com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter", version.ref = "retrofitDeserializerVersion" }
 ui = { module = "androidx.compose.ui:ui" }
+sqlite-jdbc = { module = "org.xerial:sqlite-jdbc", version.ref = "sqliteJdbc" }
+bouncycastle = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = "bouncycastle" }
 sshj = { module = "com.hierynomus:sshj", version.ref = "sshj" }
 slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4jSimple" }
 zxing-android-embedded = { module = "com.journeyapps:zxing-android-embedded", version.ref = "zxingAndroidEmbedded" }

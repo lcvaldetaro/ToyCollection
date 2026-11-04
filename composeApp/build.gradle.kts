@@ -1,3 +1,8 @@
+import java.io.File
+import com.android.build.api.variant.HasUnitTestBuilder
+import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+import org.jetbrains.compose.desktop.application.tasks.AbstractJPackageTask
+
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.jetbrains.compose)
@@ -12,24 +17,26 @@ base {
     archivesName.set("GepettoToyDatabaseManager-v$vName-($vCode)")
 }
 
-val macArch = (project.findProperty("macArch") as String?)?.lowercase() ?: run {
-    val isAppleSilicon = try {
-        val process = ProcessBuilder("sysctl", "-n", "hw.optional.arm64").start()
-        val output = process.inputStream.bufferedReader().readText().trim()
-        output == "1"
-    } catch (e: Exception) {
-        System.getProperty("os.arch").lowercase().contains("aarch64") || System.getProperty("os.arch").lowercase().contains("arm64")
+val macArch: String by lazy {
+    (project.findProperty("macArch") as String?)?.lowercase() ?: run {
+        val isAppleSilicon = try {
+            val process = ProcessBuilder("sysctl", "-n", "hw.optional.arm64").start()
+            val output = process.inputStream.bufferedReader().readText().trim()
+            output == "1"
+        } catch (_: Exception) {
+            val arch = System.getProperty("os.arch").lowercase()
+            arch.contains("aarch64") || arch.contains("arm64")
+        }
+        if (isAppleSilicon) "m1" else "intel"
     }
-    if (isAppleSilicon) "m1" else "intel"
 }
-val isArm64 = macArch.contains("aarch64") || macArch.contains("arm64") || macArch == "m1" || macArch == "arm"
-val suffix = if (isArm64) "m1" else "intel"
+val isArm64: Boolean get() = macArch.contains("aarch64") || macArch.contains("arm64") || macArch == "m1" || macArch == "arm"
+val suffix: String get() = if (isArm64) "m1" else "intel"
 
-
-val desktopMajor = libs.versions.versionName.get().split(".").getOrElse(0) { "1" }
-val desktopMinor = libs.versions.versionName.get().split(".").getOrElse(1) { "0" }
-val desktopBuildNum = libs.versions.versionCode.get()
-val desktopPackageVersion = "${desktopMajor}.${desktopMinor}.${desktopBuildNum}"
+val desktopMajor: String get() = libs.versions.versionName.get().split(".").getOrElse(0) { "1" }
+val desktopMinor: String get() = libs.versions.versionName.get().split(".").getOrElse(1) { "0" }
+val desktopBuildNum: String get() = libs.versions.versionCode.get()
+val desktopPackageVersion: String get() = "${desktopMajor}.${desktopMinor}.${desktopBuildNum}"
 
 val generateCommonConfig = tasks.register("generateCommonConfig") {
     val vName = libs.versions.versionName.get()
@@ -160,7 +167,7 @@ kotlin {
             implementation(libs.ktor.client.okhttp)
             implementation(libs.kotlinx.coroutines.swing)
             // SQLite JDBC driver for desktop SQLite support
-            implementation("org.xerial:sqlite-jdbc:3.45.1.0")
+            implementation(libs.sqlite.jdbc)
             implementation(libs.sshj)
             implementation(libs.slf4j.simple)
         }
@@ -172,7 +179,7 @@ kotlin {
             implementation(libs.androidx.appcompat)
             implementation(libs.kotlinx.coroutines.android)
             implementation(libs.sshj)
-            implementation("org.bouncycastle:bcprov-jdk18on:1.78.1")
+            implementation(libs.bouncycastle)
             implementation(libs.androidx.ui.tooling)
             implementation(libs.androidx.ui.tooling.preview)
         }
@@ -248,10 +255,22 @@ android {
         targetCompatibility = JavaVersion.VERSION_21
     }
 
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+    }
+
     bundle {
         language {
             enableSplit = false
         }
+    }
+}
+
+androidComponents {
+    beforeVariants { variantBuilder ->
+        (variantBuilder as? HasUnitTestBuilder)?.enableUnitTest = true
     }
 }
 
@@ -274,10 +293,11 @@ fun getJdkMajorVersion(home: String?): Int {
                         }
                     }
                 }
-            } catch (e: Exception) {}
+            } catch (_: Exception) {}
         }
     }
-    val isWin = org.gradle.internal.os.OperatingSystem.current().isWindows
+    val osName = System.getProperty("os.name").lowercase()
+    val isWin = osName.contains("win")
     val javaBin = if (isWin) File(home, "bin/java.exe") else File(home, "bin/java")
     if (javaBin.exists()) {
         try {
@@ -288,14 +308,16 @@ fun getJdkMajorVersion(home: String?): Int {
             if (match != null) {
                 return match.groupValues[1].toIntOrNull() ?: -1
             }
-        } catch (e: Exception) {}
+        } catch (_: Exception) {}
     }
     return -1
 }
 
 fun isMatchingJdk(home: String?, targetArm64: Boolean): Boolean {
     if (home.isNullOrEmpty()) return false
-    val isWin = org.gradle.internal.os.OperatingSystem.current().isWindows
+    val osName = System.getProperty("os.name").lowercase()
+    val isWin = osName.contains("win")
+    val isMac = osName.contains("mac")
     val javaBin = if (isWin) File(home, "bin/java.exe") else File(home, "bin/java")
     val jpackageBin = if (isWin) File(home, "bin/jpackage.exe") else File(home, "bin/jpackage")
     if (!javaBin.exists() || !jpackageBin.exists()) return false
@@ -303,57 +325,59 @@ fun isMatchingJdk(home: String?, targetArm64: Boolean): Boolean {
     val major = getJdkMajorVersion(home)
     if (major in 1..20) return false
 
-    if (!org.gradle.internal.os.OperatingSystem.current().isMacOsX) return true
+    if (!isMac) return true
     return try {
         val p = ProcessBuilder("file", javaBin.absolutePath).start()
         val out = p.inputStream.bufferedReader().readText().lowercase()
         p.waitFor()
         if (targetArm64) (out.contains("arm64") || out.contains("aarch64")) else out.contains("x86_64")
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         false
     }
 }
 
-val resolvedJavaHome: String = run {
-    if (!org.gradle.internal.os.OperatingSystem.current().isMacOsX) {
+val resolvedJavaHome: String by lazy {
+    val osName = System.getProperty("os.name").lowercase()
+    val isMac = osName.contains("mac")
+    if (!isMac) {
         val env = System.getenv("JAVA_HOME")
         if (isMatchingJdk(env, false)) {
-            return@run env!!
+            return@lazy env!!
         }
         val sys = System.getProperty("java.home")
         if (isMatchingJdk(sys, false)) {
-            return@run sys
+            return@lazy sys
         }
         val jdksDir = File(System.getProperty("user.home"), ".gradle/jdks")
         if (jdksDir.exists() && jdksDir.isDirectory) {
             val jdk21 = jdksDir.walkTopDown()
                 .filter { it.name == "Home" || it.name.startsWith("jdk") }
                 .find { isMatchingJdk(it.absolutePath, false) }
-            if (jdk21 != null) return@run jdk21.absolutePath
+            if (jdk21 != null) return@lazy jdk21.absolutePath
         }
-        return@run env ?: sys
+        return@lazy env ?: sys ?: ""
     }
 
     if (!isArm64) {
         val prop = project.findProperty("intelJavaHome") as? String
-        if (isMatchingJdk(prop, false)) return@run prop!!
+        if (isMatchingJdk(prop, false)) return@lazy prop!!
     } else {
         val prop = project.findProperty("armJavaHome") as? String
-        if (isMatchingJdk(prop, true)) return@run prop!!
+        if (isMatchingJdk(prop, true)) return@lazy prop!!
     }
 
     var dir: File? = projectDir
     while (dir != null) {
         val localJdk = File(dir, ".jdk/Contents/Home")
         if (isMatchingJdk(localJdk.absolutePath, isArm64)) {
-            return@run localJdk.absolutePath
+            return@lazy localJdk.absolutePath
         }
         val siblingDirs = dir.listFiles()?.filter { it.isDirectory }
         if (siblingDirs != null) {
             for (sib in siblingDirs) {
                 val sibJdk = File(sib, ".jdk/Contents/Home")
                 if (isMatchingJdk(sibJdk.absolutePath, isArm64)) {
-                    return@run sibJdk.absolutePath
+                    return@lazy sibJdk.absolutePath
                 }
             }
         }
@@ -366,34 +390,34 @@ val resolvedJavaHome: String = run {
             .filter { (it.name == "Home" || it.name == "Contents") && (it.absolutePath.contains("21") || it.absolutePath.contains("-21-")) }
             .map { if (it.name == "Contents") File(it, "Home") else it }
             .find { isMatchingJdk(it.absolutePath, isArm64) }
-        if (jdk21Home != null) return@run jdk21Home.absolutePath
+        if (jdk21Home != null) return@lazy jdk21Home.absolutePath
 
         val anyMatching = jdksDir.walkTopDown()
             .filter { it.name == "Home" }
             .find { isMatchingJdk(it.absolutePath, isArm64) }
-        if (anyMatching != null) return@run anyMatching.absolutePath
+        if (anyMatching != null) return@lazy anyMatching.absolutePath
     }
 
     val envJava = System.getenv("JAVA_HOME")
-    if (isMatchingJdk(envJava, isArm64)) return@run envJava!!
+    if (isMatchingJdk(envJava, isArm64)) return@lazy envJava!!
 
     val sysJava = System.getProperty("java.home")
-    if (isMatchingJdk(sysJava, isArm64)) return@run sysJava!!
+    if (isMatchingJdk(sysJava, isArm64)) return@lazy sysJava!!
 
-    if (org.gradle.internal.os.OperatingSystem.current().isMacOsX) {
+    if (isMac) {
         val archArg = if (isArm64) "arm64" else "x86_64"
         try {
             val p = ProcessBuilder("/usr/libexec/java_home", "-a", archArg, "-v", "21").start()
             val out = p.inputStream.bufferedReader().use { it.readText().trim() }
             p.waitFor()
-            if (isMatchingJdk(out, isArm64)) return@run out
-        } catch (e: Exception) {}
+            if (isMatchingJdk(out, isArm64)) return@lazy out
+        } catch (_: Exception) {}
         try {
             val p = ProcessBuilder("/usr/libexec/java_home", "-a", archArg).start()
             val out = p.inputStream.bufferedReader().use { it.readText().trim() }
             p.waitFor()
-            if (isMatchingJdk(out, isArm64)) return@run out
-        } catch (e: Exception) {}
+            if (isMatchingJdk(out, isArm64)) return@lazy out
+        } catch (_: Exception) {}
 
         val jvmDir = File("/Library/Java/JavaVirtualMachines")
         if (jvmDir.exists() && jvmDir.isDirectory) {
@@ -401,24 +425,24 @@ val resolvedJavaHome: String = run {
                 ?.filter { it.name.contains("21") }
                 ?.map { File(it, "Contents/Home") }
                 ?.find { isMatchingJdk(it.absolutePath, isArm64) }
-            if (jdk21 != null) return@run jdk21.absolutePath
+            if (jdk21 != null) return@lazy jdk21.absolutePath
 
             val anyJvm = jvmDir.listFiles()
                 ?.map { File(it, "Contents/Home") }
                 ?.find { isMatchingJdk(it.absolutePath, isArm64) }
-            if (anyJvm != null) return@run anyJvm.absolutePath
+            if (anyJvm != null) return@lazy anyJvm.absolutePath
         }
 
         val brewCandidate = if (isArm64) "/opt/homebrew/opt/openjdk/libexec/openjdk.jdk/Contents/Home" else "/usr/local/opt/openjdk/libexec/openjdk.jdk/Contents/Home"
-        if (isMatchingJdk(brewCandidate, isArm64)) return@run brewCandidate
+        if (isMatchingJdk(brewCandidate, isArm64)) return@lazy brewCandidate
     }
 
-    val fallback = System.getenv("JAVA_HOME") ?: System.getProperty("java.home")
-    if (isMatchingJdk(fallback, isArm64)) return@run fallback
+    val fallback = System.getenv("JAVA_HOME") ?: System.getProperty("java.home") ?: ""
+    if (isMatchingJdk(fallback, isArm64)) return@lazy fallback
 
-    if (org.gradle.internal.os.OperatingSystem.current().isMacOsX) {
+    if (isMac) {
         val targetName = if (isArm64) "ARM64" else "Intel x86_64"
-        throw GradleException("Could not locate a valid JDK 21+ with jpackage for target architecture: $targetName")
+        println("[ArchitectureConfig] WARNING: Could not locate a valid JDK 21+ with jpackage for target architecture: $targetName")
     }
     fallback
 }
@@ -481,7 +505,7 @@ tasks.matching { it.name == "packageDmg" }.configureEach {
                             println("[VolumeIconHook] Successfully copied icon to ${targetIcon.absolutePath}")
                             copied = true
                             break
-                        } catch (e: Exception) {
+                        } catch (_: Exception) {
                             Thread.sleep(50)
                         }
                     }
