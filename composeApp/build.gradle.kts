@@ -180,6 +180,8 @@ kotlin {
             implementation(libs.kotlinx.coroutines.android)
             implementation(libs.sshj)
             implementation(libs.bouncycastle)
+            implementation(libs.bouncycastle.bcpkix)
+            implementation(libs.bouncycastle.bcutil)
             implementation(libs.androidx.ui.tooling)
             implementation(libs.androidx.ui.tooling.preview)
         }
@@ -225,7 +227,8 @@ android {
     }
     packaging {
         resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "/META-INF/{AL2.0,LGPL2.1,LICENSE.md,LICENSE-notice.md}"
+            excludes += "/META-INF/versions/**/OSGI-INF/MANIFEST.MF"
         }
     }
     buildTypes {
