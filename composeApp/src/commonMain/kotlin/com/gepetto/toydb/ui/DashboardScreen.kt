@@ -46,10 +46,11 @@ import toydb.composeapp.generated.resources.*
 fun DashboardScreen(
     repository: ToyRepository,
     onNavigate: (Destination) -> Unit,
+    backStackLastItem: Destination? = null,
     modifier: Modifier = Modifier
 ) {
-    val stats = remember { repository.getDashboardStats() }
-    val categoriesSettings = remember { repository.getCategorySettings() }
+    val stats = remember(backStackLastItem) { repository.getDashboardStats() }
+    val categoriesSettings = remember(backStackLastItem) { repository.getCategorySettings() }
     
     DashboardContent(
         stats = stats,

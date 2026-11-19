@@ -52,6 +52,7 @@ fun ExplorerScreen(
     repository: ToyRepository,
     category: String,
     onNavigate: (Destination) -> Unit,
+    backStackLastItem: Destination? = null,
     modifier: Modifier = Modifier
 ) {
     var searchQuery by rememberSaveable(category) { mutableStateOf("") }
@@ -59,8 +60,8 @@ fun ExplorerScreen(
     val selectedCondition = ""
     var selectedMaker by rememberSaveable(category) { mutableStateOf("") }
 
-    val distinctScales = remember { repository.getDistinctScales(category) }
-    val distinctMakers = remember { repository.getDistinctMakers(category) }
+    val distinctScales = remember(category, backStackLastItem) { repository.getDistinctScales(category) }
+    val distinctMakers = remember(category, backStackLastItem) { repository.getDistinctMakers(category) }
     
     val categorySetting = remember(category) {
         repository.getCategorySettings().find { it.category == category }
@@ -69,13 +70,15 @@ fun ExplorerScreen(
         categorySetting?.imagePrefix ?: "car"
     }
 
-    val toysList = repository.getToys(
-        toyType = category,
-        searchQuery = searchQuery,
-        scaleFilter = selectedScale,
-        conditionFilter = selectedCondition,
-        makerFilter = selectedMaker
-    )
+    val toysList = remember(category, searchQuery, selectedScale, selectedCondition, selectedMaker, backStackLastItem) {
+        repository.getToys(
+            toyType = category,
+            searchQuery = searchQuery,
+            scaleFilter = selectedScale,
+            conditionFilter = selectedCondition,
+            makerFilter = selectedMaker
+        )
+    }
 
     val fallbackLabel = remember(categorySetting) {
         categorySetting?.label ?: category.replaceFirstChar { it.uppercase() }

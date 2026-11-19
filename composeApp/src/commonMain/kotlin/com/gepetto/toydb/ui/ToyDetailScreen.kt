@@ -28,7 +28,9 @@ import club.gepetto.composeutils.sysForegroundColor
 import club.gepetto.composeutils.sysTextColor
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.lazy.rememberLazyListState
+import club.gepetto.composeutils.PlatformFile
 import club.gepetto.composeutils.image.GcImage
+import coil3.SingletonImageLoader
 import com.gepetto.toydb.database.Toy
 import com.gepetto.toydb.ui.SyncImage
 import com.gepetto.toydb.database.ToyImage
@@ -61,6 +63,7 @@ fun ToyDetailScreen(
     modifier: Modifier = Modifier
 ) {
     var toyState by remember(toyType, refNum) { mutableStateOf(repository.getToy(toyType, refNum)) }
+    val context = coil3.compose.LocalPlatformContext.current
 
     LaunchedEffect(toyType, refNum, backStackLastItem) {
         toyState = repository.getToy(toyType, refNum)
@@ -84,7 +87,7 @@ fun ToyDetailScreen(
                     }
                 }
             } else {
-                resolveImageUri(prefix, toy.refNum)?.let { list.add(it) }
+                resolveImageUri(prefix, toy.refNum, toy.picture)?.let { list.add(it) }
                 toy.getSecondaryImages().forEach { img ->
                     resolveBitmapUri(img.filename)?.let { list.add(it) }
                 }
@@ -111,10 +114,23 @@ fun ToyDetailScreen(
             if (!systemFileSystem.exists(targetDir)) {
                 systemFileSystem.createDirectories(targetDir)
             }
+            if (systemFileSystem.exists(destPath)) {
+                systemFileSystem.delete(destPath)
+            }
             systemFileSystem.copy(srcPath, destPath)
+
+            try {
+                val absolutePath = PlatformFile(destPath.toString()).absolutePath
+                val imageLoader = SingletonImageLoader.get(context)
+                imageLoader.memoryCache?.remove(coil3.memory.MemoryCache.Key(absolutePath))
+                imageLoader.diskCache?.remove(absolutePath)
+            } catch (e: Exception) {
+                GcLog.e("ToyDetailScreen", "Error evicting Coil cache: ${e.message}", e)
+            }
             
             val size = systemFileSystem.metadataOrNull(destPath)?.size ?: 0L
-            val timestamp = gcCurrentTimeMillis()
+            val timestamp = systemFileSystem.metadataOrNull(destPath)?.lastModifiedAtMillis
+                ?.takeIf { it > 0L } ?: gcCurrentTimeMillis()
             
             val currentBitmaps = currentToy.bitmaps.trim()
             val currentSizes = currentToy.bitmapsSize.trim()

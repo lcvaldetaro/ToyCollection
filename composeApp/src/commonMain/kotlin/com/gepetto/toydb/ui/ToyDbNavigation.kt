@@ -415,17 +415,30 @@ fun ToyDbNavigation(
                             }
                             entry<Destination.Dashboard> {
                                 key(syncTrigger) {
-                                    DashboardScreen(repository, onNavigate = { backStack.add(it) })
+                                    DashboardScreen(
+                                        repository = repository,
+                                        onNavigate = { backStack.add(it) },
+                                        backStackLastItem = backStack.lastOrNull()
+                                    )
                                 }
                             }
                             entry<Destination.CategoryExplorer> { key ->
                                 key(syncTrigger) {
-                                    ExplorerScreen(repository, category = key.category, onNavigate = { backStack.add(it) })
+                                    ExplorerScreen(
+                                        repository = repository,
+                                        category = key.category,
+                                        onNavigate = { backStack.add(it) },
+                                        backStackLastItem = backStack.lastOrNull()
+                                    )
                                 }
                             }
                             entry<Destination.MakerDirectory> {
                                 key(syncTrigger) {
-                                    MakerDirectoryScreen(repository, onNavigate = { backStack.add(it) })
+                                    MakerDirectoryScreen(
+                                        repository = repository,
+                                        onNavigate = { backStack.add(it) },
+                                        backStackLastItem = backStack.lastOrNull()
+                                    )
                                 }
                             }
                             entry<Destination.MakerDetail> { key ->

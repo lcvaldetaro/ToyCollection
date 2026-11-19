@@ -84,15 +84,6 @@ fun SyncImage(
     val toyDescription = toy?.description ?: filename ?: ""
     var downloadSuccessTrigger by remember { mutableStateOf(0) }
 
-    // Resolve local path
-    val localPath = remember(refNum, filename, isMainImage, downloadSuccessTrigger) {
-        if (isMainImage && toy != null) {
-            resolveImageUri(prefix, toy.refNum)
-        } else {
-            filename?.let { resolveBitmapUri(it) }
-        }
-    }
-    
     val expectedDbTimestamp = remember(toy, isMainImage, filename, timestamp) {
         if (timestamp != null) {
             timestamp
@@ -105,7 +96,16 @@ fun SyncImage(
         }
     }
 
-    val localFileTime = remember(localPath) {
+    // Resolve local path
+    val localPath = remember(refNum, toy?.picture, expectedDbTimestamp, filename, isMainImage, downloadSuccessTrigger) {
+        if (isMainImage && toy != null) {
+            resolveImageUri(prefix, toy.refNum, toy.picture)
+        } else {
+            filename?.let { resolveBitmapUri(it) }
+        }
+    }
+
+    val localFileTime = remember(localPath, expectedDbTimestamp, downloadSuccessTrigger) {
         if (localPath != null) {
             try {
                 val metadata = systemFileSystem.metadataOrNull(localPath.toPath())
@@ -119,7 +119,7 @@ fun SyncImage(
     }
 
     val isOutdated = expectedDbTimestamp > 0L && localFileTime > 0L && expectedDbTimestamp > localFileTime
-    var localFileExists by remember(refNum, localPath, isOutdated) { 
+    var localFileExists by remember(refNum, localPath, expectedDbTimestamp, isOutdated) { 
         mutableStateOf(localPath != null && !isOutdated) 
     }
     

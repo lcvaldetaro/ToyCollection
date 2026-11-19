@@ -34,7 +34,9 @@ import club.gepetto.composeutils.GcSpacing
 import club.gepetto.composeutils.sysBackgroundColor
 import club.gepetto.composeutils.sysTextColor
 import androidx.compose.ui.graphics.Color
+import club.gepetto.composeutils.PlatformFile
 import club.gepetto.composeutils.image.GcImage
+import coil3.SingletonImageLoader
 import com.gepetto.toydb.database.Maker
 import com.gepetto.toydb.database.Toy
 import com.gepetto.toydb.ui.SyncImage
@@ -68,6 +70,7 @@ fun MakerDetailScreen(
     modifier: Modifier = Modifier
 ) {
     var makerState by remember(makerName) { mutableStateOf(repository.getMaker(makerName)) }
+    val context = coil3.compose.LocalPlatformContext.current
     val maker = makerState
     var toysState by remember(makerName) { mutableStateOf(repository.getToysByMaker(makerName)) }
     val toysList = toysState
@@ -138,10 +141,23 @@ fun MakerDetailScreen(
             if (!systemFileSystem.exists(targetDir)) {
                 systemFileSystem.createDirectories(targetDir)
             }
+            if (systemFileSystem.exists(destPath)) {
+                systemFileSystem.delete(destPath)
+            }
             systemFileSystem.copy(srcPath, destPath)
+
+            try {
+                val absolutePath = PlatformFile(destPath.toString()).absolutePath
+                val imageLoader = SingletonImageLoader.get(context)
+                imageLoader.memoryCache?.remove(coil3.memory.MemoryCache.Key(absolutePath))
+                imageLoader.diskCache?.remove(absolutePath)
+            } catch (e: Exception) {
+                GcLog.e("MakerDetailScreen", "Error evicting Coil cache: ${e.message}", e)
+            }
             
             val size = systemFileSystem.metadataOrNull(destPath)?.size ?: 0L
-            val timestamp = gcCurrentTimeMillis()
+            val timestamp = systemFileSystem.metadataOrNull(destPath)?.lastModifiedAtMillis
+                ?.takeIf { it > 0L } ?: gcCurrentTimeMillis()
             
             val currentBitmaps = currentMaker.bitmaps.trim()
             val currentSizes = currentMaker.bitmapsSize.trim()

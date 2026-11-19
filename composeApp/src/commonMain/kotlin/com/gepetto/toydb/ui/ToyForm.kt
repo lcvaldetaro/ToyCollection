@@ -120,6 +120,19 @@ fun ToyForm(
             if (!systemFileSystem.exists(targetDir)) {
                 systemFileSystem.createDirectories(targetDir)
             }
+            val extensions = listOf("jpg", "jpeg", "png", "gif", "webp", "JPG", "PNG", "GIF")
+            for (ext in extensions) {
+                val candidate = targetDir.div("$prefix${initialToy.refNum}.$ext")
+                if (systemFileSystem.exists(candidate)) {
+                    systemFileSystem.delete(candidate)
+                    try {
+                        val candidateAbsPath = PlatformFile(candidate.toString()).absolutePath
+                        val imageLoader = SingletonImageLoader.get(context)
+                        imageLoader.memoryCache?.remove(coil3.memory.MemoryCache.Key(candidateAbsPath))
+                        imageLoader.diskCache?.remove(candidateAbsPath)
+                    } catch (_: Exception) {}
+                }
+            }
             if (systemFileSystem.exists(destPath)) {
                 systemFileSystem.delete(destPath)
             }
@@ -136,12 +149,26 @@ fun ToyForm(
             }
             
             val size = systemFileSystem.metadataOrNull(destPath)?.size ?: 0L
-            val timestamp = gcCurrentTimeMillis()
+            val timestamp = systemFileSystem.metadataOrNull(destPath)?.lastModifiedAtMillis
+                ?.takeIf { it > 0L } ?: gcCurrentTimeMillis()
             
             picture = destFilename
             pictureSize = size.toString()
             pictureTimeStamp = timestamp.toString()
             hasPicture = true
+            
+            val existingToy = if (initialToy.refNum > 0) {
+                repository.getToy(initialToy.toyType, initialToy.refNum)
+            } else null
+            if (existingToy != null) {
+                val updatedToy = existingToy.copy(
+                    picture = destFilename,
+                    pictureSize = size.toInt(),
+                    pictureTimeStamp = timestamp,
+                    hasPicture = "y"
+                )
+                repository.saveToy(updatedToy)
+            }
             
             GcLog.d("ToyForm", "Successfully saved main picture $destFilename")
         } catch (e: Exception) {
@@ -163,9 +190,13 @@ fun ToyForm(
         }
         
         val destPath = targetDir.div(destFilename)
-        if (systemFileSystem.exists(destPath)) {
+        val extensions = listOf("jpg", "jpeg", "png", "gif", "webp", "JPG", "PNG", "GIF")
+        val existingMainPic = extensions
+            .map { targetDir.div("$prefix${initialToy.refNum}.$it") }
+            .firstOrNull { systemFileSystem.exists(it) }
+        if (existingMainPic != null) {
             pendingImagePath = selectedPath
-            overwriteDestPath = destPath.toString()
+            overwriteDestPath = existingMainPic.toString()
             showOverwriteDialog = true
         } else {
             performCopyImage(selectedPath)
@@ -280,8 +311,11 @@ fun ToyForm(
                                 bitmapsSize = newSizes
                                 bitmapsTimeStamp = newTimestamps
                                 
-                                if (initialToy.refNum > 0) {
-                                    val updatedToy = initialToy.copy(
+                                val existingToy = if (initialToy.refNum > 0) {
+                                    repository.getToy(initialToy.toyType, initialToy.refNum)
+                                } else null
+                                if (existingToy != null) {
+                                    val updatedToy = existingToy.copy(
                                         bitmaps = newBitmaps,
                                         bitmapsSize = newSizes,
                                         bitmapsTimeStamp = newTimestamps

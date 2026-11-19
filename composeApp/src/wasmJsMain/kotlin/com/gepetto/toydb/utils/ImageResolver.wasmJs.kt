@@ -4,7 +4,7 @@ package com.gepetto.toydb.utils
 
 import androidx.compose.runtime.Composable
 
-actual fun resolveImageUri(prefix: String, refNum: Int): String? = null
+actual fun resolveImageUri(prefix: String, refNum: Int, picture: String?): String? = null
 
 actual fun resolveBitmapUri(filename: String): String? = null
 

@@ -4,7 +4,7 @@ object ImageResolverConfig {
     var imagesPath: String? = null
 }
 
-expect fun resolveImageUri(prefix: String, refNum: Int): String?
+expect fun resolveImageUri(prefix: String, refNum: Int, picture: String? = null): String?
 
 expect fun resolveBitmapUri(filename: String): String?
 

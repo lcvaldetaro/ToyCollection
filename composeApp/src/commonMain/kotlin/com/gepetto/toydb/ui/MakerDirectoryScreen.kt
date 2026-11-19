@@ -40,10 +40,11 @@ import toydb.composeapp.generated.resources.*
 fun MakerDirectoryScreen(
     repository: ToyRepository,
     onNavigate: (Destination) -> Unit,
+    backStackLastItem: Destination? = null,
     modifier: Modifier = Modifier
 ) {
     var searchQuery by rememberSaveable { mutableStateOf("") }
-    val makersList = repository.getMakers()
+    val makersList = remember(backStackLastItem) { repository.getMakers() }
 
     val filteredMakers = remember(makersList, searchQuery) {
         makersList.filter {

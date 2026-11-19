@@ -9,7 +9,7 @@ import androidx.compose.runtime.Composable
 import org.jetbrains.compose.resources.stringResource
 import toydb.composeapp.generated.resources.*
 
-actual fun resolveImageUri(prefix: String, refNum: Int): String? {
+actual fun resolveImageUri(prefix: String, refNum: Int, picture: String?): String? {
     val extensions = listOf("jpg", "jpeg", "png", "gif", "webp", "JPG", "PNG", "GIF")
     val possibleDirs = mutableListOf<File>()
     
@@ -32,6 +32,14 @@ actual fun resolveImageUri(prefix: String, refNum: Int): String? {
     ))
     
     val dir = possibleDirs.find { it.exists() && it.isDirectory } ?: return null
+    
+    val trimmedPic = picture?.trim()
+    if (!trimmedPic.isNullOrEmpty()) {
+        val exactFile = File(dir, trimmedPic)
+        if (exactFile.exists()) {
+            return exactFile.absolutePath
+        }
+    }
     
     for (ext in extensions) {
         val file = File(dir, "$prefix$refNum.$ext")

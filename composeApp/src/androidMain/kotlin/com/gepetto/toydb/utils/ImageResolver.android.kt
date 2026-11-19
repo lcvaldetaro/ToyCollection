@@ -11,7 +11,7 @@ import androidx.compose.ui.platform.LocalContext
 import java.io.File
 import java.io.FileOutputStream
 
-actual fun resolveImageUri(prefix: String, refNum: Int): String? {
+actual fun resolveImageUri(prefix: String, refNum: Int, picture: String?): String? {
     val extensions = listOf("jpg", "jpeg", "png", "gif", "webp", "JPG", "PNG", "GIF")
     val possibleDirs = mutableListOf<File>()
     
@@ -23,6 +23,13 @@ actual fun resolveImageUri(prefix: String, refNum: Int): String? {
     }
     
     val dir = possibleDirs.find { it.exists() && it.isDirectory } ?: return null
+    val trimmedPic = picture?.trim()
+    if (!trimmedPic.isNullOrEmpty()) {
+        val exactFile = File(dir, trimmedPic)
+        if (exactFile.exists()) {
+            return exactFile.absolutePath
+        }
+    }
     for (ext in extensions) {
         val file = File(dir, "$prefix$refNum.$ext")
         if (file.exists()) {
@@ -80,11 +87,20 @@ fun copyUriToTempPicker(context: Context, uri: Uri): String? {
         }
         
         val tempFile = File(tempDir, fileName)
+        if (tempFile.exists()) {
+            tempFile.delete()
+        }
         contentResolver.openInputStream(uri)?.use { input ->
             FileOutputStream(tempFile).use { output ->
                 input.copyTo(output)
             }
         }
+        try {
+            val imageLoader = coil3.SingletonImageLoader.get(context)
+            val absPath = tempFile.absolutePath
+            imageLoader.memoryCache?.remove(coil3.memory.MemoryCache.Key(absPath))
+            imageLoader.diskCache?.remove(absPath)
+        } catch (_: Exception) {}
         return tempFile.absolutePath
     } catch (e: Exception) {
         club.gepetto.GcLog.e("AndroidImageResolver", "Failed to copy URI to persistent temp storage: ${e.message}", e)
