@@ -368,6 +368,7 @@ Tous droits réservés.</string>
     <string name="home_banner_switch_post">.</string>
     <string name="update_available_title">Mise à jour disponible</string>
     <string name="update_available_message">Une nouvelle version de Gestionnaire de Base de Données de Jouets Gepetto (v%1$s) est disponible. Voulez-vous la télécharger maintenant ?</string>
+    <string name="update_downloading_message">Téléchargement de la mise à jour (v%1$s)&#8230;</string>
     <string name="update_btn_update">Mettre à jour</string>
     <string name="update_btn_later">Plus tard</string>
 </resources>

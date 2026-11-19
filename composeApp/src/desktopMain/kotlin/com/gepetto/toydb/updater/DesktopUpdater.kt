@@ -6,10 +6,11 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.longOrNull
 import java.awt.Desktop
+import java.io.File
+import java.io.FileOutputStream
 import java.net.HttpURLConnection
 import java.net.Socket
 import java.net.URI
-import java.net.URL
 import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
@@ -109,6 +110,161 @@ object DesktopUpdater {
             GcLog.e("DesktopUpdater: Error checking for updates", e)
         }
         return null
+    }
+
+    fun resolveInstallerFileName(downloadUrl: String): String {
+        val rawName = try {
+            val path = URI.create(downloadUrl).path ?: ""
+            path.substringAfterLast('/').takeIf { it.isNotBlank() }
+        } catch (_: Exception) {
+            null
+        } ?: downloadUrl.substringAfterLast('/').substringBefore('?').takeIf { it.isNotBlank() }
+        return rawName ?: if (isMac()) "toydatabasemanager.dmg" else "toydatabasemanager.msi"
+    }
+
+    fun defaultDownloadsDir(): File {
+        val userHome = System.getProperty("user.home")
+        if (!userHome.isNullOrBlank()) {
+            val downloads = File(userHome, "Downloads")
+            if (downloads.exists() && downloads.isDirectory && downloads.canWrite()) {
+                return downloads
+            }
+        }
+        return File(System.getProperty("java.io.tmpdir"))
+    }
+
+    /**
+     * Downloads the installer package directly inside the JVM process (which avoids browser
+     * attachment of the macOS `com.apple.quarantine` extended attribute) and clears any
+     * quarantine attributes on macOS before returning the downloaded file.
+     */
+    fun downloadUpdateFile(
+        downloadUrl: String,
+        targetDir: File = defaultDownloadsDir(),
+        onProgress: ((Float?) -> Unit)? = null
+    ): File? {
+        try {
+            if (!targetDir.exists()) {
+                targetDir.mkdirs()
+            }
+            val fileName = resolveInstallerFileName(downloadUrl)
+            val targetFile = File(targetDir, fileName)
+            val tempFile = File(targetDir, "$fileName.part")
+
+            val url = URI.create(downloadUrl).toURL()
+            val connection = url.openConnection() as HttpURLConnection
+            connection.connectTimeout = 15000
+            connection.readTimeout = 60000
+            connection.instanceFollowRedirects = true
+            connection.requestMethod = "GET"
+
+            if (connection is HttpsURLConnection) {
+                connection.sslSocketFactory = EnabledCiphersSSLSocketFactory(HttpsURLConnection.getDefaultSSLSocketFactory())
+            }
+
+            val responseCode = connection.responseCode
+            if (responseCode != HttpURLConnection.HTTP_OK) {
+                GcLog.e("DesktopUpdater: Failed to download installer from $downloadUrl. Status: $responseCode")
+                return null
+            }
+
+            val totalBytes = connection.contentLengthLong
+            onProgress?.invoke(if (totalBytes > 0) 0f else null)
+
+            connection.inputStream.use { input ->
+                FileOutputStream(tempFile).use { output ->
+                    val buffer = ByteArray(64 * 1024)
+                    var downloadedBytes = 0L
+                    var bytesRead: Int
+                    while (input.read(buffer).also { bytesRead = it } != -1) {
+                        output.write(buffer, 0, bytesRead)
+                        downloadedBytes += bytesRead
+                        if (totalBytes > 0) {
+                            val progress = (downloadedBytes.toFloat() / totalBytes.toFloat()).coerceIn(0f, 1f)
+                            onProgress?.invoke(progress)
+                        }
+                    }
+                    output.flush()
+                }
+            }
+
+            if (targetFile.exists()) {
+                targetFile.delete()
+            }
+            if (!tempFile.renameTo(targetFile)) {
+                tempFile.copyTo(targetFile, overwrite = true)
+                tempFile.delete()
+            }
+
+            if (isMac()) {
+                clearMacQuarantine(targetFile)
+            }
+
+            onProgress?.invoke(1f)
+            return targetFile
+        } catch (e: Exception) {
+            GcLog.e("DesktopUpdater: Error downloading update from $downloadUrl", e)
+            return null
+        }
+    }
+
+    fun clearMacQuarantine(file: File) {
+        if (!isMac() || !file.exists()) return
+        try {
+            ProcessBuilder("xattr", "-d", "com.apple.quarantine", file.absolutePath)
+                .redirectErrorStream(true)
+                .start()
+                .waitFor()
+        } catch (_: Exception) {
+            // Ignore if attribute is not present
+        }
+    }
+
+    fun openInstaller(installerFile: File): Boolean {
+        if (!installerFile.exists()) return false
+        return try {
+            if (isMac()) {
+                clearMacQuarantine(installerFile)
+                ProcessBuilder("open", installerFile.absolutePath).start()
+                true
+            } else if (isWindows()) {
+                if (installerFile.name.lowercase().endsWith(".msi")) {
+                    ProcessBuilder("msiexec", "/i", installerFile.absolutePath).start()
+                } else if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
+                    Desktop.getDesktop().open(installerFile)
+                } else {
+                    ProcessBuilder("cmd", "/c", "start", "", installerFile.absolutePath).start()
+                }
+                true
+            } else if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
+                Desktop.getDesktop().open(installerFile)
+                true
+            } else {
+                ProcessBuilder("xdg-open", installerFile.absolutePath).start()
+                true
+            }
+        } catch (e: Exception) {
+            GcLog.e("DesktopUpdater: Error opening installer: ${installerFile.absolutePath}", e)
+            false
+        }
+    }
+
+    /**
+     * Downloads the update installer directly without using a web browser (preventing macOS
+     * browser quarantine flags) and launches it. Falls back to opening the URL in the system
+     * browser only if the direct download or launch fails.
+     */
+    fun downloadAndOpenUpdate(
+        downloadUrl: String,
+        targetDir: File = defaultDownloadsDir(),
+        onProgress: ((Float?) -> Unit)? = null
+    ): Boolean {
+        val downloaded = downloadUpdateFile(downloadUrl, targetDir, onProgress)
+        if (downloaded != null && openInstaller(downloaded)) {
+            return true
+        }
+        openBrowser(downloadUrl)
+        return false
     }
 
     fun openBrowser(url: String) {

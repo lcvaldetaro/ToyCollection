@@ -368,6 +368,7 @@ Todos os direitos reservados.</string>
     <string name="home_banner_switch_post">.</string>
     <string name="update_available_title">Atualização Disponível</string>
     <string name="update_available_message">Uma nova versão do Gerenciador de Banco de Dados de Brinquedos Gepetto (v%1$s) está disponível. Deseja baixar agora?</string>
+    <string name="update_downloading_message">Baixando atualização (v%1$s)&#8230;</string>
     <string name="update_btn_update">Atualizar</string>
     <string name="update_btn_later">Mais tarde</string>
 </resources>

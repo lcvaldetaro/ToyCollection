@@ -25,6 +25,7 @@ import com.gepetto.toydb.updater.DesktopUpdater
 import com.gepetto.toydb.updater.UpdateDialog
 import com.gepetto.toydb.updater.UpdateInfo
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 fun main(args: Array<String>) {
@@ -129,6 +130,9 @@ fun main(args: Array<String>) {
         ) {
             var updateInfo by remember { mutableStateOf<UpdateInfo?>(null) }
             var showUpdateDialog by remember { mutableStateOf(false) }
+            var isDownloadingUpdate by remember { mutableStateOf(false) }
+            var downloadProgress by remember { mutableStateOf<Float?>(null) }
+            val coroutineScope = rememberCoroutineScope()
 
             LaunchedEffect(Unit) {
                 val updateUrl = repository.getBaseUrlSetting().trimEnd('/') + "/version.json"
@@ -148,10 +152,26 @@ fun main(args: Array<String>) {
                 if (showUpdateDialog && updateInfo != null) {
                     UpdateDialog(
                         newVersionName = updateInfo!!.versionName,
-                        onDismiss = { showUpdateDialog = false },
+                        isDownloading = isDownloadingUpdate,
+                        downloadProgress = downloadProgress,
+                        onDismiss = {
+                            if (!isDownloadingUpdate) {
+                                showUpdateDialog = false
+                            }
+                        },
                         onConfirm = {
-                            DesktopUpdater.openBrowser(updateInfo!!.downloadUrl)
-                            showUpdateDialog = false
+                            val targetUrl = updateInfo!!.downloadUrl
+                            isDownloadingUpdate = true
+                            downloadProgress = null
+                            coroutineScope.launch {
+                                withContext(Dispatchers.IO) {
+                                    DesktopUpdater.downloadAndOpenUpdate(targetUrl) { progress ->
+                                        downloadProgress = progress
+                                    }
+                                }
+                                isDownloadingUpdate = false
+                                showUpdateDialog = false
+                            }
                         }
                     )
                 }
