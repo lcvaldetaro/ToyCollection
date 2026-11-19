@@ -8,6 +8,7 @@ HARD:
 SIMPLE:
 
 BUGS:
+[ ]-when we add a main picture via Android (did not test via Desktop) to a toy, the picture does not appear as I navigate thru the app. As if it is not on the "cache"
 [ ]-Web version can't web sync from either http://valdetaro.com/database/ or https://gepetto.club/database/
 [ ]-web version backaup/restore
 
@@ -29,3 +30,4 @@ BUGS:
 [x]-db reset for new collections
 [x]-desktop must check if there is a new version to download
 [x]-Analytics: First Install
+[x]-when starting download or an upload on the server sync, there no visual indicator that something has started

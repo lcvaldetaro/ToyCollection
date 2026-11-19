@@ -62,6 +62,11 @@ fun ServerSyncSettingsTab(
     val webSyncSuccessText = stringResource(Res.string.web_sync_success)
     val webSyncNoUpdatesText = stringResource(Res.string.web_sync_no_updates)
     val webSyncErrorText = stringResource(Res.string.web_sync_error)
+    val sftpCalculatingUploadText = stringResource(Res.string.sftp_status_calculating_upload)
+    val sftpCalculatingDownloadText = stringResource(Res.string.sftp_status_calculating_download)
+    val sftpUploadingText = stringResource(Res.string.sftp_status_uploading)
+    val sftpDownloadingText = stringResource(Res.string.sftp_status_downloading)
+    val allFieldsRequiredText = stringResource(Res.string.all_fields_required)
     var statusText by remember { mutableStateOf("") }
 
     // SFTP Config States
@@ -272,10 +277,10 @@ fun ServerSyncSettingsTab(
         )
     }
 
-    if (showSyncConfirmDialog) {
+    if (showSyncConfirmDialog && activeVerification == null) {
         AlertDialog(
             onDismissRequest = {
-                if (syncDialogPhase != "Progress") {
+                if (syncDialogPhase != "Progress" && syncDialogPhase != "Calculating") {
                     showSyncConfirmDialog = false
                 }
             },
@@ -283,6 +288,7 @@ fun ServerSyncSettingsTab(
             containerColor = sysBackgroundColor(),
             title = {
                 val titleText = when (syncDialogPhase) {
+                    "Calculating" -> stringResource(Res.string.sftp_status_syncing)
                     "Confirm" -> stringResource(Res.string.sftp_sync_direction_label, syncDirection)
                     "Progress" -> stringResource(Res.string.sftp_status_syncing)
                     "Success" -> {
@@ -300,6 +306,18 @@ fun ServerSyncSettingsTab(
             text = {
                 Column {
                     when (syncDialogPhase) {
+                        "Calculating" -> {
+                            Column(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.padding(bottom = 16.dp),
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Text(text = statusText, color = sysTextColor())
+                            }
+                        }
                         "Confirm" -> {
                             Text(
                                 text = if (proposedSftpActions.isEmpty()) {
@@ -470,12 +488,28 @@ fun ServerSyncSettingsTab(
                             )
                         }
                         "Progress" -> {
-                            Text(text = statusText, color = sysTextColor())
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    strokeWidth = 2.dp,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Text(text = statusText, color = sysTextColor())
+                            }
                             Spacer(modifier = Modifier.height(16.dp))
-                            LinearProgressIndicator(
-                                progress = { sftpSyncProgress },
-                                modifier = Modifier.fillMaxWidth()
-                            )
+                            if (sftpSyncProgress > 0f) {
+                                LinearProgressIndicator(
+                                    progress = { sftpSyncProgress },
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            } else {
+                                LinearProgressIndicator(
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
                                 text = stringResource(Res.string.sftp_transfer_warning_dialog_desc),
@@ -504,20 +538,20 @@ fun ServerSyncSettingsTab(
                 }
             },
             confirmButton = {
-                if (syncDialogPhase != "Progress") {
+                if (syncDialogPhase != "Progress" && syncDialogPhase != "Calculating") {
                     Button(
                         onClick = {
                             if (syncDialogPhase == "Confirm") {
+                                isSftpSyncing = true
+                                sftpSyncProgress = 0.0f
+                                statusText = if (syncDirection == "Upload") sftpUploadingText else sftpDownloadingText
                                 syncDialogPhase = "Progress"
                                 coroutineScope.launch {
-                                    isSftpSyncing = true
                                     val selectedSet = selectedSftpActions.filterValues { it }.keys.filter { filename ->
                                         val isHtml = filename.endsWith(".html", ignoreCase = true) || filename.endsWith(".htm", ignoreCase = true)
                                         !(excludeHtmlFiles && isHtml)
                                     }.toSet()
                                     if (syncDirection == "Upload") {
-                                        statusText = getString(Res.string.sftp_status_uploading)
-                                        sftpSyncProgress = 0.0f
                                         val result = sftpService.uploadData(buildSftpConfig(), db, onHostKeyUnverified, selectedSet) { status, progress ->
                                             statusText = status
                                             sftpSyncProgress = progress
@@ -531,13 +565,12 @@ fun ServerSyncSettingsTab(
                                             syncDialogPhase = "Error"
                                         }
                                     } else {
-                                        statusText = getString(Res.string.sftp_status_downloading)
-                                        sftpSyncProgress = 0.0f
                                         val result = sftpService.downloadData(buildSftpConfig(), db, onHostKeyUnverified, selectedSet) { status, progress ->
                                             statusText = status
                                             sftpSyncProgress = progress
                                         }
                                         if (result.isSuccess) {
+                                            onCategoriesChanged()
                                             statusText = getString(Res.string.sftp_status_download_success)
                                             syncDialogPhase = "Success"
                                         } else {
@@ -716,64 +749,73 @@ fun ServerSyncSettingsTab(
             )
             SftpSyncActions(
                 onUploadClick = {
-                    coroutineScope.launch {
-                        if (sftpHost.trim().isEmpty() || sftpUsername.trim().isEmpty()) {
-                            testErrorMsg = getString(Res.string.all_fields_required)
-                            showTestErrorDialog = true
-                            return@launch
-                        }
-                        statusText = getString(Res.string.sftp_status_calculating_upload)
-                        val result = sftpService.calculateUploadPlan(buildSftpConfig(), db, onHostKeyUnverified)
-                        if (result.isSuccess) {
-                            proposedSftpActions.clear()
-                            selectedSftpActions.clear()
-                            val actions = result.getOrNull() ?: emptyList()
-                            proposedSftpActions.addAll(actions)
-                            actions.forEach { action ->
-                                selectedSftpActions[action.filename] = true
+                    if (sftpHost.trim().isEmpty() || sftpUsername.trim().isEmpty()) {
+                        testErrorMsg = allFieldsRequiredText
+                        showTestErrorDialog = true
+                    } else {
+                        syncDirection = "Upload"
+                        statusText = sftpCalculatingUploadText
+                        isSftpSyncing = true
+                        syncDialogPhase = "Calculating"
+                        showSyncConfirmDialog = true
+                        coroutineScope.launch {
+                            val result = sftpService.calculateUploadPlan(buildSftpConfig(), db, onHostKeyUnverified)
+                            isSftpSyncing = false
+                            if (result.isSuccess) {
+                                proposedSftpActions.clear()
+                                selectedSftpActions.clear()
+                                val actions = result.getOrNull() ?: emptyList()
+                                proposedSftpActions.addAll(actions)
+                                actions.forEach { action ->
+                                    selectedSftpActions[action.filename] = true
+                                }
+                                syncDialogPhase = "Confirm"
+                            } else {
+                                showSyncConfirmDialog = false
+                                val errorMsg = result.exceptionOrNull()?.message ?: getString(Res.string.unknown)
+                                statusText = getString(Res.string.sftp_status_plan_failed, errorMsg)
+                                syncErrorMsg = errorMsg
+                                showSyncErrorDialog = true
                             }
-                            syncDirection = "Upload"
-                            syncDialogPhase = "Confirm"
-                            showSyncConfirmDialog = true
-                        } else {
-                            val errorMsg = result.exceptionOrNull()?.message ?: getString(Res.string.unknown)
-                            statusText = getString(Res.string.sftp_status_plan_failed, errorMsg)
-                            syncErrorMsg = errorMsg
-                            showSyncErrorDialog = true
                         }
                     }
                 },
                 onDownloadClick = {
-                    coroutineScope.launch {
-                        if (sftpHost.trim().isEmpty() || sftpUsername.trim().isEmpty()) {
-                            testErrorMsg = getString(Res.string.all_fields_required)
-                            showTestErrorDialog = true
-                            return@launch
-                        }
-                        statusText = getString(Res.string.sftp_status_calculating_download)
-                        val result = sftpService.calculateDownloadPlan(buildSftpConfig(), db, onHostKeyUnverified)
-                        if (result.isSuccess) {
-                            proposedSftpActions.clear()
-                            selectedSftpActions.clear()
-                            val actions = result.getOrNull() ?: emptyList()
-                            proposedSftpActions.addAll(actions)
-                            actions.forEach { action ->
-                                val isHtml = action.filename.endsWith(".html", ignoreCase = true) || action.filename.endsWith(".htm", ignoreCase = true)
-                                selectedSftpActions[action.filename] = !(excludeHtmlFiles && isHtml)
+                    if (sftpHost.trim().isEmpty() || sftpUsername.trim().isEmpty()) {
+                        testErrorMsg = allFieldsRequiredText
+                        showTestErrorDialog = true
+                    } else {
+                        syncDirection = "Download"
+                        statusText = sftpCalculatingDownloadText
+                        isSftpSyncing = true
+                        syncDialogPhase = "Calculating"
+                        showSyncConfirmDialog = true
+                        coroutineScope.launch {
+                            val result = sftpService.calculateDownloadPlan(buildSftpConfig(), db, onHostKeyUnverified)
+                            isSftpSyncing = false
+                            if (result.isSuccess) {
+                                proposedSftpActions.clear()
+                                selectedSftpActions.clear()
+                                val actions = result.getOrNull() ?: emptyList()
+                                proposedSftpActions.addAll(actions)
+                                actions.forEach { action ->
+                                    val isHtml = action.filename.endsWith(".html", ignoreCase = true) || action.filename.endsWith(".htm", ignoreCase = true)
+                                    selectedSftpActions[action.filename] = !(excludeHtmlFiles && isHtml)
+                                }
+                                syncDialogPhase = "Confirm"
+                            } else {
+                                showSyncConfirmDialog = false
+                                val errorMsg = result.exceptionOrNull()?.message ?: getString(Res.string.unknown)
+                                statusText = getString(Res.string.sftp_status_plan_failed, errorMsg)
+                                syncErrorMsg = errorMsg
+                                showSyncErrorDialog = true
                             }
-                            syncDirection = "Download"
-                            syncDialogPhase = "Confirm"
-                            showSyncConfirmDialog = true
-                        } else {
-                            val errorMsg = result.exceptionOrNull()?.message ?: getString(Res.string.unknown)
-                            statusText = getString(Res.string.sftp_status_plan_failed, errorMsg)
-                            syncErrorMsg = errorMsg
-                            showSyncErrorDialog = true
                         }
                     }
                 },
                 isSyncing = isSftpSyncing,
-                syncProgress = sftpSyncProgress
+                syncProgress = sftpSyncProgress,
+                syncDirection = syncDirection
             )
             if (isSftpSyncing) {
                 Spacer(modifier = Modifier.height(GcSpacing.Standard))
@@ -1114,8 +1156,11 @@ fun SftpSyncActions(
     onUploadClick: () -> Unit,
     onDownloadClick: () -> Unit,
     isSyncing: Boolean,
-    syncProgress: Float
+    syncProgress: Float,
+    syncDirection: String = ""
 ) {
+    val isUploading = isSyncing && (syncDirection.isEmpty() || syncDirection == "Upload")
+    val isDownloading = isSyncing && (syncDirection.isEmpty() || syncDirection == "Download")
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = sysBackgroundColor()),
@@ -1134,10 +1179,10 @@ fun SftpSyncActions(
                     onClick = onUploadClick,
                     modifier = Modifier.weight(1f)
                 ) {
-                    if (isSyncing) {
+                    if (isUploading) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(20.dp),
-                            color = MaterialTheme.colorScheme.onPrimary,
+                            color = LocalContentColor.current,
                             strokeWidth = 2.dp
                         )
                         Spacer(modifier = Modifier.width(8.dp))
@@ -1156,10 +1201,10 @@ fun SftpSyncActions(
                         contentColor = MaterialTheme.colorScheme.onSecondary
                     )
                 ) {
-                    if (isSyncing) {
+                    if (isDownloading) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(20.dp),
-                            color = MaterialTheme.colorScheme.onSecondary,
+                            color = LocalContentColor.current,
                             strokeWidth = 2.dp
                         )
                         Spacer(modifier = Modifier.width(8.dp))
@@ -1170,6 +1215,35 @@ fun SftpSyncActions(
                 }
             }
         }
+    }
+}
+
+@PreviewLightDark
+@Preview(name = "Landscape", widthDp = 800, heightDp = 480)
+@Composable
+fun SftpSyncActionsPreview() {
+    GcTheme {
+        SftpSyncActions(
+            onUploadClick = {},
+            onDownloadClick = {},
+            isSyncing = false,
+            syncProgress = 0f
+        )
+    }
+}
+
+@PreviewLightDark
+@Preview(name = "Landscape", widthDp = 800, heightDp = 480)
+@Composable
+fun SftpSyncActionsSyncingPreview() {
+    GcTheme {
+        SftpSyncActions(
+            onUploadClick = {},
+            onDownloadClick = {},
+            isSyncing = true,
+            syncProgress = 0.3f,
+            syncDirection = "Upload"
+        )
     }
 }
 
